@@ -9,6 +9,7 @@ from accounts.decorators import super_admin_required, role_required
 from accounts.forms import StyledAuthenticationForm, StaffCreateForm, StaffEditForm
 from accounts.models import User, AuditLog, Role, HospitalSetting
 from accounts.utils import write_audit_log
+from reports.excel_utils import export_rows_to_excel, export_rows_to_pdf
 
 
 class StaffLoginView(LoginView):
@@ -320,6 +321,12 @@ def staff_attendance(request):
         records = records.filter(date__gte=start)
     if end:
         records = records.filter(date__lte=end)
+    if request.GET.get('export') in ['excel', 'pdf']:
+        headers = ['Date', 'Staff ID', 'Name', 'Department', 'Check In', 'Check Out', 'Hours', 'Status']
+        rows = [(a.date, a.staff.staff_id, a.staff.get_full_name() or a.staff.username, a.staff.department.name if a.staff.department else '', a.check_in, a.check_out, a.total_working_hours, a.get_status_display()) for a in records[:5000]]
+        if request.GET.get('export') == 'pdf':
+            return export_rows_to_pdf(headers, rows, 'staff_attendance.pdf', 'Staff Attendance Report')
+        return export_rows_to_excel(headers, rows, 'staff_attendance.xlsx', 'Attendance')
     page_obj = Paginator(records, 31).get_page(request.GET.get('page'))
     from departments.models import Department
     return render(request, 'accounts/staff_attendance.html', {'page_obj': page_obj, 'filters': request.GET, 'departments': Department.objects.filter(is_active=True)})
@@ -502,8 +509,6 @@ def staff_salary_mark_paid(request, pk):
 
 @role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_export(request):
-    import csv
-    from django.http import HttpResponse
     from accounts.models import StaffSalaryPayment
     payments = StaffSalaryPayment.objects.select_related('staff', 'staff__department').all()
     year = request.GET.get('year')
@@ -512,26 +517,17 @@ def staff_salary_export(request):
         payments = payments.filter(year=year)
     if month:
         payments = payments.filter(month=month)
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="salary_report.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Staff ID', 'Name', 'Department', 'Year', 'Month', 'Present', 'Leave', 'Absent', 'Base', 'Bonus', 'Deductions', 'Net', 'Status'])
-    for p in payments:
-        writer.writerow([p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()])
-    return response
+    headers = ['Staff ID', 'Name', 'Department', 'Year', 'Month', 'Present', 'Leave', 'Absent', 'Base', 'Bonus', 'Deductions', 'Net', 'Status']
+    rows = [(p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()) for p in payments[:5000]]
+    if request.GET.get('export') == 'pdf':
+        return export_rows_to_pdf(headers, rows, 'salary_report.pdf', 'Salary / Payroll Report')
+    return export_rows_to_excel(headers, rows, 'salary_report.xlsx', 'Salary')
+
 
 @login_required
 def staff_attendance_punch(request):
-    """Manual/device-compatible attendance punch.
-
-    This makes fingerprint attendance workable before a specific biometric
-    SDK is connected: a device, small local script, or staff admin can POST
-    staff_id + direction. Real devices can call the JSON endpoint with the
-    same fields.
-    """
     from django.utils import timezone
     from accounts.models import StaffAttendance
-
     if request.method == 'POST':
         staff_id = (request.POST.get('staff_id') or '').strip()
         direction = (request.POST.get('direction') or 'in').strip().lower()
@@ -553,22 +549,14 @@ def staff_attendance_punch(request):
 
 
 def staff_attendance_device_punch(request):
-    """JSON endpoint for fingerprint/biometric devices or a local bridge script.
-
-    Accepted params: staff_id, direction=in/out, timestamp optional ISO string,
-    device_log_id optional. If FINGERPRINT_DEVICE_API_KEY is set, callers must
-    send api_key with the same value.
-    """
     import datetime
     from django.conf import settings
     from django.http import JsonResponse
     from django.utils import timezone
     from accounts.models import StaffAttendance
-
     expected_key = getattr(settings, 'FINGERPRINT_DEVICE_API_KEY', '')
     if expected_key and request.GET.get('api_key') != expected_key and request.POST.get('api_key') != expected_key:
         return JsonResponse({'ok': False, 'error': 'Invalid device API key.'}, status=403)
-
     data = request.POST if request.method == 'POST' else request.GET
     staff_id = (data.get('staff_id') or '').strip()
     direction = (data.get('direction') or '').strip().lower()
@@ -602,30 +590,18 @@ def staff_attendance_device_punch(request):
     if device_log_id:
         att.device_log_id = device_log_id
     att.save()
-    return JsonResponse({
-        'ok': True,
-        'type': 'staff',
-        'label': 'STAFF',
-        'staff_id': staff.staff_id,
-        'staff_name': staff.get_full_name() or staff.username,
-        'date': att.date.isoformat(),
-        'check_in': att.check_in.isoformat() if att.check_in else '',
-        'check_out': att.check_out.isoformat() if att.check_out else '',
-        'hours': str(att.total_working_hours),
-        'status': att.get_status_display(),
-    })
+    return JsonResponse({'ok': True, 'type': 'staff', 'label': 'STAFF', 'staff_id': staff.staff_id, 'staff_name': staff.get_full_name() or staff.username, 'date': att.date.isoformat(), 'check_in': att.check_in.isoformat() if att.check_in else '', 'check_out': att.check_out.isoformat() if att.check_out else '', 'hours': str(att.total_working_hours), 'status': att.get_status_display()})
 
 
 @super_admin_required
 def system_readiness(request):
-    """Operational readiness checklist for local/live deployment."""
     from django.conf import settings
-    from django.core.cache import cache
-    checks = []
-    checks.append({'name': 'Django DEBUG disabled for production', 'ok': not settings.DEBUG, 'detail': f'DEBUG={settings.DEBUG}'})
-    checks.append({'name': 'Redis URL configured', 'ok': bool(getattr(settings, 'REDIS_URL', '')), 'detail': getattr(settings, 'REDIS_URL', '') or 'Using local in-memory fallback'})
-    checks.append({'name': 'Celery broker configured', 'ok': bool(getattr(settings, 'CELERY_BROKER_URL', '')), 'detail': getattr(settings, 'CELERY_BROKER_URL', '')})
-    checks.append({'name': 'eSewa merchant configured', 'ok': bool(settings.ESEWA_MERCHANT_CODE and settings.ESEWA_SECRET_KEY), 'detail': f"sandbox={settings.ESEWA_SANDBOX}, merchant={settings.ESEWA_MERCHANT_CODE}"})
-    checks.append({'name': 'Fingerprint endpoint available', 'ok': True, 'detail': request.build_absolute_uri(reverse('accounts:staff_attendance_device_punch'))})
-    checks.append({'name': 'Staff discount configured', 'ok': True, 'detail': f"enabled={HospitalSetting.get_solo().staff_discount_enabled}, percent={HospitalSetting.get_solo().staff_discount_percent}%"})
+    checks = [
+        {'name': 'Django DEBUG disabled for production', 'ok': not settings.DEBUG, 'detail': f'DEBUG={settings.DEBUG}'},
+        {'name': 'Redis URL configured', 'ok': bool(getattr(settings, 'REDIS_URL', '')), 'detail': getattr(settings, 'REDIS_URL', '') or 'Using local in-memory fallback'},
+        {'name': 'Celery broker configured', 'ok': bool(getattr(settings, 'CELERY_BROKER_URL', '')), 'detail': getattr(settings, 'CELERY_BROKER_URL', '')},
+        {'name': 'eSewa merchant configured', 'ok': bool(settings.ESEWA_MERCHANT_CODE and settings.ESEWA_SECRET_KEY), 'detail': f"sandbox={settings.ESEWA_SANDBOX}, merchant={settings.ESEWA_MERCHANT_CODE}"},
+        {'name': 'Fingerprint endpoint available', 'ok': True, 'detail': request.build_absolute_uri(reverse('accounts:staff_attendance_device_punch'))},
+        {'name': 'Staff discount configured', 'ok': True, 'detail': f"enabled={HospitalSetting.get_solo().staff_discount_enabled}, percent={HospitalSetting.get_solo().staff_discount_percent}%"},
+    ]
     return render(request, 'accounts/system_readiness.html', {'checks': checks})

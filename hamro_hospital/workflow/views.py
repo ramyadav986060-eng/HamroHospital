@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from accounts.decorators import role_required
 from accounts.models import Role
 from workflow.models import ServiceOrder, PatientTimeline, PaymentEvent
+from reports.excel_utils import export_rows_to_excel, export_rows_to_pdf
 
 
 ROLE_SERVICE_TYPES = {
@@ -138,6 +139,12 @@ def department_revenue(request):
     elif role_type and not request.user.is_superuser and request.user.effective_role != Role.ACCOUNTS_DEPT:
         orders = orders.filter(service_type=role_type)
     summary = orders.values('service_type').annotate(total=Sum('bill__payment_events__amount'), count=Count('id')).order_by('service_type')
+    if request.GET.get('export') in ['excel', 'pdf']:
+        headers = ['Service', 'Patient', 'Type', 'Bill', 'Amount']
+        rows = [(o.service_name, o.patient.full_name, o.get_service_type_display(), o.bill.bill_number if o.bill else '', o.total_amount) for o in orders[:5000]]
+        if request.GET.get('export') == 'pdf':
+            return export_rows_to_pdf(headers, rows, 'department_revenue.pdf', 'Department Revenue Report')
+        return export_rows_to_excel(headers, rows, 'department_revenue.xlsx', 'Department Revenue')
     return render(request, 'workflow/department_revenue.html', {
         'summary': summary,
         'orders': orders[:300],
