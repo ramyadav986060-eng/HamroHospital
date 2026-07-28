@@ -66,13 +66,25 @@
         </div>
     </div>
 
+    {% if lab_request.parameter_values.exists %}
+    <div class="tuh-section-title">Structured Result Values</div>
+    <table class="tuh-print-table">
+        <thead><tr><th>Parameter</th><th>Value</th><th>Unit / Range</th><th>Flag</th><th>Remarks</th></tr></thead>
+        <tbody>
+        {% for value in lab_request.parameter_values.all %}
+            <tr><td>{{ value.parameter.name }}</td><td>{{ value.value }}</td><td>{{ value.parameter.unit }}{% if value.parameter.normal_range %} / {{ value.parameter.normal_range }}{% endif %}</td><td>{{ value.flag|default:"-" }}</td><td>{{ value.remarks|default:"-" }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
     <div class="tuh-section-title">Result Notes</div>
     <div class="tuh-body-text">{{ lab_request.result_notes|default:"No result notes recorded."|linebreaks }}</div>
 
     <div class="tuh-print-footer">
         <div class="tuh-footer-cols">
             <div class="footer-col"><i class="bi bi-person-circle"></i>
-                <div><div class="f-title">Verified By</div><div>{% if lab_request.processed_by %}{{ lab_request.processed_by.get_full_name|default:lab_request.processed_by.username }}{% else %}Laboratory{% endif %}</div></div>
+                <div><div class="f-title">Verified By</div><div>{% if lab_request.verified_by %}{{ lab_request.verified_by.get_full_name|default:lab_request.verified_by.username }}{% elif lab_request.processed_by %}{{ lab_request.processed_by.get_full_name|default:lab_request.processed_by.username }}{% else %}Laboratory{% endif %}</div></div>
             </div>
             <div class="footer-col"><i class="bi bi-printer"></i>
                 <div><div class="f-title">Printed On</div><div>{% now "M d, Y h:i A" %}</div></div>

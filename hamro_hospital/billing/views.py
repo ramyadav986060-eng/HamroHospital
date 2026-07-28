@@ -221,6 +221,18 @@ def create_bill(request, patient_id):
                     s.save()
 
             bill.recalculate_total()
+            # Apply available admission deposit credit to IPD/admission bills.
+            if bill.admission_id:
+                from admissions.models import AdmissionDeposit
+                from decimal import Decimal
+                deposits = AdmissionDeposit.objects.filter(admission_id=bill.admission_id, deposit_type=AdmissionDeposit.DepositType.DEPOSIT)
+                used = AdmissionDeposit.objects.filter(admission_id=bill.admission_id, deposit_type__in=[AdmissionDeposit.DepositType.USED, AdmissionDeposit.DepositType.REFUND])
+                available_deposit = (sum((d.amount for d in deposits), start=Decimal('0')) - sum((d.amount for d in used), start=Decimal('0')))
+                credit = min(available_deposit, bill.final_amount_paid) if available_deposit > 0 else Decimal('0')
+                if credit > 0:
+                    bill.admission_deposit_credit = credit
+                    bill.save(update_fields=['admission_deposit_credit'])
+                    AdmissionDeposit.objects.create(admission_id=bill.admission_id, deposit_type=AdmissionDeposit.DepositType.USED, amount=credit, payment_method='deposit_credit', receipt_number=bill.bill_number, received_by=request.user, remarks='Applied to admission bill')
             if bill.status == Bill.Status.PAID:
                 record_payment_event(bill, received_by=request.user, remarks='Bill created and paid')
 

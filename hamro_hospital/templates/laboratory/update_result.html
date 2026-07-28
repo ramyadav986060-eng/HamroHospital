@@ -42,6 +42,7 @@
     <button type="submit" class="btn btn-primary">Save</button>
     {% if lab_request.status == 'completed' %}
     <a href="{% url 'laboratory:print_report' lab_request.pk %}" class="btn btn-outline-secondary" target="_blank">Print Report</a>
+    <form method="post" action="{% url 'laboratory:verify_result' lab_request.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-outline-success">Verify Result</button></form>
     {% endif %}
 </form>
 {% endblock %}

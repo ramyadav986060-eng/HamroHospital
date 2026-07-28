@@ -488,6 +488,9 @@
             {% if bill.insurance_coverage_amount %}
             <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Insurance Coverage</span><h4 style="margin:0;">- NPR {{ bill.insurance_coverage_amount }}</h4></div>
             {% endif %}
+            {% if bill.admission_deposit_credit %}
+            <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Admission Deposit Credit</span><h4 style="margin:0;">- NPR {{ bill.admission_deposit_credit }}</h4></div>
+            {% endif %}
             <div style="display:flex; justify-content: space-between; gap: 40px; border-top: 1px solid #bfdbfe; padding-top: 6px;"><span>{% if bill.status == 'pending' %}Amount Due{% else %}Final Amount Paid{% endif %}</span><h4 style="margin:0;">NPR {{ bill.final_amount_paid }}</h4></div>
         </div>
     </div>

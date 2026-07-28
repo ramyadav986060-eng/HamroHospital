@@ -81,6 +81,7 @@ class Bill(models.Model):
         'patients.InsuranceCompany', on_delete=models.SET_NULL, null=True, blank=True, related_name='bills',
     )
     insurance_coverage_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    admission_deposit_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PAID)
     barcode = models.ImageField(upload_to='billing/barcodes/', blank=True, null=True)
@@ -126,7 +127,7 @@ class Bill(models.Model):
 
     @property
     def final_amount_paid(self):
-        return self.total_amount - self.discount_total - self.insurance_coverage_amount
+        return self.total_amount - self.discount_total - self.insurance_coverage_amount - self.admission_deposit_credit
 
 
 class BillItem(models.Model):

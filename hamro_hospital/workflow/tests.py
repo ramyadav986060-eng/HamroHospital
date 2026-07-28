@@ -72,3 +72,24 @@ class AdmissionWorkflowTests(TestCase):
             insurance_clearance=True, bed_release_ready=True,
         )
         self.assertTrue(checklist.is_complete)
+
+class SafetyAndInventoryTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='staff1', password='pass12345', role=Role.CASH_COUNTER, is_staff=True)
+        province = Province.objects.create(number=5, name='Lumbini')
+        district = District.objects.create(province=province, name='Rupandehi')
+        self.patient = Patient.objects.create(first_name='Safe', last_name='Patient', gender='M', date_of_birth='1990-01-01', phone_number='9800000003', district=district, blood_group='A+')
+
+    def test_blood_compatibility(self):
+        from blood_bank.models import is_compatible_blood
+        self.assertTrue(is_compatible_blood('O-', 'A+'))
+        self.assertFalse(is_compatible_blood('B+', 'A+'))
+
+    def test_pharmacy_batch_and_ledger_models(self):
+        from pharmacy.models import Medicine, Supplier, MedicineBatch, StockLedger
+        med = Medicine.objects.create(medicine_code='M001', name='Paracetamol', category='Tablet', selling_price=10, current_stock=100, minimum_stock=5)
+        supplier = Supplier.objects.create(name='Demo Supplier')
+        batch = MedicineBatch.objects.create(medicine=med, supplier=supplier, batch_number='B001', quantity_received=50, quantity_available=50, mrp=10)
+        StockLedger.objects.create(medicine=med, batch=batch, movement_type=StockLedger.MovementType.PURCHASE, quantity_change=50, balance_after=100, created_by=self.user)
+        self.assertEqual(med.batches.count(), 1)
+        self.assertEqual(med.stock_ledger.count(), 1)
