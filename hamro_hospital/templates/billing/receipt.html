@@ -372,6 +372,10 @@
             {% if bill.patient.qr_code %}
                 <img class="qr-code" src="{{ bill.patient.qr_code.url }}" alt="Patient QR">
             {% endif %}
+            {% if bill.patient.barcode %}
+                <div class="small fw-bold text-muted mt-1">Patient Barcode</div>
+                <img class="barcode-img" src="{{ bill.patient.barcode.url }}" alt="Patient Barcode">
+            {% endif %}
             <p class="inv-label">Invoice No.</p>
             <p class="inv-number">{{ bill.bill_number }}</p>
             {% if bill.barcode %}

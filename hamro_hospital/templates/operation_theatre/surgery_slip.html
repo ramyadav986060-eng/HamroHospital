@@ -35,6 +35,16 @@
             <div class="row-val"><strong>{{ surgery.patient.full_name }}</strong> ({{ surgery.patient.patient_code }})</div>
         </div>
         <div class="row-item">
+            <div class="row-label"><i class="bi bi-telephone-fill"></i> Phone Number</div>
+            <div class="row-val">{{ surgery.patient.phone_number }}</div>
+        </div>
+        {% if surgery.patient.barcode %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-upc-scan"></i> Patient Barcode</div>
+            <div class="row-val"><img src="{{ surgery.patient.barcode.url }}" alt="Patient Barcode" style="max-width:220px;max-height:48px;object-fit:contain;"></div>
+        </div>
+        {% endif %}
+        <div class="row-item">
             <div class="row-label"><i class="bi bi-clipboard2-pulse"></i> Surgery</div>
             <div class="row-val">{{ surgery.surgery_name }}</div>
         </div>

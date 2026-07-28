@@ -771,3 +771,72 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -.01em; }
     .home-notice-track { font-size: .95rem; animation-duration: 18s; }
     .home-hero { padding-top: 72px; padding-bottom: 74px; }
 }
+
+/* Sidebar collapsed state: clean icon-only rail with visible expand/collapse arrow. */
+.app-sidebar.collapsed { width: var(--sidebar-width-collapsed); }
+.app-sidebar.collapsed .app-sidebar-brand {
+    justify-content: center;
+    padding-left: .65rem;
+    padding-right: .65rem;
+    gap: 0;
+}
+.app-sidebar.collapsed .app-sidebar-brand img {
+    width: 46px;
+    height: 46px;
+}
+.app-sidebar.collapsed .brand-text,
+.app-sidebar.collapsed .app-sidebar-foot,
+.app-sidebar.collapsed .nav-link span,
+.app-sidebar.collapsed .nav-link .ms-auto,
+.app-sidebar.collapsed .nav-link::after,
+.app-sidebar.collapsed .collapse .nav-link {
+    display: none !important;
+}
+.app-sidebar.collapsed .collapse { display: none !important; }
+.app-sidebar.collapsed .app-sidebar-nav {
+    padding-left: .55rem;
+    padding-right: .55rem;
+    overflow-x: hidden;
+}
+.app-sidebar.collapsed .app-sidebar-nav .nav-link {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto .35rem;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.app-sidebar.collapsed .app-sidebar-nav .nav-link i:first-child {
+    width: auto;
+    font-size: 1.25rem;
+    margin: 0;
+}
+.app-sidebar.collapsed .app-sidebar-toggle {
+    display: inline-flex !important;
+    position: absolute;
+    right: -14px;
+    top: 70px;
+    z-index: 5;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    color: var(--brand);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.app-sidebar.collapsed + .app-sidebar-overlay + .app-main,
+.app-sidebar.collapsed ~ .app-main {
+    margin-left: var(--sidebar-width-collapsed);
+}
+.stat-card h2, .stat-card h3 {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(1.25rem, 2.2vw, 2rem);
+}
+.report-toolbar .form-control,
+.report-toolbar .form-select { min-height: 40px; }

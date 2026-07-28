@@ -2,24 +2,9 @@
 {% load finance_tags %}
 {% block title %}Nursing Report{% endblock %}
 {% block page_title %}Nursing Report{% endblock %}
-{% block sidebar %}
-<nav class="nav flex-column">
-    <a class="nav-link " href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Dashboard</a>
-    <a class="nav-link " href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> Registrations</a>
-    <a class="nav-link " href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> Departments</a>
-    <a class="nav-link " href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> Doctors</a>
-    <a class="nav-link " href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> Cash Counters</a>
-    <a class="nav-link " href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> Pharmacy</a>
-    <a class="nav-link " href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> Laboratory</a>
-    <a class="nav-link active" href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> Nursing</a>
-    <a class="nav-link " href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> Operation Theatre</a>
-    <a class="nav-link " href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> Blood Bank</a>
-    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
-</nav>
-{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='nursing' %}{% endblock %}
 {% block dashboard_content %}
-<div class="mb-3 text-end"><a href="{% url 'reports:nursing_report' %}?export=excel" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Export Excel</a></div>
-<div class="row g-4">
-    <div class="col-md-4"><div class="stat-card blue"><h6>Total Nursing Notes</h6><h3 class="fw-bold">{{ total_notes }}</h3></div></div>
-</div>
+{% include 'reports/report_filter.html' %}
+<div class="row g-4 mb-4"><div class="col-md-4"><div class="stat-card blue"><h6>Total Nursing Notes</h6><h3>{{ total_notes }}</h3></div></div></div>
+<div class="tuh-card p-4"><h5 class="mb-3">Nursing Notes</h5><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Patient</th><th>Note Type</th><th>Recorded By</th><th>Recorded At</th></tr></thead><tbody>{% for n in notes %}<tr><td>{{ n.admission.patient.full_name }}<br><small>{{ n.admission.patient.patient_code }}</small></td><td>{{ n.get_note_type_display }}</td><td>{{ n.recorded_by.username|default:'-' }}</td><td>{{ n.recorded_at|date:'Y-m-d H:i' }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No nursing notes found.</td></tr>{% endfor %}</tbody></table></div></div>
 {% endblock %}

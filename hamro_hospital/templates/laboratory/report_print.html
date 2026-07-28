@@ -35,6 +35,16 @@
             <div class="row-val"><strong>{{ lab_request.patient_obj.full_name }}</strong> ({{ lab_request.patient_obj.patient_code }})</div>
         </div>
         <div class="row-item">
+            <div class="row-label"><i class="bi bi-telephone-fill"></i> Phone Number</div>
+            <div class="row-val">{{ lab_request.patient_obj.phone_number }}</div>
+        </div>
+        {% if lab_request.patient_obj.barcode %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-upc-scan"></i> Patient Barcode</div>
+            <div class="row-val"><img src="{{ lab_request.patient_obj.barcode.url }}" alt="Patient Barcode" style="max-width:220px;max-height:48px;object-fit:contain;"></div>
+        </div>
+        {% endif %}
+        <div class="row-item">
             <div class="row-label"><i class="bi bi-flask"></i> Test</div>
             <div class="row-val highlight">{{ lab_request.test_name }}</div>
         </div>

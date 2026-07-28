@@ -2,21 +2,7 @@
 {% load finance_tags %}
 {% block title %}Revenue Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
 {% block page_title %}Financial Revenue Dashboard{% endblock %}
-{% block sidebar %}
-<nav class="nav flex-column">
-    <a class="nav-link active" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Dashboard</a>
-    <a class="nav-link " href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> Registrations</a>
-    <a class="nav-link " href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> Departments</a>
-    <a class="nav-link " href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> Doctors</a>
-    <a class="nav-link " href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> Cash Counters</a>
-    <a class="nav-link " href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> Pharmacy</a>
-    <a class="nav-link " href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> Laboratory</a>
-    <a class="nav-link " href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> Nursing</a>
-    <a class="nav-link " href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> Operation Theatre</a>
-    <a class="nav-link " href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> Blood Bank</a>
-    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
-</nav>
-{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='revenue' %}{% endblock %}
 {% block dashboard_content %}
 <!-- Search & Filter Controls Card (spec section 18) -->
 <form method="get" class="tuh-card p-3 mb-4 bg-light border shadow-sm" id="revenueFilterForm">
@@ -61,25 +47,25 @@
 <!-- Four Primary Revenue Statistic Cards (spec section 18 - Guaranteed no-overflow responsive scaling) -->
 <div class="row g-4 mb-4">
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card blue shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue(\'Today\\\'s Revenue\', \'NPR {{ todays_revenue|floatformat:2 }}\')">
+        <div class="stat-card blue shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Today Revenue', 'NPR {{ todays_revenue|floatformat:2 }}')">
             <span class="small text-uppercase fw-bold opacity-75">Today's Revenue</span>
             <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ todays_revenue|short_amount }}</h3>
         </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card green shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue(\'Monthly Revenue\', \'NPR {{ monthly_revenue|floatformat:2 }}\')">
+        <div class="stat-card green shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Monthly Revenue', 'NPR {{ monthly_revenue|floatformat:2 }}')">
             <span class="small text-uppercase fw-bold opacity-75">Monthly Revenue</span>
             <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ monthly_revenue|short_amount }}</h3>
         </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card orange shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue(\'Yearly Revenue\', \'NPR {{ yearly_revenue|floatformat:2 }}\')">
+        <div class="stat-card orange shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Yearly Revenue', 'NPR {{ yearly_revenue|floatformat:2 }}')">
             <span class="small text-uppercase fw-bold opacity-75">Yearly Revenue</span>
             <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ yearly_revenue|short_amount }}</h3>
         </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-        <div class="stat-card gray shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue(\'Total Revenue (All Time)\', \'NPR {{ total_revenue|floatformat:2 }}\')">
+        <div class="stat-card gray shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Total Revenue (All Time)', 'NPR {{ total_revenue|floatformat:2 }}')">
             <span class="small text-uppercase fw-bold opacity-75">Total Revenue (All Time)</span>
             <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ total_revenue|short_amount }}</h3>
         </div>
@@ -135,6 +121,22 @@
                 <div class="form-text text-muted" style="font-size: 0.75rem;">Includes all confirmed digital and physical collections for selected range.</div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="tuh-card p-4 mt-4">
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-diagram-3"></i> Department-wise OPD Revenue</h5>
+    <div class="table-responsive">
+        <table class="table table-hover small align-middle">
+            <thead><tr><th>Department</th><th>Visits</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+            {% for row in department_revenue %}
+                <tr><td>{{ row.department__name|default:'Unknown' }}</td><td>{{ row.visits }}</td><td class="text-end">NPR {{ row.total|floatformat:2 }}</td></tr>
+            {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">No department revenue found for this range.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endif %}

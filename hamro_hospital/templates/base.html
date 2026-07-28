@@ -126,11 +126,23 @@
 </nav>
 {% endblock %}
 
+<script>
+function hamroGoBack(fallbackUrl) {
+    try {
+        if (window.history.length > 1 && document.referrer && new URL(document.referrer).host === window.location.host) {
+            window.history.back();
+            return;
+        }
+    } catch (e) {}
+    window.location.href = fallbackUrl || '/';
+}
+</script>
+
 <main class="tuh-main">
     <div class="container mt-3">
         {% block back_button %}
-        <button type="button" class="btn btn-outline-secondary btn-sm mb-2 tuh-back-btn" onclick="if(document.referrer && document.referrer.indexOf(window.location.host) !== -1){window.history.back();}else{window.location.href='{{ user_dashboard_url|default:'/' }}';}">
-            <i class="bi bi-arrow-left"></i> Back
+        <button type="button" class="btn btn-outline-secondary btn-sm mb-2 tuh-back-btn" onclick="hamroGoBack('{{ user_dashboard_url|default:'/' }}')" title="Go back">
+            <i class="bi bi-chevron-left"></i> Back
         </button>
         {% endblock %}
         {% block messages %}

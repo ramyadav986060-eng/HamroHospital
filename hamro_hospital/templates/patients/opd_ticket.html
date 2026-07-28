@@ -379,6 +379,10 @@
             <div class="row-val"><strong>{{ patient.full_name }}</strong></div>
         </div>
         <div class="row-item">
+            <div class="row-label"><i class="bi bi-telephone-fill"></i> Phone Number</div>
+            <div class="row-val"><strong>{{ patient.phone_number }}</strong></div>
+        </div>
+        <div class="row-item">
             <div class="row-label"><i class="bi bi-building"></i> Department</div>
             <div class="row-val blue-highlight">{{ visit.department.name }}</div>
         </div>
@@ -425,6 +429,10 @@
             <h3>PATIENT QR</h3>
             {% if patient.qr_code %}
                 <img src="{{ patient.qr_code.url }}" alt="Patient QR Code">
+            {% endif %}
+            {% if patient.barcode %}
+                <div class="mt-2 small fw-bold text-muted">Patient Barcode</div>
+                <img src="{{ patient.barcode.url }}" alt="Patient Barcode" style="width:180px;max-height:44px;object-fit:contain;">
             {% endif %}
         </div>
         <div class="tuh-queue-card">

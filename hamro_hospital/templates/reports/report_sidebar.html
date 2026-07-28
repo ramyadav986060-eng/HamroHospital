@@ -1,0 +1,12 @@
+<nav class="nav flex-column">
+    <a class="nav-link {% if active == 'revenue' %}active{% endif %}" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> <span>Revenue Dashboard</span></a>
+    <a class="nav-link {% if active == 'registration' %}active{% endif %}" href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> <span>Registrations</span></a>
+    <a class="nav-link {% if active == 'department' %}active{% endif %}" href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> <span>Departments</span></a>
+    <a class="nav-link {% if active == 'doctor' %}active{% endif %}" href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> <span>Doctors</span></a>
+    <a class="nav-link {% if active == 'counter' %}active{% endif %}" href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> <span>Cash Counter</span></a>
+    <a class="nav-link {% if active == 'pharmacy' %}active{% endif %}" href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> <span>Pharmacy</span></a>
+    <a class="nav-link {% if active == 'laboratory' %}active{% endif %}" href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> <span>Laboratory</span></a>
+    <a class="nav-link {% if active == 'nursing' %}active{% endif %}" href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> <span>Nursing</span></a>
+    <a class="nav-link {% if active == 'ot' %}active{% endif %}" href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> <span>Operation Theatre</span></a>
+    <a class="nav-link {% if active == 'blood' %}active{% endif %}" href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> <span>Blood Bank</span></a>
+</nav>

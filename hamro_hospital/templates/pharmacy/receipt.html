@@ -39,6 +39,18 @@
             <div class="row-label"><i class="bi bi-person-fill"></i> Patient</div>
             <div class="row-val">{% if sale.patient %}<strong>{{ sale.patient.full_name }}</strong> ({{ sale.patient.patient_code }}){% else %}Walk-in Customer{% endif %}</div>
         </div>
+        {% if sale.patient %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-telephone-fill"></i> Phone Number</div>
+            <div class="row-val">{{ sale.patient.phone_number }}</div>
+        </div>
+        {% if sale.patient.barcode %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-upc-scan"></i> Patient Barcode</div>
+            <div class="row-val"><img src="{{ sale.patient.barcode.url }}" alt="Patient Barcode" style="max-width:220px;max-height:48px;object-fit:contain;"></div>
+        </div>
+        {% endif %}
+        {% endif %}
         <div class="row-item">
             <div class="row-label"><i class="bi bi-calendar3"></i> Date</div>
             <div class="row-val">{{ sale.created_at|date:"F d, Y  h:i a" }}</div>

@@ -12,15 +12,15 @@
 {% block dashboard_content %}
 <div class="row g-4">
     <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Sales Today</small></div></div>
-    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue(\'Total Today\', \'NPR {{ todays_total|floatformat:2 }}\')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Total Today', 'NPR {{ todays_total|floatformat:2 }}')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Today</small></div></div>
     <div class="col-md-3 col-sm-6"><div class="stat-card orange"><i class="bi bi-exclamation-triangle fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ low_stock_count }}</h2><small>Low Stock</small></div></div>
     <div class="col-md-3 col-sm-6"><div class="stat-card gray"><i class="bi bi-x-circle fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ out_of_stock_count }}</h2><small>Out of Stock</small></div></div>
 </div>
 <div class="row g-4 mt-1">
     <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Sales This Month</small></div></div>
-    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Month\', \'NPR {{ monthly_total|floatformat:2 }}\')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Month', 'NPR {{ monthly_total|floatformat:2 }}')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div></div>
     <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Sales This Year</small></div></div>
-    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Year\', \'NPR {{ yearly_total|floatformat:2 }}\')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Year', 'NPR {{ yearly_total|floatformat:2 }}')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div></div>
 </div>
 <div class="mt-4"><a href="{% url 'pharmacy:patient_lookup' %}" class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Find Patient to Dispense</a></div>
 {% endblock %}

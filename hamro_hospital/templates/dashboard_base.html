@@ -117,8 +117,8 @@
             </button>
             <div class="app-topbar-title">
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle px-2 py-1" onclick="history.back()" title="Go Back">
-                        <i class="bi bi-arrow-left"></i>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle px-2 py-1" onclick="hamroGoBack('{{ user_dashboard_url|default:'/' }}')" title="Go Back">
+                        <i class="bi bi-chevron-left"></i>
                     </button>
                     <h1>{% block page_title %}Dashboard{% endblock %}</h1>
                 </div>

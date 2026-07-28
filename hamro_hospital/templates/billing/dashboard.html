@@ -15,13 +15,13 @@
         <div class="stat-card blue"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Bills Today</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Total Collected (Today)\', \'NPR {{ todays_total|floatformat:2 }}\')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Collected</small></div>
+        <div class="stat-card green click-amount-card" onclick="showFullValue('Total Collected (Today)', 'NPR {{ todays_total|floatformat:2 }}')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Collected</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="stat-card orange click-amount-card" onclick="showFullValue(\'eSewa Collected\', \'NPR {{ totals_by_method.esewa|floatformat:2 }}\')"><i class="bi bi-credit-card fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.esewa|short_amount }}</h2><small>eSewa</small></div>
+        <div class="stat-card orange click-amount-card" onclick="showFullValue('eSewa Collected', 'NPR {{ totals_by_method.esewa|floatformat:2 }}')"><i class="bi bi-credit-card fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.esewa|short_amount }}</h2><small>eSewa</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="stat-card gray click-amount-card" onclick="showFullValue(\'Insurance Billed\', \'NPR {{ totals_by_method.insurance|floatformat:2 }}\')"><i class="bi bi-shield-check fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.insurance|short_amount }}</h2><small>Insurance</small></div>
+        <div class="stat-card gray click-amount-card" onclick="showFullValue('Insurance Billed', 'NPR {{ totals_by_method.insurance|floatformat:2 }}')"><i class="bi bi-shield-check fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.insurance|short_amount }}</h2><small>Insurance</small></div>
     </div>
 </div>
 <div class="row g-4 mb-4">
@@ -29,13 +29,13 @@
         <div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Bills This Month</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Month\', \'NPR {{ monthly_total|floatformat:2 }}\')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div>
+        <div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Month', 'NPR {{ monthly_total|floatformat:2 }}')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
         <div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Bills This Year</small></div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Year\', \'NPR {{ yearly_total|floatformat:2 }}\')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div>
+        <div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Year', 'NPR {{ yearly_total|floatformat:2 }}')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div>
     </div>
 </div>
 <div class="mb-4"><a href="{% url 'billing:patient_lookup' %}" class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Find Patient to Bill</a></div>

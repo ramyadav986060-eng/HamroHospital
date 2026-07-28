@@ -37,12 +37,21 @@
         var sidebar = document.querySelector('.app-sidebar');
         var collapseBtn = document.querySelector('.app-sidebar-toggle');
         if (sidebar && collapseBtn) {
+            function syncSidebarToggleIcon() {
+                var icon = collapseBtn.querySelector('i');
+                if (!icon) return;
+                icon.className = sidebar.classList.contains('collapsed') ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+                collapseBtn.setAttribute('aria-label', sidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar');
+                collapseBtn.title = sidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar';
+            }
             if (localStorage.getItem(SIDEBAR_KEY) === '1') {
                 sidebar.classList.add('collapsed');
             }
+            syncSidebarToggleIcon();
             collapseBtn.addEventListener('click', function () {
                 sidebar.classList.toggle('collapsed');
                 localStorage.setItem(SIDEBAR_KEY, sidebar.classList.contains('collapsed') ? '1' : '0');
+                syncSidebarToggleIcon();
             });
         }
 
