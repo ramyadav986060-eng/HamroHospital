@@ -18,6 +18,7 @@ class Role(models.TextChoices):
     BLOOD_BANK = 'blood_bank', 'Blood Bank'
     ACCOUNTS_DEPT = 'accounts_dept', 'Finance'
     MEDICAL_RECORDS = 'medical_records', 'Medical Records'
+    DEPARTMENT_HEAD = 'department_head', 'Department Head / Sub-Admin'
 
 
 class User(AbstractUser):
@@ -35,6 +36,11 @@ class User(AbstractUser):
         help_text='Primary role used to route the dashboard and gate permissions.',
     )
     phone_number = models.CharField(max_length=20, blank=True)
+    staff_id = models.CharField(max_length=30, unique=True, blank=True, null=True, db_index=True)
+    staff_barcode = models.ImageField(upload_to='staff/barcodes/', blank=True, null=True)
+    department = models.ForeignKey('departments.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_users')
+    designation = models.CharField(max_length=120, blank=True)
+    is_department_head = models.BooleanField(default=False)
     is_active_staff = models.BooleanField(
         default=True,
         help_text='Super Admin can deactivate a staff account without deleting it.',
@@ -71,6 +77,7 @@ class User(AbstractUser):
             Role.BLOOD_BANK: 'blood_bank:dashboard',
             Role.ACCOUNTS_DEPT: 'finance:dashboard',
             Role.MEDICAL_RECORDS: 'medical_records:dashboard',
+            Role.DEPARTMENT_HEAD: 'accounts:staff_profile',
         }
         return mapping.get(self.effective_role, 'accounts:dashboard_super_admin')
 
@@ -149,6 +156,28 @@ class AuditLog(models.Model):
         return f"[{self.created_at:%Y-%m-%d %H:%M}] {self.get_action_display()} - {self.description}"
 
 
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        if not self.staff_id:
+            prefix = 'STF'
+            last = User.objects.filter(staff_id__startswith=prefix).exclude(staff_id__isnull=True).order_by('-staff_id').first()
+            next_seq = 1
+            if last and last.staff_id:
+                try:
+                    next_seq = int(last.staff_id.replace(prefix, '')) + 1
+                except ValueError:
+                    next_seq = User.objects.filter(staff_id__startswith=prefix).count() + 1
+            self.staff_id = f'{prefix}{next_seq:06d}'
+        super().save(*args, **kwargs)
+        if (is_new or not self.staff_barcode) and self.staff_id:
+            self._generate_staff_barcode()
+
+    def _generate_staff_barcode(self):
+        from accounts.qr_utils import generate_barcode_file
+        self.staff_barcode.save(f'{self.staff_id}.png', generate_barcode_file(self.staff_id), save=False)
+        User.objects.filter(pk=self.pk).update(staff_barcode=self.staff_barcode.name)
+
+
 class Notification(models.Model):
     user = models.ForeignKey(
         'accounts.User', on_delete=models.CASCADE, related_name='notifications',
@@ -195,6 +224,8 @@ class HospitalSetting(models.Model):
     receipt_settings = models.TextField(blank=True, default='Fit on half A4. Print barcode on top-right.')
     print_settings = models.TextField(blank=True, default='Standard A4 Portrait')
     theme_color = models.CharField(max_length=20, default='#1a365d')
+    staff_discount_enabled = models.BooleanField(default=True)
+    staff_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=90)
 
     class Meta:
         db_table = 'accounts_hospital_setting'
@@ -207,3 +238,94 @@ class HospitalSetting(models.Model):
         """Return the solo configuration or create it if missing."""
         obj, _created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class StaffAttendance(models.Model):
+    class Status(models.TextChoices):
+        PRESENT = 'present', 'Present'
+        ABSENT = 'absent', 'Absent'
+        LEAVE = 'leave', 'Approved Leave'
+        HOLIDAY = 'holiday', 'Holiday / Weekend'
+        PARTIAL = 'partial', 'Partial'
+
+    staff = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance_records')
+    date = models.DateField()
+    check_in = models.DateTimeField(null=True, blank=True)
+    check_out = models.DateTimeField(null=True, blank=True)
+    total_working_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.ABSENT)
+    source = models.CharField(max_length=50, blank=True, default='manual', help_text='manual, fingerprint, import, etc.')
+    device_log_id = models.CharField(max_length=100, blank=True)
+    remarks = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'accounts_staff_attendance'
+        ordering = ['-date', 'staff__first_name']
+        unique_together = [('staff', 'date')]
+        indexes = [models.Index(fields=['staff', 'date']), models.Index(fields=['date', 'status'])]
+
+    def __str__(self):
+        return f'{self.staff.staff_id} - {self.date} ({self.get_status_display()})'
+
+    def save(self, *args, **kwargs):
+        if self.check_in and self.check_out:
+            seconds = max(0, (self.check_out - self.check_in).total_seconds())
+            self.total_working_hours = round(seconds / 3600, 2)
+            if self.total_working_hours >= 6:
+                self.status = self.Status.PRESENT
+            elif self.total_working_hours > 0:
+                self.status = self.Status.PARTIAL
+        super().save(*args, **kwargs)
+
+
+class StaffLeaveRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    staff = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_requests')
+    leave_type = models.CharField(max_length=50, default='General Leave')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.TextField()
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='leave_requests_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'accounts_staff_leave_request'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['staff', 'status']), models.Index(fields=['start_date', 'end_date'])]
+
+    def __str__(self):
+        return f'{self.staff} {self.start_date} to {self.end_date} ({self.get_status_display()})'
+
+    def approve(self, reviewed_by, notes=''):
+        import datetime
+        from django.utils import timezone
+        self.status = self.Status.APPROVED
+        self.reviewed_by = reviewed_by
+        self.reviewed_at = timezone.now()
+        self.review_notes = notes
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_notes'])
+        day = self.start_date
+        while day <= self.end_date:
+            StaffAttendance.objects.update_or_create(
+                staff=self.staff, date=day,
+                defaults={'status': StaffAttendance.Status.LEAVE, 'remarks': f'Approved leave: {self.leave_type}'},
+            )
+            day += datetime.timedelta(days=1)
+
+    def reject(self, reviewed_by, notes=''):
+        from django.utils import timezone
+        self.status = self.Status.REJECTED
+        self.reviewed_by = reviewed_by
+        self.reviewed_at = timezone.now()
+        self.review_notes = notes
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_notes'])

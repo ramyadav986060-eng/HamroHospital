@@ -8,7 +8,7 @@ from django.utils.http import urlencode
 from django.utils import timezone
 
 from accounts.decorators import cash_counter_required, billing_counter_required, accounts_dept_required, role_required
-from accounts.models import AuditLog, Role
+from accounts.models import AuditLog, Role, User
 from accounts.utils import write_audit_log
 from billing.forms import (
     PatientLookupForm, BillPaymentForm, RefundRequestForm, RefundReviewForm,
@@ -142,6 +142,11 @@ def create_bill(request, patient_id):
         if not selected_service_ids and not has_pending_selection:
             messages.error(request, 'Select at least one service or pending doctor order to bill.')
         elif payment_form.is_valid():
+            staff_beneficiary = None
+            staff_discount_code = (request.POST.get('staff_discount_code') or '').strip()
+            if staff_discount_code:
+                staff_beneficiary = User.objects.filter(staff_id__iexact=staff_discount_code, is_active_staff=True).first()
+
             if counter_department == 'laboratory':
                 forced_counter_name = 'Laboratory Counter'
             elif counter_department == 'radiology':
@@ -221,6 +226,13 @@ def create_bill(request, patient_id):
                     s.save()
 
             bill.recalculate_total()
+            if staff_beneficiary:
+                from accounts.models import HospitalSetting
+                setting = HospitalSetting.get_solo()
+                if setting.staff_discount_enabled:
+                    bill.staff_discount_percent = setting.staff_discount_percent
+                    bill.staff_discount_amount = (bill.total_amount * setting.staff_discount_percent / 100)
+                    bill.save(update_fields=['staff_discount_percent', 'staff_discount_amount'])
             # Apply available admission deposit credit to IPD/admission bills.
             if bill.admission_id:
                 from admissions.models import AdmissionDeposit

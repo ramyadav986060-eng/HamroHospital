@@ -1,18 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from accounts.models import User, AuditLog, Notification, HospitalSetting
+from accounts.models import User, AuditLog, Notification, HospitalSetting, StaffAttendance, StaffLeaveRequest
 
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'role', 'is_active_staff', 'is_superuser')
-    list_filter = ('role', 'is_active_staff', 'is_superuser')
+    readonly_fields = ('staff_id', 'staff_barcode')
+    list_display = ('staff_id', 'username', 'first_name', 'last_name', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff', 'is_superuser')
+    list_filter = ('role', 'department', 'is_department_head', 'is_active_staff', 'is_superuser')
     fieldsets = UserAdmin.fieldsets + (
-        ('Hospital Role', {'fields': ('role', 'phone_number', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Hospital Role', {'fields': ('role', 'phone_number', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
 
 
@@ -57,3 +58,18 @@ class AuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+@admin.register(StaffAttendance)
+class StaffAttendanceAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'date', 'check_in', 'check_out', 'total_working_hours', 'status', 'source')
+    list_filter = ('status', 'source', 'date')
+    search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name', 'device_log_id')
+
+
+@admin.register(StaffLeaveRequest)
+class StaffLeaveRequestAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'leave_type', 'start_date', 'end_date', 'status', 'reviewed_by', 'created_at')
+    list_filter = ('status', 'leave_type', 'start_date')
+    search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name', 'reason')
+    readonly_fields = ('created_at', 'reviewed_at')

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
-from accounts.models import User, Role, HospitalSetting
+from accounts.models import User, Role, HospitalSetting, StaffAttendance, StaffLeaveRequest
 
 
 class StyledAuthenticationForm(AuthenticationForm):
@@ -31,7 +31,7 @@ class StaffCreateForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role']
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'is_department_head']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -39,6 +39,9 @@ class StaffCreateForm(UserCreationForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -52,13 +55,16 @@ class StaffEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'is_active_staff']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -106,4 +112,42 @@ class HospitalSettingForm(forms.ModelForm):
             'receipt_settings': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'print_settings': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'theme_color': forms.TextInput(attrs={'class': 'form-control', 'style': 'height: 38px;'}),
+        }
+
+
+class StaffAttendanceForm(forms.ModelForm):
+    class Meta:
+        model = StaffAttendance
+        fields = ['staff', 'date', 'check_in', 'check_out', 'status', 'source', 'device_log_id', 'remarks']
+        widgets = {
+            'staff': forms.Select(attrs={'class': 'form-select'}),
+            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'check_in': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'check_out': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'source': forms.TextInput(attrs={'class': 'form-control'}),
+            'device_log_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'remarks': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class StaffLeaveRequestForm(forms.ModelForm):
+    class Meta:
+        model = StaffLeaveRequest
+        fields = ['leave_type', 'start_date', 'end_date', 'reason']
+        widgets = {
+            'leave_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+
+class StaffLeaveReviewForm(forms.ModelForm):
+    class Meta:
+        model = StaffLeaveRequest
+        fields = ['status', 'review_notes']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'review_notes': forms.TextInput(attrs={'class': 'form-control'}),
         }

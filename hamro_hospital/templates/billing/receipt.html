@@ -488,6 +488,9 @@
             {% if bill.insurance_coverage_amount %}
             <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Insurance Coverage</span><h4 style="margin:0;">- NPR {{ bill.insurance_coverage_amount }}</h4></div>
             {% endif %}
+            {% if bill.staff_discount_amount %}
+            <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Staff Discount {% if bill.staff_beneficiary %}({{ bill.staff_beneficiary.staff_id }}){% endif %} - {{ bill.staff_discount_percent }}%</span><h4 style="margin:0;">- NPR {{ bill.staff_discount_amount }}</h4></div>
+            {% endif %}
             {% if bill.admission_deposit_credit %}
             <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Admission Deposit Credit</span><h4 style="margin:0;">- NPR {{ bill.admission_deposit_credit }}</h4></div>
             {% endif %}

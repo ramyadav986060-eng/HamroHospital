@@ -3,7 +3,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 
 from accounts.decorators import super_admin_required
 from accounts.forms import StyledAuthenticationForm, StaffCreateForm, StaffEditForm
@@ -256,3 +256,129 @@ def hospital_settings_view(request):
         'setting': setting,
     })
 
+
+@login_required
+def staff_profile(request):
+    return render(request, 'accounts/staff_profile.html', {'staff': request.user})
+
+
+@super_admin_required
+def staff_card(request, pk):
+    staff = get_object_or_404(User, pk=pk)
+    return render(request, 'accounts/staff_card.html', {'staff': staff})
+
+
+@login_required
+def staff_attendance(request):
+    import datetime
+    from django.core.paginator import Paginator
+    from accounts.models import StaffAttendance
+    records = StaffAttendance.objects.select_related('staff')
+    if not (request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT]):
+        if request.user.is_department_head and request.user.department_id:
+            records = records.filter(staff__department=request.user.department)
+        else:
+            records = records.filter(staff=request.user)
+    date_filter = request.GET.get('date', '')
+    month = request.GET.get('month', '')
+    year = request.GET.get('year', '')
+    start = request.GET.get('start_date', '')
+    end = request.GET.get('end_date', '')
+    if date_filter:
+        records = records.filter(date=date_filter)
+    if month and year:
+        records = records.filter(date__month=month, date__year=year)
+    elif year:
+        records = records.filter(date__year=year)
+    if start:
+        records = records.filter(date__gte=start)
+    if end:
+        records = records.filter(date__lte=end)
+    page_obj = Paginator(records, 31).get_page(request.GET.get('page'))
+    return render(request, 'accounts/staff_attendance.html', {'page_obj': page_obj, 'filters': request.GET})
+
+
+@login_required
+def staff_leave_request(request):
+    from accounts.forms import StaffLeaveRequestForm
+    from accounts.utils import create_notification
+    if request.method == 'POST':
+        form = StaffLeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave = form.save(commit=False)
+            leave.staff = request.user
+            leave.save()
+            if request.user.department_id:
+                heads = User.objects.filter(department=request.user.department, is_department_head=True, is_active_staff=True)
+                for head in heads:
+                    create_notification('Leave Request', f'{request.user.get_full_name() or request.user.username} requested leave.', user=head, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
+            create_notification('Leave Request', f'{request.user.get_full_name() or request.user.username} requested leave.', role=Role.SUPER_ADMIN, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
+            messages.success(request, 'Leave request submitted.')
+            return redirect('accounts:staff_leave_list')
+    else:
+        form = StaffLeaveRequestForm()
+    return render(request, 'accounts/staff_leave_form.html', {'form': form})
+
+
+@login_required
+def staff_leave_list(request):
+    from accounts.models import StaffLeaveRequest
+    leaves = StaffLeaveRequest.objects.select_related('staff', 'reviewed_by')
+    if not (request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN):
+        if request.user.is_department_head and request.user.department_id:
+            leaves = leaves.filter(staff__department=request.user.department)
+        else:
+            leaves = leaves.filter(staff=request.user)
+    return render(request, 'accounts/staff_leave_list.html', {'leaves': leaves})
+
+
+@login_required
+def staff_leave_review(request, pk):
+    from accounts.forms import StaffLeaveReviewForm
+    from accounts.models import StaffLeaveRequest
+    leave = get_object_or_404(StaffLeaveRequest.objects.select_related('staff'), pk=pk)
+    allowed = request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN or (request.user.is_department_head and request.user.department_id == leave.staff.department_id)
+    if not allowed:
+        messages.error(request, "You don't have permission to review this leave request.")
+        return redirect('accounts:staff_leave_list')
+    if request.method == 'POST':
+        form = StaffLeaveReviewForm(request.POST, instance=leave)
+        if form.is_valid():
+            status = form.cleaned_data['status']
+            notes = form.cleaned_data.get('review_notes', '')
+            if status == StaffLeaveRequest.Status.APPROVED:
+                leave.approve(request.user, notes)
+            elif status == StaffLeaveRequest.Status.REJECTED:
+                leave.reject(request.user, notes)
+            else:
+                form.save()
+            messages.success(request, 'Leave request updated.')
+            return redirect('accounts:staff_leave_list')
+    else:
+        form = StaffLeaveReviewForm(instance=leave)
+    return render(request, 'accounts/staff_leave_review.html', {'form': form, 'leave': leave})
+
+
+@login_required
+def staff_lookup_api(request):
+    from django.http import JsonResponse
+    code = (request.GET.get('code') or request.GET.get('q') or '').strip()
+    if not code:
+        return JsonResponse({'found': False, 'error': 'No code supplied.'}, status=400)
+    staff = User.objects.filter(staff_id__iexact=code).select_related('department').first()
+    if not staff:
+        staff = User.objects.filter(username__iexact=code).select_related('department').first()
+    if not staff:
+        return JsonResponse({'found': False, 'type': 'unknown', 'error': 'No staff matches that code.'})
+    return JsonResponse({
+        'found': True,
+        'type': 'staff',
+        'label': 'STAFF',
+        'id': staff.id,
+        'staff_id': staff.staff_id,
+        'full_name': staff.get_full_name() or staff.username,
+        'role': staff.get_role_display(),
+        'department': staff.department.name if staff.department else '',
+        'designation': staff.designation,
+        'barcode_url': staff.staff_barcode.url if staff.staff_barcode else '',
+    })

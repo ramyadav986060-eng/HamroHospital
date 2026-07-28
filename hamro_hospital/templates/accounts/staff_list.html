@@ -13,27 +13,29 @@
 {% endblock %}
 {% block dashboard_content %}
 <div class="d-flex justify-content-end mb-3">
-    <a href="{% url 'accounts:staff_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Staff Member</a>
+    <a href="{% url 'accounts:staff_attendance' %}" class="btn btn-outline-primary me-2"><i class="bi bi-calendar-check"></i> Attendance</a><a href="{% url 'accounts:staff_leave_list' %}" class="btn btn-outline-secondary me-2"><i class="bi bi-calendar-x"></i> Leave</a><a href="{% url 'accounts:staff_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Staff Member</a>
 </div>
 <div class="tuh-card p-4">
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Staff ID</th><th>Username</th><th>Full Name</th><th>Department</th><th>Role</th><th>Phone</th><th>Status</th><th></th></tr></thead>
             <tbody>
             {% for s in staff %}
                 <tr>
+                    <td><span class="badge bg-success">STAFF</span><br>{{ s.staff_id }}</td>
                     <td>{{ s.username }}</td>
                     <td>{{ s.get_full_name|default:"-" }}</td>
-                    <td><span class="badge badge-success-soft">{{ s.get_role_display }}</span></td>
+                    <td>{{ s.department.name|default:"-" }}</td>
+                    <td><span class="badge badge-success-soft">{{ s.get_role_display }}</span>{% if s.is_department_head %}<br><span class="badge bg-primary">Head</span>{% endif %}</td>
                     <td>{{ s.phone_number|default:"-" }}</td>
                     <td>
                         {% if s.is_active_staff %}<span class="badge badge-success-soft">Active</span>
                         {% else %}<span class="badge badge-danger-soft">Deactivated</span>{% endif %}
                     </td>
-                    <td><a href="{% url 'accounts:staff_edit' s.pk %}" class="btn btn-sm btn-outline-primary">Edit</a></td>
+                    <td><a href="{% url 'accounts:staff_card' s.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary">Card</a> <a href="{% url 'accounts:staff_edit' s.pk %}" class="btn btn-sm btn-outline-primary">Edit</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6" class="text-center text-muted">No staff accounts yet.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">No staff accounts yet.</td></tr>
             {% endfor %}
             </tbody>
         </table>

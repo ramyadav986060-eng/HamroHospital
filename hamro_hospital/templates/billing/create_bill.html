@@ -157,6 +157,11 @@
                 {{ payment_form.counter_name }}
             </div>
             {% endif %}
+            <div class="col-md-6">
+                <label class="form-label">Staff Discount Barcode / Staff ID</label>
+                <input type="text" name="staff_discount_code" class="form-control" placeholder="Scan staff barcode for staff benefit">
+                <div class="form-text">If valid staff is scanned, configured staff discount is applied on receipt.</div>
+            </div>
             <div class="col-md-6" id="insurance-company-wrapper">
                 <label class="form-label">Insurance Company (if applicable)</label>
                 {{ payment_form.insurance_company }}

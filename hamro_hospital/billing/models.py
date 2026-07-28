@@ -72,6 +72,10 @@ class Bill(models.Model):
     cashier = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='bills_created',
     )
+    staff_beneficiary = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_discount_bills',
+        help_text='Staff member receiving staff benefit discount, if applicable.',
+    )
     counter_name = models.CharField(
         max_length=100, default='Main Cash Counter',
         help_text='e.g. "Main Cash Counter", "Laboratory Counter", "Radiology Counter"',
@@ -81,6 +85,8 @@ class Bill(models.Model):
         'patients.InsuranceCompany', on_delete=models.SET_NULL, null=True, blank=True, related_name='bills',
     )
     insurance_coverage_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    staff_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    staff_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     admission_deposit_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PAID)
@@ -127,7 +133,7 @@ class Bill(models.Model):
 
     @property
     def final_amount_paid(self):
-        return self.total_amount - self.discount_total - self.insurance_coverage_amount - self.admission_deposit_credit
+        return self.total_amount - self.discount_total - self.insurance_coverage_amount - self.staff_discount_amount - self.admission_deposit_credit
 
 
 class BillItem(models.Model):
