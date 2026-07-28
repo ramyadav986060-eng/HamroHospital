@@ -58,5 +58,11 @@ class AnnouncementAdmin(admin.ModelAdmin):
     date_hierarchy = 'publish_at'
 @admin.register(HomeNotification)
 class HomeNotificationAdmin(admin.ModelAdmin):
-    list_display = ('message', 'is_active', 'updated_at')
+    list_display = ('short_message', 'is_active', 'updated_at')
     list_filter = ('is_active',)
+    search_fields = ('message',)
+    fields = ('message', 'is_active')
+
+    @admin.display(description='Message')
+    def short_message(self, obj):
+        return obj.message[:90] + ('...' if len(obj.message) > 90 else '')

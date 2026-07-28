@@ -2,48 +2,41 @@
 {% block title %}{{ HOSPITAL_NAME }} - Quality Healthcare in Nepal{% endblock %}
 {% block back_button %}{% endblock %}
 {% block content %}
-{% if home_notification %}
-<div style="background-color: var(--accent); color: white; padding: 10px 0; overflow: hidden; white-space: nowrap; font-size: 1.1rem; font-weight: 600;">
-    <div style="display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite;">
-        {{ home_notification.message }}
+<div class="home-notice-ticker" aria-label="Home notification">
+    <div class="home-notice-track">
+        <span><i class="bi bi-megaphone-fill me-2"></i>{% if home_notification %}{{ home_notification.message }}{% else %}हाम्रो अस्पतालमा तपाईंलाई हार्दिक स्वागत छ। गुणस्तरीय स्वास्थ्य सेवा, अनुभवी चिकित्सक र सुरक्षित उपचारका लागि हामी सधैं तपाईंको सेवामा छौं।{% endif %}</span>
     </div>
 </div>
-<style>
-@keyframes marquee {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
-}
-</style>
-{% endif %}
 
-
-<section class="tuh-hero text-center">
+<section class="tuh-hero text-center home-hero">
     <div class="container">
         <h1 class="display-4 fw-bold mb-3">हाम्रो अस्पताल — स्वास्थ्य नै सबैभन्दा ठूलो धन हो।</h1>
-        <p class="lead mb-4">हाम्रो अस्पतालले दक्ष चिकित्सक र अत्याधुनिक प्रविधि मार्फत नेपालका नागरिकहरूलाई उत्कृष्ट, भरपर्दो र सुलभ स्वास्थ्य सेवा प्रदान गर्दै आइरहेको छ।</p>
-        <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <a href="{% url 'patient_portal:login' %}" class="btn btn-danger btn-lg text-white">
-                <i class="bi bi-person-circle"></i> Patient Login
-            </a>
-        </div>
+        <p class="lead mb-3 nepali-hero-copy">
+            हाम्रो अस्पतालले अनुभवी चिकित्सक, जिम्मेवार स्वास्थ्यकर्मी र आधुनिक प्रविधिको सहायताले सुरक्षित, छिटो र विश्वसनीय स्वास्थ्य सेवा उपलब्ध गराउँछ।
+            बिरामीको सम्मान, सहज उपचार र निरन्तर हेरचाह हाम्रो प्रमुख प्रतिबद्धता हो।
+        </p>
+        <p class="hero-subcopy mb-4">
+            Hamro Hospital brings together expert doctors, compassionate care teams, and modern facilities to provide dependable healthcare for every patient.
+        </p>
+        <a href="{% url 'patient_portal:login' %}" class="btn btn-light btn-lg hero-patient-login">
+            <i class="bi bi-person-circle"></i> Patient Login
+        </a>
     </div>
 </section>
 
-
-
-<section class="container" style="margin-top: -30px; position: relative; z-index: 10;">
+<section class="container home-quick-links">
     <div class="row text-center g-3 justify-content-center">
         <div class="col-lg-2 col-md-4 col-6">
-            <a href="{% url 'website:department_list' %}" class="text-decoration-none">
-                <div class="tuh-card p-3 h-100 shadow-sm bg-white">
+            <a href="{% url 'website:medical_services' %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
                     <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-heart-pulse text-primary"></i></div>
-                    <h6 class="mb-0 text-dark">Medical Services</h6>
+                    <h6 class="mb-0 text-dark">Services</h6>
                 </div>
             </a>
         </div>
         <div class="col-lg-2 col-md-4 col-6">
-            <a href="{% url 'website:department_list' %}" class="text-decoration-none">
-                <div class="tuh-card p-3 h-100 shadow-sm bg-white">
+            <a href="{% url 'website:home' %}#ehs" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
                     <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-diagram-3 text-primary"></i></div>
                     <h6 class="mb-0 text-dark">Departments</h6>
                 </div>
@@ -51,7 +44,7 @@
         </div>
         <div class="col-lg-2 col-md-4 col-6">
             <a href="{% url 'website:doctor_list' %}" class="text-decoration-none">
-                <div class="tuh-card p-3 h-100 shadow-sm bg-white">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
                     <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-person-badge text-primary"></i></div>
                     <h6 class="mb-0 text-dark">Doctors</h6>
                 </div>
@@ -59,7 +52,7 @@
         </div>
         <div class="col-lg-2 col-md-4 col-6">
             <a href="{% url 'patient_portal:signup' %}" class="text-decoration-none">
-                <div class="tuh-card p-3 h-100 shadow-sm bg-white">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
                     <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-person-plus text-primary"></i></div>
                     <h6 class="mb-0 text-dark">Patient Registration</h6>
                 </div>
@@ -67,7 +60,7 @@
         </div>
         <div class="col-lg-2 col-md-4 col-6">
             <a href="{% url 'appointments:book_appointment' %}" class="text-decoration-none">
-                <div class="tuh-card p-3 h-100 shadow-sm bg-white">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
                     <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-plus-circle text-primary"></i></div>
                     <h6 class="mb-0 text-dark">Extension Services</h6>
                 </div>
@@ -76,13 +69,14 @@
     </div>
 </section>
 
-<section id="ehs" class="container py-5">
-    <h2 class="text-center mb-4 fw-bold">External Hospital Services (EHS)</h2>
+<section id="ehs" class="container py-5 scroll-target-section">
+    <h2 class="text-center mb-2 fw-bold">External Hospital Services (EHS)</h2>
+    <p class="text-center text-muted mb-4">Choose a service area to view consultation details, doctors, and schedules.</p>
     <div class="row g-4">
         {% for dept in departments %}
         <div class="col-md-3 col-sm-6">
             <a href="{% url 'website:department_detail' dept.slug %}" class="text-decoration-none">
-                <div class="tuh-card p-4 h-100 text-center">
+                <div class="tuh-card p-4 h-100 text-center service-card-clean">
                     <div class="tuh-icon-circle mx-auto mb-3"><i class="{{ dept.icon_class|default:'bi bi-hospital' }}"></i></div>
                     <h6 class="text-dark mb-1">{{ dept.name }}</h6>
                     <small class="text-muted">NPR {{ dept.consultation_fee }}</small>
@@ -94,7 +88,7 @@
         {% endfor %}
     </div>
     <div class="text-center mt-4">
-        <a href="{% url 'website:department_list' %}" class="btn btn-outline-primary">View All Departments</a>
+        <a href="{% url 'website:department_list' %}" class="btn btn-outline-primary">View All EHS Departments</a>
     </div>
 </section>
 
@@ -154,13 +148,5 @@
     </div>
 </section>
 {% endif %}
-
-<section class="container py-5">
-    <div class="tuh-card p-4 p-md-5 text-center">
-        <h3 class="fw-bold mb-2"><i class="bi bi-telephone-fill text-danger"></i> Emergency Contact</h3>
-        <p class="text-muted mb-3">In case of a medical emergency, call us immediately - available 24/7.</p>
-        <a href="tel:{{ HOSPITAL_EMERGENCY_PHONE }}" class="btn btn-danger btn-lg">{{ HOSPITAL_EMERGENCY_PHONE }}</a>
-    </div>
-</section>
 
 {% endblock %}
