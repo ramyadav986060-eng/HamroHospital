@@ -1,0 +1,19 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Staff Attendance Punch{% endblock %}
+{% block page_title %}Staff Attendance Punch{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:650px;">
+    <p class="text-muted">Scan or type Staff ID / staff barcode, then choose check-in or check-out. This also provides a working local fallback before connecting the physical fingerprint device.</p>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-8"><label class="form-label">Staff ID / Barcode</label><input name="staff_id" class="form-control form-control-lg" autofocus placeholder="e.g. STF000001"></div>
+        <div class="col-md-4"><label class="form-label">Direction</label><select name="direction" class="form-select form-select-lg"><option value="in">Check In</option><option value="out">Check Out</option></select></div>
+        <div class="col-12"><button class="btn btn-primary btn-lg"><i class="bi bi-fingerprint"></i> Submit Punch</button> <a href="{% url 'accounts:staff_attendance' %}" class="btn btn-outline-secondary btn-lg">Attendance</a></div>
+    </form>
+</div>
+<div class="tuh-card p-4 mt-4">
+    <h6 class="fw-bold">Device/API endpoint</h6>
+    <code>{{ request.scheme }}://{{ request.get_host }}{% url 'accounts:staff_attendance_device_punch' %}?staff_id=STF000001&amp;direction=in</code>
+    <p class="text-muted small mt-2 mb-0">If FINGERPRINT_DEVICE_API_KEY is set, include <code>api_key=...</code>. Timestamp can be sent as ISO format.</p>
+</div>
+{% endblock %}

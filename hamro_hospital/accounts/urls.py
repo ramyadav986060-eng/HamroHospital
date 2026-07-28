@@ -16,6 +16,8 @@ urlpatterns = [
     path('staff/profile/', views.staff_profile, name='staff_profile'),
     path('staff/<int:pk>/card/', views.staff_card, name='staff_card'),
     path('staff/attendance/', views.staff_attendance, name='staff_attendance'),
+    path('staff/attendance/punch/', views.staff_attendance_punch, name='staff_attendance_punch'),
+    path('staff/attendance/device-punch/', views.staff_attendance_device_punch, name='staff_attendance_device_punch'),
     path('staff/leave/', views.staff_leave_list, name='staff_leave_list'),
     path('staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
     path('staff/leave/<int:pk>/review/', views.staff_leave_review, name='staff_leave_review'),
@@ -35,5 +37,6 @@ urlpatterns = [
     path('backups/create/', views.backup_create, name='backup_create'),
     path('notifications/create/', views.notification_create, name='notification_create'),
     path('notifications/mark-read/', views.mark_all_read, name='mark_all_read'),
+    path('system-readiness/', views.system_readiness, name='system_readiness'),
     path('settings/', views.hospital_settings_view, name='hospital_settings'),
 ]

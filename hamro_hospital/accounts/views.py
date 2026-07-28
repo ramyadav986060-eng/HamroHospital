@@ -7,7 +7,7 @@ from django.urls import reverse_lazy, reverse
 
 from accounts.decorators import super_admin_required, role_required
 from accounts.forms import StyledAuthenticationForm, StaffCreateForm, StaffEditForm
-from accounts.models import User, AuditLog, Role
+from accounts.models import User, AuditLog, Role, HospitalSetting
 from accounts.utils import write_audit_log
 
 
@@ -514,3 +514,113 @@ def staff_salary_export(request):
     for p in payments:
         writer.writerow([p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()])
     return response
+
+@login_required
+def staff_attendance_punch(request):
+    """Manual/device-compatible attendance punch.
+
+    This makes fingerprint attendance workable before a specific biometric
+    SDK is connected: a device, small local script, or staff admin can POST
+    staff_id + direction. Real devices can call the JSON endpoint with the
+    same fields.
+    """
+    from django.utils import timezone
+    from accounts.models import StaffAttendance
+
+    if request.method == 'POST':
+        staff_id = (request.POST.get('staff_id') or '').strip()
+        direction = (request.POST.get('direction') or 'in').strip().lower()
+        staff = User.objects.filter(staff_id__iexact=staff_id, is_active_staff=True).first()
+        if not staff:
+            messages.error(request, 'No active staff found for that Staff ID / barcode.')
+            return redirect('accounts:staff_attendance_punch')
+        now = timezone.now()
+        att, _ = StaffAttendance.objects.get_or_create(staff=staff, date=now.date(), defaults={'source': 'manual_punch'})
+        if direction == 'out':
+            att.check_out = now
+        else:
+            att.check_in = now
+        att.source = 'manual_punch'
+        att.save()
+        messages.success(request, f'{staff.get_full_name() or staff.username} marked {direction.upper()} at {now:%H:%M}. Status: {att.get_status_display()}')
+        return redirect('accounts:staff_attendance')
+    return render(request, 'accounts/staff_attendance_punch.html')
+
+
+def staff_attendance_device_punch(request):
+    """JSON endpoint for fingerprint/biometric devices or a local bridge script.
+
+    Accepted params: staff_id, direction=in/out, timestamp optional ISO string,
+    device_log_id optional. If FINGERPRINT_DEVICE_API_KEY is set, callers must
+    send api_key with the same value.
+    """
+    import datetime
+    from django.conf import settings
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from accounts.models import StaffAttendance
+
+    expected_key = getattr(settings, 'FINGERPRINT_DEVICE_API_KEY', '')
+    if expected_key and request.GET.get('api_key') != expected_key and request.POST.get('api_key') != expected_key:
+        return JsonResponse({'ok': False, 'error': 'Invalid device API key.'}, status=403)
+
+    data = request.POST if request.method == 'POST' else request.GET
+    staff_id = (data.get('staff_id') or '').strip()
+    direction = (data.get('direction') or '').strip().lower()
+    timestamp = (data.get('timestamp') or '').strip()
+    device_log_id = (data.get('device_log_id') or '').strip()
+    if not staff_id:
+        return JsonResponse({'ok': False, 'error': 'staff_id is required.'}, status=400)
+    staff = User.objects.filter(staff_id__iexact=staff_id, is_active_staff=True).first()
+    if not staff:
+        return JsonResponse({'ok': False, 'error': 'Staff not found.', 'type': 'unknown'}, status=404)
+    if timestamp:
+        try:
+            punch_time = datetime.datetime.fromisoformat(timestamp)
+            if timezone.is_naive(punch_time):
+                punch_time = timezone.make_aware(punch_time)
+        except ValueError:
+            return JsonResponse({'ok': False, 'error': 'Invalid timestamp.'}, status=400)
+    else:
+        punch_time = timezone.now()
+    att, _ = StaffAttendance.objects.get_or_create(staff=staff, date=punch_time.date(), defaults={'source': 'fingerprint'})
+    if direction == 'out':
+        att.check_out = punch_time
+    elif direction == 'in':
+        att.check_in = punch_time
+    else:
+        if not att.check_in or punch_time < att.check_in:
+            att.check_in = punch_time
+        if not att.check_out or punch_time > att.check_out:
+            att.check_out = punch_time
+    att.source = 'fingerprint'
+    if device_log_id:
+        att.device_log_id = device_log_id
+    att.save()
+    return JsonResponse({
+        'ok': True,
+        'type': 'staff',
+        'label': 'STAFF',
+        'staff_id': staff.staff_id,
+        'staff_name': staff.get_full_name() or staff.username,
+        'date': att.date.isoformat(),
+        'check_in': att.check_in.isoformat() if att.check_in else '',
+        'check_out': att.check_out.isoformat() if att.check_out else '',
+        'hours': str(att.total_working_hours),
+        'status': att.get_status_display(),
+    })
+
+
+@super_admin_required
+def system_readiness(request):
+    """Operational readiness checklist for local/live deployment."""
+    from django.conf import settings
+    from django.core.cache import cache
+    checks = []
+    checks.append({'name': 'Django DEBUG disabled for production', 'ok': not settings.DEBUG, 'detail': f'DEBUG={settings.DEBUG}'})
+    checks.append({'name': 'Redis URL configured', 'ok': bool(getattr(settings, 'REDIS_URL', '')), 'detail': getattr(settings, 'REDIS_URL', '') or 'Using local in-memory fallback'})
+    checks.append({'name': 'Celery broker configured', 'ok': bool(getattr(settings, 'CELERY_BROKER_URL', '')), 'detail': getattr(settings, 'CELERY_BROKER_URL', '')})
+    checks.append({'name': 'eSewa merchant configured', 'ok': bool(settings.ESEWA_MERCHANT_CODE and settings.ESEWA_SECRET_KEY), 'detail': f"sandbox={settings.ESEWA_SANDBOX}, merchant={settings.ESEWA_MERCHANT_CODE}"})
+    checks.append({'name': 'Fingerprint endpoint available', 'ok': True, 'detail': request.build_absolute_uri(reverse('accounts:staff_attendance_device_punch'))})
+    checks.append({'name': 'Staff discount configured', 'ok': True, 'detail': f"enabled={HospitalSetting.get_solo().staff_discount_enabled}, percent={HospitalSetting.get_solo().staff_discount_percent}%"})
+    return render(request, 'accounts/system_readiness.html', {'checks': checks})
