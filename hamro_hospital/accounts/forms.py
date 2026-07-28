@@ -116,6 +116,7 @@ class HospitalSettingForm(forms.ModelForm):
             'staff_discount_percent': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'required_daily_working_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.25'}),
             'default_weekend_days': forms.TextInput(attrs={'class': 'form-control'}),
+            'paid_leave_days_per_month': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 

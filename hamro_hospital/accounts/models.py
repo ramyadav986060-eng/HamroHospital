@@ -228,6 +228,7 @@ class HospitalSetting(models.Model):
     staff_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=90)
     required_daily_working_hours = models.DecimalField(max_digits=4, decimal_places=2, default=9)
     default_weekend_days = models.CharField(max_length=30, default='sat', help_text='Comma-separated weekday codes for default holidays, e.g. sat or fri,sat')
+    paid_leave_days_per_month = models.PositiveIntegerField(default=5, help_text='Standard paid leave days allowed per month before Super Admin override is required.')
 
     class Meta:
         db_table = 'accounts_hospital_setting'
@@ -299,6 +300,7 @@ class StaffLeaveRequest(models.Model):
     end_date = models.DateField()
     reason = models.TextField()
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
+    requires_super_admin_override = models.BooleanField(default=False)
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='leave_requests_reviewed')
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_notes = models.CharField(max_length=255, blank=True)
@@ -308,6 +310,27 @@ class StaffLeaveRequest(models.Model):
         db_table = 'accounts_staff_leave_request'
         ordering = ['-created_at']
         indexes = [models.Index(fields=['staff', 'status']), models.Index(fields=['start_date', 'end_date'])]
+
+    @property
+    def total_days(self):
+        return max(1, (self.end_date - self.start_date).days + 1)
+
+    def month_leave_days_if_approved(self):
+        from django.db.models import Sum
+        month_start = self.start_date.replace(day=1)
+        existing = StaffLeaveRequest.objects.filter(
+            staff=self.staff, status=self.Status.APPROVED,
+            start_date__year=self.start_date.year, start_date__month=self.start_date.month,
+        ).exclude(pk=self.pk)
+        days = sum((leave.total_days for leave in existing), start=0)
+        return days + self.total_days
+
+    def exceeds_paid_leave_limit(self):
+        try:
+            limit = HospitalSetting.get_solo().paid_leave_days_per_month
+        except Exception:
+            limit = 5
+        return self.month_leave_days_if_approved() > limit
 
     def __str__(self):
         return f'{self.staff} {self.start_date} to {self.end_date} ({self.get_status_display()})'

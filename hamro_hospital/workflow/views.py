@@ -24,7 +24,9 @@ def service_order_queue(request):
     user_role = request.user.effective_role
     if not request.user.is_superuser and user_role not in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT]:
         service_type = ROLE_SERVICE_TYPES.get(user_role)
-        if service_type:
+        if user_role == Role.DEPARTMENT_HEAD and request.user.department_id:
+            orders = orders.filter(destination_department=request.user.department)
+        elif service_type:
             orders = orders.filter(service_type=service_type)
         elif user_role == Role.DOCTOR and hasattr(request.user, 'doctor_profile'):
             orders = orders.filter(ordered_by=request.user)
@@ -106,7 +108,7 @@ def patient_timeline(request, patient_id):
     paginator = Paginator(events, 40)
     return render(request, 'workflow/patient_timeline.html', {'patient': patient, 'page_obj': paginator.get_page(request.GET.get('page'))})
 
-@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK)
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK)
 def department_revenue(request):
     from django.db.models import Sum, Count
     from django.utils import timezone
@@ -131,7 +133,9 @@ def department_revenue(request):
 
     orders = ServiceOrder.objects.filter(bill__payment_events__in=events).select_related('bill').distinct()
     role_type = ROLE_SERVICE_TYPES.get(request.user.effective_role)
-    if role_type and not request.user.is_superuser and request.user.effective_role != Role.ACCOUNTS_DEPT:
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and request.user.department_id and not request.user.is_superuser:
+        orders = orders.filter(destination_department=request.user.department)
+    elif role_type and not request.user.is_superuser and request.user.effective_role != Role.ACCOUNTS_DEPT:
         orders = orders.filter(service_type=role_type)
     summary = orders.values('service_type').annotate(total=Sum('bill__payment_events__amount'), count=Count('id')).order_by('service_type')
     return render(request, 'workflow/department_revenue.html', {

@@ -334,6 +334,8 @@ def staff_leave_request(request):
         if form.is_valid():
             leave = form.save(commit=False)
             leave.staff = request.user
+            if leave.exceeds_paid_leave_limit():
+                leave.requires_super_admin_override = True
             leave.save()
             if request.user.department_id:
                 heads = User.objects.filter(department=request.user.department, is_department_head=True, is_active_staff=True)
@@ -374,6 +376,9 @@ def staff_leave_review(request, pk):
             status = form.cleaned_data['status']
             notes = form.cleaned_data.get('review_notes', '')
             if status == StaffLeaveRequest.Status.APPROVED:
+                if leave.requires_super_admin_override and not (request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN):
+                    messages.error(request, 'This leave exceeds the monthly paid leave limit and requires Main Super Admin approval.')
+                    return redirect('accounts:staff_leave_review', pk=leave.pk)
                 leave.approve(request.user, notes)
             elif status == StaffLeaveRequest.Status.REJECTED:
                 leave.reject(request.user, notes)

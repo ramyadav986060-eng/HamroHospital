@@ -97,10 +97,13 @@ def referral_create(request, patient_id=None, referral_type=None):
 
 
 @login_required
+@role_required(*Role.values)
 def department_queue(request):
     referrals = Referral.objects.select_related('patient', 'referred_by', 'to_department').all()
     role_type = _role_referral_type(request.user)
-    if role_type and not request.user.is_superuser:
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        referrals = referrals.filter(to_department=request.user.department)
+    elif role_type and not request.user.is_superuser:
         referrals = referrals.filter(referral_type=role_type)
 
     status_filter = request.GET.get('status')
@@ -115,12 +118,18 @@ def department_queue(request):
 
 
 @login_required
+@role_required(*Role.values)
 def referral_detail(request, pk):
     referral = get_object_or_404(Referral.objects.select_related('patient', 'referred_by', 'to_department'), pk=pk)
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        if not request.user.department_id or referral.to_department_id != request.user.department_id:
+            messages.error(request, 'Department Heads can only view referrals for their own department.')
+            return redirect('referrals:department_queue')
     return render(request, 'referrals/referral_detail.html', {'referral': referral})
 
 
 @login_required
+@role_required(*Role.values)
 def referral_update_status(request, pk):
     referral = get_object_or_404(Referral, pk=pk)
     if request.method == 'POST':
@@ -138,6 +147,7 @@ def referral_update_status(request, pk):
 
 
 @login_required
+@role_required(*Role.values)
 def referral_generate_bill(request, pk):
     referral = get_object_or_404(Referral.objects.select_related('patient'), pk=pk)
     if referral.related_bill_id:
