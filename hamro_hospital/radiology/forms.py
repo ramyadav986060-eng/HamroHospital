@@ -1,6 +1,7 @@
 from django import forms
 
 from consultations.models import RadiologyRequest
+from radiology.models import RadiologyReportTemplate
 
 
 class RadiologyReportForm(forms.ModelForm):
@@ -11,13 +12,19 @@ class RadiologyReportForm(forms.ModelForm):
     Image Upload')."""
     class Meta:
         model = RadiologyRequest
-        fields = ['status', 'findings', 'impression', 'report_notes']
+        fields = ['status', 'report_template', 'findings', 'impression', 'report_notes']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'report_template': forms.Select(attrs={'class': 'form-select'}),
             'findings': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'impression': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'report_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Radiologist note'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['report_template'].queryset = RadiologyReportTemplate.objects.filter(is_active=True)
+        self.fields['report_template'].required = False
 
 
 class ManualRadiologyRequestForm(forms.ModelForm):

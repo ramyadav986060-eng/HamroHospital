@@ -216,3 +216,26 @@ def todays_sales(request):
         'sales': sales, 'totals_by_method': totals_by_method, 'grand_total': sum(totals_by_method.values()),
         'selected_date': selected_date, 'is_today': selected_date == datetime.date.today(),
     })
+
+@pharmacy_required
+def prescription_queue(request):
+    """Digital prescriptions from doctors that have not yet been dispensed."""
+    consultations = Consultation.objects.filter(
+        prescription_items__isnull=False,
+    ).select_related('visit__patient', 'doctor').prefetch_related('prescription_items', 'pharmacy_sales').distinct()
+    status = request.GET.get('status', 'pending')
+    if status == 'pending':
+        consultations = consultations.filter(pharmacy_sales__isnull=True)
+    elif status == 'dispensed':
+        consultations = consultations.filter(pharmacy_sales__isnull=False)
+    q = request.GET.get('q', '').strip()
+    if q:
+        consultations = consultations.filter(
+            Q(visit__patient__patient_code__icontains=q) |
+            Q(visit__patient__first_name__icontains=q) |
+            Q(visit__patient__last_name__icontains=q) |
+            Q(visit__patient__phone_number__icontains=q)
+        )
+    return render(request, 'pharmacy/prescription_queue.html', {
+        'consultations': consultations[:200], 'status': status, 'q': q,
+    })

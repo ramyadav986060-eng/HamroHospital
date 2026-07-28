@@ -10,5 +10,6 @@ urlpatterns = [
     path('queue/', views.request_queue, name='queue'),
     path('<int:pk>/accept/', views.accept_request, name='accept_request'),
     path('<int:pk>/update/', views.update_report, name='update_report'),
+    path('<int:pk>/verify/', views.verify_report, name='verify_report'),
     path('<int:pk>/print/', views.print_report, name='print_report'),
 ]

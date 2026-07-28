@@ -214,3 +214,25 @@ def print_report(request, pk):
         RadiologyRequest.objects.select_related('consultation__visit__patient', 'consultation__visit__department', 'patient'), pk=pk,
     )
     return render(request, 'radiology/report_print.html', {'radiology_request': radiology_request})
+
+@radiology_required
+def verify_report(request, pk):
+    radiology_request = get_object_or_404(RadiologyRequest.objects.select_related('consultation__doctor__user_account', 'patient'), pk=pk)
+    if radiology_request.status != RequestStatus.COMPLETED:
+        messages.error(request, 'Only completed radiology reports can be verified.')
+        return redirect('radiology:update_report', pk=pk)
+    if request.method == 'POST':
+        radiology_request.verified_by = request.user
+        radiology_request.verified_at = timezone.now()
+        radiology_request.save(update_fields=['verified_by', 'verified_at'])
+        from accounts.utils import create_notification
+        doctor_user = radiology_request.consultation.doctor.user_account if radiology_request.consultation_id and radiology_request.consultation.doctor and radiology_request.consultation.doctor.user_account_id else None
+        create_notification(
+            title='Verified Radiology Report Ready',
+            message=f'Radiology report {radiology_request.display_service_name} is verified for {radiology_request.patient_obj.full_name}.',
+            user=doctor_user,
+            role=None if doctor_user else Role.DOCTOR,
+            related_url=reverse('radiology:print_report', args=[radiology_request.pk]),
+        )
+        messages.success(request, 'Radiology report verified.')
+    return redirect('radiology:print_report', pk=pk)

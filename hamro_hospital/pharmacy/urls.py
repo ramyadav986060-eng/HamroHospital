@@ -6,6 +6,7 @@ app_name = 'pharmacy'
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('search/', views.patient_lookup, name='patient_lookup'),
+    path('prescriptions/', views.prescription_queue, name='prescription_queue'),
     path('dispense/<int:patient_id>/', views.dispense, name='dispense'),
     path('sale/<int:pk>/receipt/', views.receipt, name='receipt'),
     path('sale/<int:pk>/reprint/', views.reprint_receipt, name='reprint_receipt'),

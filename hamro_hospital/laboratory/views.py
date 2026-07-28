@@ -233,3 +233,25 @@ def print_report(request, pk):
         LabTestRequest.objects.select_related('consultation__visit__patient', 'consultation__visit__department', 'patient'), pk=pk,
     )
     return render(request, 'laboratory/report_print.html', {'lab_request': lab_request})
+
+@laboratory_required
+def verify_result(request, pk):
+    lab_request = get_object_or_404(LabTestRequest.objects.select_related('consultation__doctor__user_account', 'patient'), pk=pk)
+    if lab_request.status != RequestStatus.COMPLETED:
+        messages.error(request, 'Only completed lab results can be verified.')
+        return redirect('laboratory:update_result', pk=pk)
+    if request.method == 'POST':
+        lab_request.verified_by = request.user
+        lab_request.verified_at = timezone.now()
+        lab_request.save(update_fields=['verified_by', 'verified_at'])
+        from accounts.utils import create_notification
+        doctor_user = lab_request.consultation.doctor.user_account if lab_request.consultation_id and lab_request.consultation.doctor and lab_request.consultation.doctor.user_account_id else None
+        create_notification(
+            title='Verified Lab Result Ready',
+            message=f'Lab result {lab_request.test_name} is verified for {lab_request.patient_obj.full_name}.',
+            user=doctor_user,
+            role=None if doctor_user else Role.DOCTOR,
+            related_url=reverse('laboratory:print_report', args=[lab_request.pk]),
+        )
+        messages.success(request, 'Lab result verified.')
+    return redirect('laboratory:print_report', pk=pk)

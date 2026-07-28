@@ -49,3 +49,21 @@ class RadiologyTest(models.Model):
                 'price': self.price, 'is_active': self.is_active,
             },
         )
+
+class RadiologyReportTemplate(models.Model):
+    """Reusable professional report text template for common radiology services."""
+    name = models.CharField(max_length=150, unique=True)
+    service_type = models.CharField(max_length=20, choices=[
+        ('xray', 'X-Ray'), ('ct', 'CT Scan'), ('mri', 'MRI'), ('ecg', 'ECG'),
+        ('echo', 'Echo'), ('ultrasound', 'Ultrasound'), ('custom', 'Other / Custom'),
+    ], default='xray')
+    findings_template = models.TextField(blank=True)
+    impression_template = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'radiology_report_template'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name

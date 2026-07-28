@@ -128,6 +128,10 @@ class LabTestRequest(models.Model):
     processed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='lab_requests_processed',
     )
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='lab_requests_verified',
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'consultations_lab_test_request'
@@ -228,6 +232,13 @@ class RadiologyRequest(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     processed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='radiology_requests_processed',
+    )
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='radiology_requests_verified',
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    report_template = models.ForeignKey(
+        'radiology.RadiologyReportTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='requests'
     )
 
     class Meta:
