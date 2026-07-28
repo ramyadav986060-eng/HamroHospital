@@ -24,6 +24,9 @@ urlpatterns = [
     path('staff/<int:staff_id>/salary-profile/', views.staff_salary_profile_edit, name='staff_salary_profile_edit'),
     path('staff/salary/generate/', views.staff_salary_generate, name='staff_salary_generate'),
     path('staff/salary/payments/', views.staff_salary_payments, name='staff_salary_payments'),
+    path('staff/salary/export/', views.staff_salary_export, name='staff_salary_export'),
+    path('staff/salary/<int:pk>/slip/', views.staff_salary_slip, name='staff_salary_slip'),
+    path('staff/salary/<int:pk>/mark-paid/', views.staff_salary_mark_paid, name='staff_salary_mark_paid'),
 
     path('audit-log/', views.audit_log_list, name='audit_log_list'),
     path('backups/', views.backup_list, name='backup_list'),

@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 
-from accounts.decorators import super_admin_required
+from accounts.decorators import super_admin_required, role_required
 from accounts.forms import StyledAuthenticationForm, StaffCreateForm, StaffEditForm
 from accounts.models import User, AuditLog, Role
 from accounts.utils import write_audit_log
@@ -55,9 +55,11 @@ def dashboard_super_admin(request):
     return render(request, 'accounts/dashboard_super_admin.html', context)
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD)
 def staff_list(request):
-    staff = User.objects.all().order_by('role', 'first_name')
+    staff = User.objects.all().select_related('department').order_by('role', 'first_name')
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        staff = staff.filter(department=request.user.department)
     return render(request, 'accounts/staff_list.html', {'staff': staff, 'roles': Role.choices})
 
 
@@ -67,6 +69,17 @@ def staff_create(request):
         form = StaffCreateForm(request.POST)
         if form.is_valid():
             user = form.save()
+            if user.role == Role.DOCTOR and not hasattr(user, 'doctor_profile'):
+                from departments.models import Department
+                from doctors.models import Doctor
+                department = user.department or Department.objects.filter(is_active=True).first()
+                if department:
+                    full_name = user.get_full_name() or user.username
+                    Doctor.objects.create(
+                        user_account=user, department=department, full_name=full_name,
+                        qualification='Not specified', specialization=user.designation or 'General',
+                        consultation_fee=0, contact_number=user.phone_number, is_active=True,
+                    )
             write_audit_log(request, AuditLog.Action.USER_CREATED,
                              f"Created staff account {user.username} ({user.get_role_display()})")
             messages.success(request, f'Staff account "{user.username}" created successfully.')
@@ -76,9 +89,13 @@ def staff_create(request):
     return render(request, 'accounts/staff_form.html', {'form': form, 'title': 'Add Staff Member'})
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD)
 def staff_edit(request, pk):
     staff_member = get_object_or_404(User, pk=pk)
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        if not request.user.department_id or staff_member.department_id != request.user.department_id:
+            messages.error(request, 'Department Heads can only manage staff in their own department.')
+            return redirect('accounts:staff_list')
     if request.method == 'POST':
         form = StaffEditForm(request.POST, instance=staff_member)
         if form.is_valid():
@@ -279,11 +296,20 @@ def staff_attendance(request):
             records = records.filter(staff__department=request.user.department)
         else:
             records = records.filter(staff=request.user)
+    q = request.GET.get('q', '').strip()
+    department_id = request.GET.get('department', '').strip()
     date_filter = request.GET.get('date', '')
     month = request.GET.get('month', '')
     year = request.GET.get('year', '')
     start = request.GET.get('start_date', '')
     end = request.GET.get('end_date', '')
+    if q:
+        records = records.filter(
+            Q(staff__staff_id__icontains=q) | Q(staff__username__icontains=q) |
+            Q(staff__first_name__icontains=q) | Q(staff__last_name__icontains=q)
+        )
+    if department_id:
+        records = records.filter(staff__department_id=department_id)
     if date_filter:
         records = records.filter(date=date_filter)
     if month and year:
@@ -295,7 +321,8 @@ def staff_attendance(request):
     if end:
         records = records.filter(date__lte=end)
     page_obj = Paginator(records, 31).get_page(request.GET.get('page'))
-    return render(request, 'accounts/staff_attendance.html', {'page_obj': page_obj, 'filters': request.GET})
+    from departments.models import Department
+    return render(request, 'accounts/staff_attendance.html', {'page_obj': page_obj, 'filters': request.GET, 'departments': Department.objects.filter(is_active=True)})
 
 
 @login_required
@@ -383,7 +410,7 @@ def staff_lookup_api(request):
         'barcode_url': staff.staff_barcode.url if staff.staff_barcode else '',
     })
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_profiles(request):
     from accounts.models import StaffSalaryProfile
     for staff in User.objects.filter(is_active_staff=True):
@@ -392,7 +419,7 @@ def staff_salary_profiles(request):
     return render(request, 'accounts/staff_salary_profiles.html', {'profiles': profiles})
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_profile_edit(request, staff_id):
     from accounts.forms import StaffSalaryProfileForm
     from accounts.models import StaffSalaryProfile
@@ -409,7 +436,7 @@ def staff_salary_profile_edit(request, staff_id):
     return render(request, 'accounts/staff_salary_profile_form.html', {'form': form, 'staff_member': staff})
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_generate(request):
     import calendar
     from django.utils import timezone
@@ -435,7 +462,7 @@ def staff_salary_generate(request):
     return render(request, 'accounts/staff_salary_generate.html', {'year': year, 'month': month})
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_payments(request):
     from accounts.models import StaffSalaryPayment
     payments = StaffSalaryPayment.objects.select_related('staff', 'prepared_by').all()
@@ -446,3 +473,44 @@ def staff_salary_payments(request):
     if month:
         payments = payments.filter(month=month)
     return render(request, 'accounts/staff_salary_payments.html', {'payments': payments, 'year': year or '', 'month': month or ''})
+
+
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
+def staff_salary_slip(request, pk):
+    from accounts.models import StaffSalaryPayment
+    payment = get_object_or_404(StaffSalaryPayment.objects.select_related('staff', 'staff__department', 'prepared_by'), pk=pk)
+    return render(request, 'accounts/staff_salary_slip.html', {'payment': payment})
+
+
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
+def staff_salary_mark_paid(request, pk):
+    from django.utils import timezone
+    from accounts.models import StaffSalaryPayment
+    payment = get_object_or_404(StaffSalaryPayment, pk=pk)
+    if request.method == 'POST':
+        payment.status = StaffSalaryPayment.Status.PAID
+        payment.paid_at = timezone.now()
+        payment.save(update_fields=['status', 'paid_at'])
+        messages.success(request, 'Salary marked as paid.')
+    return redirect('accounts:staff_salary_payments')
+
+
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
+def staff_salary_export(request):
+    import csv
+    from django.http import HttpResponse
+    from accounts.models import StaffSalaryPayment
+    payments = StaffSalaryPayment.objects.select_related('staff', 'staff__department').all()
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    if year:
+        payments = payments.filter(year=year)
+    if month:
+        payments = payments.filter(month=month)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="salary_report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Staff ID', 'Name', 'Department', 'Year', 'Month', 'Present', 'Leave', 'Absent', 'Base', 'Bonus', 'Deductions', 'Net', 'Status'])
+    for p in payments:
+        writer.writerow([p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()])
+    return response
