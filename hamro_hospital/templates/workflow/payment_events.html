@@ -1,0 +1,7 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Payment Events{% endblock %}
+{% block page_title %}Payment Events / Reconciliation{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4 d-flex gap-2"><input name="q" value="{{ q }}" class="form-control" placeholder="Bill #, patient ID, transaction ref"><button class="btn btn-primary">Search</button></form>
+<div class="tuh-card p-4"><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Date</th><th>Bill</th><th>Patient</th><th>Method</th><th>Amount</th><th>Received By</th><th>Reference</th></tr></thead><tbody>{% for e in page_obj %}<tr><td>{{ e.paid_at|date:'Y-m-d H:i' }}</td><td><a href="{% url 'billing:receipt' e.bill.pk %}">{{ e.bill.bill_number }}</a></td><td>{{ e.bill.patient.full_name }}<br><small>{{ e.bill.patient.patient_code }}</small></td><td>{{ e.payment_method }}</td><td>NPR {{ e.amount }}</td><td>{{ e.received_by.get_full_name|default:e.received_by.username|default:'-' }}</td><td>{{ e.transaction_reference|default:'-' }}</td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted">No payment events found.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

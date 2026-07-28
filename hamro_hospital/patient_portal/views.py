@@ -591,3 +591,9 @@ def my_document_download(request, pk):
         patient_id_text=patient.patient_code,
     )
     return FileResponse(doc.file.open('rb'), filename=doc.file.name.rsplit('/', 1)[-1])
+
+@patient_login_required
+def my_timeline(request):
+    patient = request.portal_patient.patient
+    events = patient.timeline_events.select_related('actor').all()[:500]
+    return render(request, 'patient_portal/my_timeline.html', {'patient': patient, 'events': events})

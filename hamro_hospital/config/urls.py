@@ -31,6 +31,7 @@ urlpatterns = [
     path('finance/', include('finance.urls')),
     path('referrals/', include('referrals.urls')),
     path('medical-records/', include('medical_records.urls')),
+    path('workflow/', include('workflow.urls')),
 ]
 
 if settings.DEBUG:

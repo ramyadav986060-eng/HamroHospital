@@ -4,8 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from accounts.decorators import role_required, super_admin_required
 from accounts.models import Role, AuditLog
 from accounts.utils import write_audit_log
-from admissions.models import Admission, Ward, Bed
-from admissions.forms import AdmissionForm, DischargeForm, WardForm, BedForm
+from admissions.models import Admission, Ward, Bed, DischargeChecklist
+from admissions.forms import AdmissionForm, DischargeForm, WardForm, BedForm, DischargeChecklistForm
 
 # Doctors do not admit patients directly; they send Admission Referrals.
 admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.WARD_ADMISSION, Role.NURSING)
@@ -128,9 +128,17 @@ def admission_detail(request, pk):
     admission = get_object_or_404(
         Admission.objects.select_related('patient', 'ward', 'bed', 'department', 'admitting_doctor'), pk=pk,
     )
+    checklist, _ = DischargeChecklist.objects.get_or_create(admission=admission)
+    # Auto-set bill clearance when there are no pending bills.
+    from billing.models import Bill
+    no_pending_bills = not Bill.objects.filter(patient=admission.patient, status=Bill.Status.PENDING).exists()
+    if checklist.all_bills_paid != no_pending_bills:
+        checklist.all_bills_paid = no_pending_bills
+        checklist.save(update_fields=['all_bills_paid', 'updated_at'])
     discharge_form = DischargeForm() if admission.status == Admission.Status.ADMITTED else None
+    checklist_form = DischargeChecklistForm(instance=checklist) if admission.status == Admission.Status.ADMITTED else None
     return render(request, 'admissions/admission_detail.html', {
-        'admission': admission, 'discharge_form': discharge_form,
+        'admission': admission, 'discharge_form': discharge_form, 'checklist': checklist, 'checklist_form': checklist_form,
     })
 
 
@@ -144,13 +152,31 @@ def admission_slip(request, pk):
 
 
 @admissions_staff_required
+def update_discharge_checklist(request, pk):
+    admission = get_object_or_404(Admission, pk=pk)
+    checklist, _ = DischargeChecklist.objects.get_or_create(admission=admission)
+    if request.method == 'POST':
+        form = DischargeChecklistForm(request.POST, instance=checklist)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.updated_by = request.user
+            obj.save()
+            messages.success(request, 'Discharge checklist updated.')
+    return redirect('admissions:admission_detail', pk=admission.pk)
+
+
+@admissions_staff_required
 def discharge_patient(request, pk):
     admission = get_object_or_404(Admission, pk=pk)
     if request.method == 'POST':
         from billing.models import Bill
         pending_bills = Bill.objects.filter(patient=admission.patient, status=Bill.Status.PENDING)
+        checklist, _ = DischargeChecklist.objects.get_or_create(admission=admission)
         if pending_bills.exists():
             messages.error(request, 'Cannot discharge: patient has pending payments. Please clear all bills first.')
+            return redirect('admissions:admission_detail', pk=admission.pk)
+        if not checklist.is_complete:
+            messages.error(request, 'Cannot discharge: discharge checklist is incomplete.')
             return redirect('admissions:admission_detail', pk=admission.pk)
         form = DischargeForm(request.POST)
         if form.is_valid():

@@ -1,6 +1,6 @@
 from django import forms
 
-from admissions.models import Admission, Ward, Bed
+from admissions.models import Admission, Ward, Bed, DischargeChecklist
 from departments.models import Department
 from doctors.models import Doctor
 
@@ -65,3 +65,22 @@ class BedForm(forms.ModelForm):
             'ward': forms.Select(attrs={'class': 'form-select'}),
             'bed_number': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+class DischargeChecklistForm(forms.ModelForm):
+    class Meta:
+        model = DischargeChecklist
+        fields = [
+            'all_bills_paid', 'lab_reports_complete', 'radiology_reports_complete',
+            'medicine_charges_complete', 'discharge_summary_prepared', 'nursing_clearance',
+            'insurance_clearance', 'bed_release_ready', 'remarks',
+        ]
+        widgets = {
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if name != 'remarks':
+                field.widget.attrs.update({'class': 'form-check-input'})

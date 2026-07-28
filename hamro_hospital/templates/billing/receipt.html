@@ -554,6 +554,7 @@
         </select>
         <button class="btn btn-success"><i class="bi bi-check-circle"></i> Mark Payment Completed</button>
     </form>
+    <a href="{% url 'billing:pay_pending_bill_esewa' bill.pk %}" class="btn btn-outline-success ms-2"><i class="bi bi-wallet2"></i> Pay with eSewa</a>
 </div>
 {% endif %}
 

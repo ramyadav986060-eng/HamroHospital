@@ -34,6 +34,23 @@
         </div>
     </div>
     <div class="col-md-6">
+
+        {% if checklist_form %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Discharge Checklist</h6>
+            <form method="post" action="{% url 'admissions:update_discharge_checklist' admission.pk %}">
+                {% csrf_token %}
+                <div class="row g-2 small">
+                    {% for field in checklist_form %}
+                        {% if field.name != 'remarks' %}<div class="col-md-6"><label class="form-check-label">{{ field }} {{ field.label }}</label></div>{% endif %}
+                    {% endfor %}
+                    <div class="col-12"><label class="form-label mt-2">Remarks</label>{{ checklist_form.remarks }}</div>
+                </div>
+                <button class="btn btn-sm btn-primary mt-3">Save Checklist</button>
+                {% if checklist.is_complete %}<span class="badge bg-success ms-2">Ready for discharge</span>{% else %}<span class="badge bg-warning text-dark ms-2">Incomplete</span>{% endif %}
+            </form>
+        </div>
+        {% endif %}
         {% if discharge_form %}
         <div class="tuh-card p-4">
             <h6 class="fw-bold mb-3">Discharge Patient</h6>

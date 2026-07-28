@@ -153,3 +153,37 @@ class Admission(models.Model):
     def length_of_stay_days(self):
         end = self.discharge_date or timezone.now()
         return max((end - self.admission_date).days, 0)
+
+class DischargeChecklist(models.Model):
+    """Operational discharge clearance checklist for an admission."""
+    admission = models.OneToOneField(Admission, on_delete=models.CASCADE, related_name='discharge_checklist')
+    all_bills_paid = models.BooleanField(default=False)
+    lab_reports_complete = models.BooleanField(default=False)
+    radiology_reports_complete = models.BooleanField(default=False)
+    medicine_charges_complete = models.BooleanField(default=False)
+    discharge_summary_prepared = models.BooleanField(default=False)
+    nursing_clearance = models.BooleanField(default=False)
+    insurance_clearance = models.BooleanField(default=False)
+    bed_release_ready = models.BooleanField(default=False)
+    remarks = models.TextField(blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='discharge_checklists_updated')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'admissions_discharge_checklist'
+
+    def __str__(self):
+        return f'Discharge checklist for {self.admission.admission_number}'
+
+    @property
+    def is_complete(self):
+        return all([
+            self.all_bills_paid,
+            self.lab_reports_complete,
+            self.radiology_reports_complete,
+            self.medicine_charges_complete,
+            self.discharge_summary_prepared,
+            self.nursing_clearance,
+            self.insurance_clearance,
+            self.bed_release_ready,
+        ])

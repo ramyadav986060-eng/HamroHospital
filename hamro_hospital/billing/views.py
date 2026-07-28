@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils import timezone
 
 from accounts.decorators import cash_counter_required, billing_counter_required, accounts_dept_required, role_required
@@ -18,6 +19,7 @@ from patients.models import Patient
 from website.models import HospitalService
 from workflow.utils import record_payment_event, add_timeline
 from workflow.models import PatientTimeline
+from appointments.esewa import build_payment_fields, get_form_url, decode_and_verify_response
 
 
 @cash_counter_required
@@ -274,6 +276,56 @@ def create_bill(request, patient_id):
         'pending_radiologies': pending_radiologies, 'pending_surgeries': pending_surgeries,
         'counter_department': counter_department,
     })
+
+
+@cash_counter_required
+def pay_pending_bill_esewa(request, pk):
+    bill = get_object_or_404(Bill.objects.select_related('patient'), pk=pk, status=Bill.Status.PENDING)
+    success_url = request.build_absolute_uri(reverse('billing:bill_esewa_success'))
+    failure_url = request.build_absolute_uri(reverse('billing:bill_esewa_failure')) + '?' + urlencode({'bill_id': bill.id})
+    fields = build_payment_fields(
+        amount=bill.final_amount_paid,
+        transaction_uuid=bill.bill_number,
+        success_url=success_url,
+        failure_url=failure_url,
+    )
+    return render(request, 'appointments/pay_redirect.html', {'appointment': bill, 'form_url': get_form_url(), 'fields': fields})
+
+
+@cash_counter_required
+def bill_esewa_success(request):
+    data_param = request.GET.get('data', '')
+    payload = decode_and_verify_response(data_param) if data_param else None
+    if not payload or payload.get('status') != 'COMPLETE':
+        messages.error(request, 'Could not verify eSewa payment for this bill.')
+        return redirect('billing:dashboard')
+    bill = get_object_or_404(Bill, bill_number=payload.get('transaction_uuid'))
+    bill.payment_method = PaymentMethod.ESEWA
+    bill.status = Bill.Status.PAID
+    bill.cashier = request.user
+    bill.save(update_fields=['payment_method', 'status', 'cashier'])
+    record_payment_event(
+        bill, received_by=request.user, method=PaymentMethod.ESEWA,
+        transaction_reference=payload.get('transaction_code', ''),
+        gateway_response=str(payload), remarks='eSewa pending bill payment',
+    )
+    from accounts.utils import create_notification
+    for referral in bill.referrals.all():
+        role_map = {'laboratory': Role.LABORATORY, 'radiology': Role.RADIOLOGY, 'pharmacy': Role.PHARMACY, 'nursing': Role.NURSING, 'admission': Role.WARD_ADMISSION, 'operation_theatre': Role.OPERATION_THEATRE, 'blood_bank': Role.BLOOD_BANK}
+        target_role = role_map.get(referral.referral_type)
+        if target_role:
+            create_notification(title='Payment Completed', message=f'eSewa payment completed for {bill.patient.full_name}, bill {bill.bill_number}.', role=target_role, related_url=reverse('referrals:referral_detail', args=[referral.pk]))
+    messages.success(request, f'eSewa payment completed for bill {bill.bill_number}.')
+    return redirect('billing:receipt', pk=bill.pk)
+
+
+@cash_counter_required
+def bill_esewa_failure(request):
+    bill_id = request.GET.get('bill_id')
+    messages.error(request, 'eSewa payment was not completed. Bill remains pending.')
+    if bill_id:
+        return redirect('billing:receipt', pk=bill_id)
+    return redirect('billing:dashboard')
 
 
 @cash_counter_required

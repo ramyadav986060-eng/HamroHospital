@@ -1,5 +1,5 @@
 from django.contrib import admin
-from admissions.models import Ward, Bed, Admission
+from admissions.models import Ward, Bed, Admission, DischargeChecklist
 
 
 class BedInline(admin.TabularInline):
@@ -30,4 +30,16 @@ class AdmissionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not obj.created_by_id:
             obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(DischargeChecklist)
+class DischargeChecklistAdmin(admin.ModelAdmin):
+    list_display = ('admission', 'all_bills_paid', 'nursing_clearance', 'insurance_clearance', 'bed_release_ready', 'updated_at')
+    list_filter = ('all_bills_paid', 'nursing_clearance', 'insurance_clearance', 'bed_release_ready')
+    search_fields = ('admission__admission_number', 'admission__patient__patient_code')
+    readonly_fields = ('updated_at',)
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_by = request.user
         super().save_model(request, obj, form, change)

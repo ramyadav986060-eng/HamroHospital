@@ -19,6 +19,8 @@ urlpatterns = [
     path('book-visit/esewa/success/', views.visit_esewa_success, name='visit_esewa_success'),
     path('book-visit/esewa/failure/', views.visit_esewa_failure, name='visit_esewa_failure'),
 
+    path('timeline/', views.my_timeline, name='my_timeline'),
+
     path('visits/', views.my_visits, name='my_visits'),
     path('visits/<int:visit_id>/ticket/', views.my_ticket, name='my_ticket'),
     path('patient-card/', views.my_patient_card, name='my_patient_card'),
