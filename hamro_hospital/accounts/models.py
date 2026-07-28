@@ -160,6 +160,7 @@ class Notification(models.Model):
     )
     title = models.CharField(max_length=150)
     message = models.TextField()
+    related_url = models.CharField(max_length=255, blank=True, help_text='Optional URL opened when the notification is clicked.')
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

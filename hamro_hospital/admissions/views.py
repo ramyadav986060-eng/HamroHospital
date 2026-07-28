@@ -7,7 +7,8 @@ from accounts.utils import write_audit_log
 from admissions.models import Admission, Ward, Bed
 from admissions.forms import AdmissionForm, DischargeForm, WardForm, BedForm
 
-admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.WARD_ADMISSION)
+# Doctors do not admit patients directly; they send Admission Referrals.
+admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.WARD_ADMISSION, Role.NURSING)
 
 
 @admissions_staff_required
@@ -35,6 +36,11 @@ def admission_list(request):
             selected_date = None
 
     # Load dynamic inpatient recommendations from consultations (spec section 12)
+    from referrals.models import Referral
+    admission_referrals = Referral.objects.filter(
+        referral_type=Referral.ReferralType.ADMISSION,
+        status__in=['new', 'acknowledged', 'in_progress'],
+    ).select_related('patient', 'referred_by', 'to_department')
     active_admissions = Admission.objects.filter(patient=OuterRef('visit__patient'), status=Admission.Status.ADMITTED)
     recommended_admissions = Consultation.objects.filter(
         recommend_admission=True
@@ -54,6 +60,7 @@ def admission_list(request):
         'yearly_count': Admission.objects.filter(admission_date__date__gte=year_start).count(),
         'currently_admitted_count': currently_admitted.count(),
         'recommended_admissions': recommended_admissions,
+        'admission_referrals': admission_referrals,
         'discharge_queue': currently_admitted.order_by('admission_date')[:15],
     })
 
@@ -92,7 +99,18 @@ def admit_patient(request, patient_id):
             messages.success(request, f'{patient.full_name} admitted. Admission #: {admission.admission_number}')
             return redirect('admissions:admission_detail', pk=admission.pk)
     else:
-        form = AdmissionForm()
+        initial = {}
+        referral_id = request.GET.get('referral')
+        if referral_id:
+            from referrals.models import Referral
+            referral = Referral.objects.filter(pk=referral_id, patient=patient).first()
+            if referral:
+                initial = {
+                    'department': referral.to_department_id,
+                    'reason_for_admission': referral.reason,
+                    'diagnosis': referral.diagnosis,
+                }
+        form = AdmissionForm(initial=initial)
     return render(request, 'admissions/admit_form.html', {'form': form, 'patient': patient})
 
 

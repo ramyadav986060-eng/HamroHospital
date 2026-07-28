@@ -34,9 +34,10 @@ def write_audit_log(request, action, description, patient_id_text='', receipt_nu
     )
 
 
-def create_notification(title, message, role=None, user=None):
+def create_notification(title, message, role=None, user=None, related_url=''):
     """
     Create a notification for a specific user, or for all users with a specific role.
+    related_url is optional and lets department staff open the relevant record directly.
     """
     from accounts.models import Notification
     Notification.objects.create(
@@ -44,4 +45,5 @@ def create_notification(title, message, role=None, user=None):
         role=role,
         title=title,
         message=message,
+        related_url=related_url or '',
     )

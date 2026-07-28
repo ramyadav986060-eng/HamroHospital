@@ -23,7 +23,10 @@
             <p class="text-muted small mb-2">{{ ward.available_beds }} / {{ ward.total_beds }} beds available</p>
             <ul class="list-unstyled small mb-0">
                 {% for bed in ward.beds.all %}
-                    <li>Bed {{ bed.bed_number }} - {% if bed.is_occupied %}<span class="text-danger">Occupied</span>{% else %}<span class="text-success">Free</span>{% endif %}</li>
+                    <li class="d-flex justify-content-between align-items-center border rounded px-2 py-1 mb-1">
+                        <span>Bed {{ bed.bed_number }}</span>
+                        {% if bed.is_occupied %}<span class="badge bg-danger">Occupied</span>{% else %}<span class="badge bg-success">Available</span>{% endif %}
+                    </li>
                 {% empty %}<li class="text-muted">No beds added yet.</li>{% endfor %}
             </ul>
         </div>

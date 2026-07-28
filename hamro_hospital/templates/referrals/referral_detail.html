@@ -1,0 +1,51 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Referral - {{ referral.patient.full_name }}{% endblock %}
+{% block page_title %}Referral Details{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'referrals:department_queue' %}"><i class="bi bi-inboxes"></i> <span>Referral Queue</span></a>
+    <a class="nav-link" href="{% url 'patients:patient_detail' referral.patient.pk %}"><i class="bi bi-person-vcard"></i> <span>Patient Record</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="tuh-card p-4">
+            <div class="d-flex justify-content-between flex-wrap gap-2 mb-3"><h5 class="fw-bold mb-0">{{ referral.get_referral_type_display }}</h5><span class="badge bg-primary">{{ referral.get_status_display }}</span></div>
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Patient</dt><dd class="col-sm-9"><a href="{% url 'patients:patient_detail' referral.patient.pk %}">{{ referral.patient.full_name }}</a> ({{ referral.patient.patient_code }}) · {{ referral.patient.phone_number }}</dd>
+                <dt class="col-sm-3">Referred By</dt><dd class="col-sm-9">{% if referral.referred_by %}Dr. {{ referral.referred_by.full_name }}{% else %}Unknown{% endif %}</dd>
+                <dt class="col-sm-3">Department</dt><dd class="col-sm-9">{{ referral.to_department.name|default:'-' }}</dd>
+                <dt class="col-sm-3">Diagnosis</dt><dd class="col-sm-9">{{ referral.diagnosis|default:'-' }}</dd>
+                <dt class="col-sm-3">Reason</dt><dd class="col-sm-9">{{ referral.reason|linebreaksbr }}</dd>
+                <dt class="col-sm-3">Clinical Notes</dt><dd class="col-sm-9">{{ referral.clinical_notes|default:'-'|linebreaksbr }}</dd>
+                <dt class="col-sm-3">Instructions</dt><dd class="col-sm-9">{{ referral.instructions|default:'-'|linebreaksbr }}</dd>
+                {% if referral.attachment %}<dt class="col-sm-3">Attachment</dt><dd class="col-sm-9"><a href="{{ referral.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip"></i> Open Attachment</a></dd>{% endif %}
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold">Process Referral</h6>
+            <form method="post" action="{% url 'referrals:referral_update_status' referral.pk %}" class="mb-3">
+                {% csrf_token %}
+                <select name="status" class="form-select mb-2">
+                    <option value="new" {% if referral.status == 'new' %}selected{% endif %}>New</option>
+                    <option value="acknowledged" {% if referral.status == 'acknowledged' %}selected{% endif %}>Acknowledged</option>
+                    <option value="in_progress" {% if referral.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="completed" {% if referral.status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if referral.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+                <button class="btn btn-primary w-100">Update Status</button>
+            </form>
+            <div class="d-grid gap-2">
+                <a class="btn btn-outline-primary" href="{% url 'patients:patient_detail' referral.patient.pk %}">Open Patient Record</a>
+                {% if referral.referral_type == 'admission' %}<a class="btn btn-success" href="{% url 'admissions:admit_patient' referral.patient.pk %}?referral={{ referral.pk }}">Admit Patient</a>{% endif %}
+                {% if referral.referral_type == 'laboratory' %}<a class="btn btn-outline-secondary" href="{% url 'laboratory:manual_create' referral.patient.pk %}">Create Lab Request</a>{% endif %}
+                {% if referral.referral_type == 'radiology' %}<a class="btn btn-outline-secondary" href="{% url 'radiology:manual_create' referral.patient.pk %}">Create Radiology Request</a>{% endif %}
+                {% if referral.referral_type == 'pharmacy' %}<a class="btn btn-outline-secondary" href="{% url 'pharmacy:dispense' referral.patient.pk %}">Dispense Medicines</a>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

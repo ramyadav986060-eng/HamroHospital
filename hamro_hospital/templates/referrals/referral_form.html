@@ -1,32 +1,31 @@
 {% extends 'dashboard_base.html' %}
-{% load crispy_forms_tags %}
-
 {% block title %}Create Referral - {{ HOSPITAL_NAME }}{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="h3 mb-0 text-gray-800">Create Referral</h2>
-        <p class="text-muted mb-0">Refer patient to another department</p>
-    </div>
-    <a href="javascript:history.back()" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Back
-    </a>
-</div>
-
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="tuh-card p-4">
-            <form method="post">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="mt-4 text-end">
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-send"></i> Send Referral
-                    </button>
-                </div>
-            </form>
+{% block page_title %}Create Patient Referral{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Doctor Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link active" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> <span>Create Referral</span></a>
+    <a class="nav-link" href="{% url 'referrals:department_queue' %}"><i class="bi bi-inboxes"></i> <span>Referral Queue</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:900px;">
+    <p class="text-muted">Send a patient to Laboratory, Radiology, Pharmacy, Nursing, Admission, OT, Blood Bank, or another department. Doctors do not admit patients directly; use Admission Referral for Admission/Nursing staff review.</p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.errors %}<div class="alert alert-danger">Please correct the highlighted fields.</div>{% endif %}
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Patient *</label>{{ form.patient }}{% for e in form.patient.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-6"><label class="form-label">Referral Destination *</label>{{ form.referral_type }}{% for e in form.referral_type.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-6"><label class="form-label">Specific Department</label>{{ form.to_department }}</div>
+            <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+            <div class="col-12"><label class="form-label">Reason for Referral *</label>{{ form.reason }}{% for e in form.reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
+            <div class="col-12"><label class="form-label">Instructions</label>{{ form.instructions }}</div>
+            <div class="col-12"><label class="form-label">Supporting Attachment</label>{{ form.attachment }}<div class="form-text">PDF, scanned report, image, or other relevant file.</div></div>
         </div>
-    </div>
+        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-send"></i> Send Referral</button></div>
+    </form>
 </div>
 {% endblock %}

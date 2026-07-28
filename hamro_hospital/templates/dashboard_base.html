@@ -140,11 +140,11 @@
                         <li class="dropdown-header fw-bold border-bottom pb-2">Notifications</li>
                         {% for n in unread_notifications %}
                             <li>
-                                <div class="dropdown-item py-2 border-bottom" style="white-space: normal;">
+                                <a class="dropdown-item py-2 border-bottom" style="white-space: normal;" href="{% if n.related_url %}{{ n.related_url }}{% else %}#{% endif %}">
                                     <div class="fw-bold small">{{ n.title }}</div>
                                     <div class="text-muted text-wrap" style="font-size: 0.75rem;">{{ n.message }}</div>
                                     <div class="text-muted mt-1" style="font-size: 0.65rem;">{{ n.created_at|date:"Y-m-d H:i" }}</div>
-                                </div>
+                                </a>
                             </li>
                         {% empty %}
                             <li class="text-center py-3 text-muted small">No new notifications.</li>

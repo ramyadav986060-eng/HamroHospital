@@ -1,0 +1,21 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctor Profile{% endblock %}
+{% block page_title %}Doctor Profile Settings{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link active" href="{% url 'doctors:profile' %}"><i class="bi bi-person-gear"></i> <span>Profile Settings</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:850px;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+            {% for field in form %}<div class="col-md-6 {% if field.name == 'biography' %}col-md-12{% endif %}"><label class="form-label">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}
+        </div>
+        <div class="mt-4"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Profile</button> <a href="{% url 'doctors:change_password' %}" class="btn btn-outline-secondary">Change Password</a></div>
+    </form>
+</div>
+{% endblock %}

@@ -26,6 +26,29 @@
     {% if selected_date %}<a href="{% url 'admissions:admission_list' %}" class="btn btn-sm btn-outline-secondary">Clear Date</a>{% endif %}
 </form>
 
+{% if admission_referrals %}
+<div class="tuh-card p-4 mb-4 border border-primary shadow-sm">
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-send"></i> Admission Referrals from Doctors</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small table-sm">
+            <thead><tr><th>Patient</th><th>Diagnosis</th><th>Reason</th><th>Referred By</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+            {% for ref in admission_referrals %}
+                <tr>
+                    <td><strong>{{ ref.patient.full_name }}</strong><br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td>
+                    <td>{{ ref.diagnosis|default:'-' }}</td>
+                    <td>{{ ref.reason|truncatewords:12 }}</td>
+                    <td>{% if ref.referred_by %}Dr. {{ ref.referred_by.full_name }}{% else %}-{% endif %}</td>
+                    <td>{{ ref.get_status_display }}</td>
+                    <td class="text-end"><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-outline-primary">Review</a> <a href="{% url 'admissions:admit_patient' ref.patient.pk %}?referral={{ ref.pk }}" class="btn btn-sm btn-success">Admit</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 {% if recommended_admissions %}
 <div class="tuh-card p-4 mb-4 border border-warning shadow-sm">
     <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-exclamation-triangle"></i> Doctor Recommended Admissions (Pending)</h5>
