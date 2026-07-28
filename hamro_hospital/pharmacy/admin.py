@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from pharmacy.models import Medicine, StockAdjustment, PharmacySale, PharmacySaleItem
+from pharmacy.models import Medicine, StockAdjustment, PharmacySale, PharmacySaleItem, Supplier, MedicineBatch, StockLedger
 
 
 @admin.register(Medicine)
@@ -68,3 +68,25 @@ class PharmacySaleAdmin(admin.ModelAdmin):
         formset.save_m2m()
         if isinstance(form.instance, PharmacySale):
             form.instance.recalculate_total()
+
+
+@admin.register(Supplier)
+class SupplierAdmin(admin.ModelAdmin):
+    list_display = ('name', 'contact_person', 'phone_number', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'contact_person', 'phone_number')
+
+
+@admin.register(MedicineBatch)
+class MedicineBatchAdmin(admin.ModelAdmin):
+    list_display = ('medicine', 'batch_number', 'supplier', 'expiry_date', 'quantity_received', 'quantity_available', 'mrp')
+    list_filter = ('supplier', 'expiry_date')
+    search_fields = ('medicine__name', 'batch_number', 'supplier__name')
+
+
+@admin.register(StockLedger)
+class StockLedgerAdmin(admin.ModelAdmin):
+    list_display = ('medicine', 'movement_type', 'quantity_change', 'balance_after', 'reference', 'created_by', 'created_at')
+    list_filter = ('movement_type', 'created_at')
+    search_fields = ('medicine__name', 'reference', 'remarks')
+    readonly_fields = ('created_at',)

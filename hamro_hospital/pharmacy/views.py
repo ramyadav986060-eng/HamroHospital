@@ -9,7 +9,7 @@ from accounts.decorators import super_admin_required, pharmacy_required
 from accounts.models import AuditLog
 from accounts.utils import write_audit_log
 from pharmacy.forms import MedicineForm, StockAdjustmentForm, PharmacySaleForm
-from pharmacy.models import Medicine, StockAdjustment, PharmacySale, PharmacySaleItem
+from pharmacy.models import Medicine, StockAdjustment, PharmacySale, PharmacySaleItem, StockLedger
 from patients.models import Patient
 from consultations.models import Consultation
 from referrals.models import Referral
@@ -160,6 +160,7 @@ def dispense(request, patient_id):
                         qty = quantities[mid]
                         medicine.current_stock -= qty
                         medicine.save(update_fields=['current_stock'])
+                        StockLedger.objects.create(medicine=medicine, movement_type=StockLedger.MovementType.SALE, quantity_change=-qty, balance_after=medicine.current_stock, reference=sale.sale_number, created_by=request.user)
                         PharmacySaleItem.objects.create(
                             sale=sale, medicine=medicine, medicine_name=medicine.name,
                             unit_price=medicine.selling_price, quantity=qty,

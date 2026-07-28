@@ -56,3 +56,49 @@ class LabTest(models.Model):
                 'price': self.price, 'is_active': self.is_active,
             },
         )
+
+class LabPanel(models.Model):
+    """Group of lab parameters/tests, e.g. CBC, LFT, KFT."""
+    name = models.CharField(max_length=150, unique=True)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'laboratory_panel'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class LabParameter(models.Model):
+    panel = models.ForeignKey(LabPanel, on_delete=models.CASCADE, related_name='parameters')
+    name = models.CharField(max_length=150)
+    unit = models.CharField(max_length=50, blank=True)
+    normal_range = models.CharField(max_length=150, blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'laboratory_parameter'
+        ordering = ['panel', 'display_order', 'name']
+        unique_together = [('panel', 'name')]
+
+    def __str__(self):
+        return f'{self.panel.name} - {self.name}'
+
+
+class LabResultValue(models.Model):
+    lab_request = models.ForeignKey('consultations.LabTestRequest', on_delete=models.CASCADE, related_name='parameter_values')
+    parameter = models.ForeignKey(LabParameter, on_delete=models.PROTECT, related_name='result_values')
+    value = models.CharField(max_length=100)
+    flag = models.CharField(max_length=20, blank=True, help_text='e.g. High, Low, Critical')
+    remarks = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = 'laboratory_result_value'
+        ordering = ['parameter__display_order', 'parameter__name']
+        unique_together = [('lab_request', 'parameter')]
+
+    def __str__(self):
+        return f'{self.lab_request} - {self.parameter.name}: {self.value}'

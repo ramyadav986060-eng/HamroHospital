@@ -24,8 +24,12 @@ def _generate_claim_number():
 
 class InsuranceClaim(models.Model):
     class Status(models.TextChoices):
+        CREATED = 'created', 'Claim Created'
+        SUBMITTED = 'submitted', 'Submitted'
+        UNDER_REVIEW = 'under_review', 'Under Review'
         PENDING = 'pending', 'Pending'
         APPROVED = 'approved', 'Approved'
+        PARTIALLY_APPROVED = 'partially_approved', 'Partially Approved'
         REJECTED = 'rejected', 'Rejected'
         SETTLED = 'settled', 'Settled'
 
@@ -49,7 +53,7 @@ class InsuranceClaim(models.Model):
     co_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_cashless = models.BooleanField(default=False)
 
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CREATED)
     remarks = models.TextField(blank=True)
     review_notes = models.TextField(blank=True)
 
@@ -70,6 +74,11 @@ class InsuranceClaim(models.Model):
 
     def __str__(self):
         return f"{self.claim_number} - {self.patient.full_name}"
+
+    @property
+    def patient_payable_amount(self):
+        approved = self.approved_amount or 0
+        return self.amount_claimed - approved + self.co_payment_amount
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding

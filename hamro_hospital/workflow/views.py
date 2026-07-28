@@ -105,3 +105,38 @@ def patient_timeline(request, patient_id):
     events = patient.timeline_events.select_related('actor').all()
     paginator = Paginator(events, 40)
     return render(request, 'workflow/patient_timeline.html', {'patient': patient, 'page_obj': paginator.get_page(request.GET.get('page'))})
+
+@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK)
+def department_revenue(request):
+    from django.db.models import Sum, Count
+    from django.utils import timezone
+    import datetime
+
+    today = timezone.now().date()
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+    events = PaymentEvent.objects.select_related('bill', 'bill__patient')
+    if start:
+        try:
+            events = events.filter(paid_at__date__gte=datetime.date.fromisoformat(start))
+        except ValueError:
+            pass
+    else:
+        events = events.filter(paid_at__date=today)
+    if end:
+        try:
+            events = events.filter(paid_at__date__lte=datetime.date.fromisoformat(end))
+        except ValueError:
+            pass
+
+    orders = ServiceOrder.objects.filter(bill__payment_events__in=events).select_related('bill').distinct()
+    role_type = ROLE_SERVICE_TYPES.get(request.user.effective_role)
+    if role_type and not request.user.is_superuser and request.user.effective_role != Role.ACCOUNTS_DEPT:
+        orders = orders.filter(service_type=role_type)
+    summary = orders.values('service_type').annotate(total=Sum('bill__payment_events__amount'), count=Count('id')).order_by('service_type')
+    return render(request, 'workflow/department_revenue.html', {
+        'summary': summary,
+        'orders': orders[:300],
+        'start_date': start,
+        'end_date': end,
+    })

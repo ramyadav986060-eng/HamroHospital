@@ -198,3 +198,65 @@ class PharmacySaleItem(models.Model):
     @property
     def line_total(self):
         return self.unit_price * self.quantity
+
+class Supplier(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    contact_person = models.CharField(max_length=150, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'pharmacy_supplier'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class MedicineBatch(models.Model):
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='batches')
+    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='medicine_batches')
+    batch_number = models.CharField(max_length=100)
+    expiry_date = models.DateField(null=True, blank=True)
+    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    mrp = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantity_received = models.PositiveIntegerField(default=0)
+    quantity_available = models.PositiveIntegerField(default=0)
+    received_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'pharmacy_medicine_batch'
+        ordering = ['expiry_date', 'medicine__name']
+        unique_together = [('medicine', 'batch_number')]
+
+    def __str__(self):
+        return f'{self.medicine.name} - {self.batch_number}'
+
+
+class StockLedger(models.Model):
+    class MovementType(models.TextChoices):
+        PURCHASE = 'purchase', 'Purchase'
+        SALE = 'sale', 'Sale'
+        ADJUSTMENT = 'adjustment', 'Adjustment'
+        RETURN = 'return', 'Return'
+        EXPIRED = 'expired', 'Expired / Write-off'
+
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='stock_ledger')
+    batch = models.ForeignKey(MedicineBatch, on_delete=models.SET_NULL, null=True, blank=True, related_name='ledger_entries')
+    movement_type = models.CharField(max_length=20, choices=MovementType.choices)
+    quantity_change = models.IntegerField()
+    balance_after = models.IntegerField()
+    reference = models.CharField(max_length=120, blank=True)
+    remarks = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_ledger_entries')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'pharmacy_stock_ledger'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['medicine', 'created_at'])]
+
+    def __str__(self):
+        return f'{self.medicine.name}: {self.quantity_change:+d} ({self.get_movement_type_display()})'

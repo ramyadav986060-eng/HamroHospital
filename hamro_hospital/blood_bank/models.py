@@ -41,11 +41,14 @@ class BloodUnit(models.Model):
         PLATELETS = 'platelets', 'Platelets'
 
     class Status(models.TextChoices):
+        COLLECTED = 'collected', 'Collected'
+        TESTED = 'tested', 'Tested'
         AVAILABLE = 'available', 'Available'
         RESERVED = 'reserved', 'Reserved'
         ISSUED = 'issued', 'Issued'
         EXPIRED = 'expired', 'Expired'
         DISCARDED = 'discarded', 'Discarded'
+        RETURNED = 'returned', 'Returned'
 
     bag_number = models.CharField(max_length=30, unique=True, editable=False, db_index=True)
     blood_group = models.CharField(max_length=3, choices=BloodGroup.choices)
@@ -147,9 +150,40 @@ class BloodIssue(models.Model):
     )
     issued_at = models.DateTimeField(auto_now_add=True)
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        patient_group = getattr(self.patient, 'blood_group', '')
+        donor_group = getattr(self.blood_unit, 'blood_group', '')
+        if patient_group and donor_group and not is_compatible_blood(donor_group, patient_group):
+            raise ValidationError(f'Incompatible blood issue: donor {donor_group} cannot be issued to recipient {patient_group}.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        BloodUnit.objects.filter(pk=self.blood_unit_id).update(status=BloodUnit.Status.ISSUED)
+
     class Meta:
         db_table = 'blood_bank_issue'
         ordering = ['-issued_at']
 
     def __str__(self):
         return f"{self.blood_unit.bag_number} -> {self.patient.full_name}"
+
+# Red-cell compatibility map used by Blood Bank safety checks.
+BLOOD_COMPATIBILITY = {
+    'O-': {'O-'},
+    'O+': {'O-', 'O+'},
+    'A-': {'O-', 'A-'},
+    'A+': {'O-', 'O+', 'A-', 'A+'},
+    'B-': {'O-', 'B-'},
+    'B+': {'O-', 'O+', 'B-', 'B+'},
+    'AB-': {'O-', 'A-', 'B-', 'AB-'},
+    'AB+': {'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'},
+}
+
+
+def is_compatible_blood(donor_group, recipient_group):
+    """Return True if donor blood group can be issued to recipient group."""
+    if not donor_group or not recipient_group:
+        return False
+    return donor_group in BLOOD_COMPATIBILITY.get(recipient_group, set())

@@ -187,3 +187,56 @@ class DischargeChecklist(models.Model):
             self.insurance_clearance,
             self.bed_release_ready,
         ])
+
+class AdmissionDeposit(models.Model):
+    class DepositType(models.TextChoices):
+        DEPOSIT = 'deposit', 'Deposit'
+        USED = 'used', 'Used Against Bill'
+        REFUND = 'refund', 'Refund'
+
+    admission = models.ForeignKey(Admission, on_delete=models.CASCADE, related_name='deposits')
+    deposit_type = models.CharField(max_length=10, choices=DepositType.choices, default=DepositType.DEPOSIT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=30, default='cash')
+    receipt_number = models.CharField(max_length=50, blank=True)
+    received_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='admission_deposits_received')
+    remarks = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'admissions_deposit'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.admission.admission_number} - {self.get_deposit_type_display()} NPR {self.amount}'
+
+
+class BedTransfer(models.Model):
+    admission = models.ForeignKey(Admission, on_delete=models.CASCADE, related_name='bed_transfers')
+    from_ward = models.ForeignKey(Ward, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers_from')
+    from_bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers_from')
+    to_ward = models.ForeignKey(Ward, on_delete=models.PROTECT, related_name='transfers_to')
+    to_bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers_to')
+    reason = models.CharField(max_length=255, blank=True)
+    transferred_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='bed_transfers_done')
+    transferred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'admissions_bed_transfer'
+        ordering = ['-transferred_at']
+
+    def __str__(self):
+        return f'{self.admission.admission_number}: {self.from_ward} -> {self.to_ward}'
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        if is_new:
+            self.from_ward = self.admission.ward
+            self.from_bed = self.admission.bed
+        super().save(*args, **kwargs)
+        if is_new:
+            if self.from_bed_id:
+                Bed.objects.filter(pk=self.from_bed_id).update(is_occupied=False)
+            if self.to_bed_id:
+                Bed.objects.filter(pk=self.to_bed_id).update(is_occupied=True)
+            Admission.objects.filter(pk=self.admission_id).update(ward=self.to_ward, bed=self.to_bed)

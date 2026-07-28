@@ -1,0 +1,9 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Department Revenue{% endblock %}
+{% block page_title %}Department Revenue{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4 d-flex gap-2 align-items-end"><div><label class="form-label small fw-bold">From</label><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div><div><label class="form-label small fw-bold">To</label><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div><button class="btn btn-primary">Apply</button></form>
+<div class="row g-4 mb-4">{% for row in summary %}<div class="col-md-3"><div class="stat-card blue click-amount-card" onclick="showFullValue('{{ row.service_type|title }} Revenue', 'NPR {{ row.total|floatformat:2 }}')"><h6>{{ row.service_type|title }}</h6><h3>NPR {{ row.total|short_amount }}</h3><small>{{ row.count }} order(s)</small></div></div>{% empty %}<div class="col-12"><div class="tuh-card p-4 text-center text-muted">No revenue found for this period.</div></div>{% endfor %}</div>
+<div class="tuh-card p-4"><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Service</th><th>Patient</th><th>Type</th><th>Bill</th><th>Amount</th></tr></thead><tbody>{% for order in orders %}<tr><td>{{ order.service_name }}</td><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.get_service_type_display }}</td><td>{% if order.bill %}<a href="{% url 'billing:receipt' order.bill.pk %}">{{ order.bill.bill_number }}</a>{% endif %}</td><td>NPR {{ order.total_amount }}</td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No orders.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from admissions.models import Ward, Bed, Admission, DischargeChecklist
+from admissions.models import Ward, Bed, Admission, DischargeChecklist, AdmissionDeposit, BedTransfer
 
 
 class BedInline(admin.TabularInline):
@@ -42,4 +42,29 @@ class DischargeChecklistAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(AdmissionDeposit)
+class AdmissionDepositAdmin(admin.ModelAdmin):
+    list_display = ('admission', 'deposit_type', 'amount', 'payment_method', 'received_by', 'created_at')
+    list_filter = ('deposit_type', 'payment_method', 'created_at')
+    search_fields = ('admission__admission_number', 'admission__patient__patient_code', 'receipt_number')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.received_by_id:
+            obj.received_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(BedTransfer)
+class BedTransferAdmin(admin.ModelAdmin):
+    list_display = ('admission', 'from_ward', 'from_bed', 'to_ward', 'to_bed', 'transferred_by', 'transferred_at')
+    list_filter = ('to_ward', 'transferred_at')
+    search_fields = ('admission__admission_number', 'admission__patient__patient_code', 'reason')
+    readonly_fields = ('from_ward', 'from_bed', 'transferred_by', 'transferred_at')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.transferred_by_id:
+            obj.transferred_by = request.user
         super().save_model(request, obj, form, change)
