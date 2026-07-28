@@ -60,13 +60,15 @@ def dashboard(request):
 
 
 @registration_counter_required
-def patient_register(request):
+def patient_register(request, extension_mode=False):
     """
     Register a new patient or, when an existing Patient ID/QR/barcode was
     scanned, create a returning-patient OPD visit without duplicating the
     patient record. Scanned returning patients are always charged the old
     patient fee (NPR 50 by default).
     """
+    extension_mode = extension_mode or request.GET.get('extension') == '1' or request.POST.get('is_extension_service') == '1'
+    extension_doctor_id = request.GET.get('doctor') or request.POST.get('extension_doctor_id')
     existing_patient = None
     existing_patient_id = request.POST.get('existing_patient_id') if request.method == 'POST' else None
     if existing_patient_id:
@@ -97,17 +99,24 @@ def patient_register(request):
             if existing_patient:
                 patient = existing_patient
                 patient_type = Visit.PatientType.OLD
-                registration_fee = settings.OLD_PATIENT_REGISTRATION_FEE
+                if extension_mode and candidate_visit.doctor:
+                    registration_fee = candidate_visit.doctor.extension_old_fee
+                else:
+                    registration_fee = settings.OLD_PATIENT_REGISTRATION_FEE
             else:
                 patient = patient_form.save(commit=False)
                 patient.created_by = request.user
                 patient.save()
                 patient_type = visit_form.cleaned_data.get('patient_type') or Visit.PatientType.NEW
-                registration_fee = visit_form.cleaned_data['registration_fee']
+                if extension_mode and candidate_visit.doctor:
+                    registration_fee = candidate_visit.doctor.extension_new_fee if patient_type == Visit.PatientType.NEW else candidate_visit.doctor.extension_old_fee
+                else:
+                    registration_fee = visit_form.cleaned_data['registration_fee']
 
             visit = visit_form.save(commit=False)
             visit.patient = patient
-            visit.patient_type = patient_type
+            visit.patient_type = Visit.PatientType.EXTENSION if extension_mode else patient_type
+            visit.is_extension_service = extension_mode
             visit.registration_fee = registration_fee
             visit.created_by = request.user
             if visit.payment_method == Visit.PaymentMethod.CASH:
@@ -140,12 +149,17 @@ def patient_register(request):
             return redirect('patients:opd_ticket', visit_id=visit.id)
     else:
         patient_form = PatientForm()
-        visit_form = VisitForm(initial={'patient_type': Visit.PatientType.NEW, 'payment_method': Visit.PaymentMethod.CASH})
+        initial = {'patient_type': Visit.PatientType.NEW, 'payment_method': Visit.PaymentMethod.CASH}
+        if extension_doctor_id:
+            initial['doctor'] = extension_doctor_id
+        visit_form = VisitForm(initial=initial)
 
     return render(request, 'patients/patient_register.html', {
         'patient_form': patient_form, 'visit_form': visit_form,
         'new_fee': 100, 'old_fee': 50,
         'existing_patient': existing_patient,
+        'extension_mode': extension_mode,
+        'extension_doctor_id': extension_doctor_id or '',
     })
 
 @any_staff_required
@@ -634,8 +648,9 @@ def confirm_arrival(request, appointment_id):
             patient=patient,
             department=appointment.department,
             doctor=appointment.doctor,
-            patient_type=Visit.PatientType.OLD if appointment.patient_type == 'old' else Visit.PatientType.NEW,
+            patient_type=Visit.PatientType.EXTENSION if appointment.is_extension_service else (Visit.PatientType.OLD if appointment.patient_type == 'old' else Visit.PatientType.NEW),
             registration_fee=appointment.registration_fee,
+            is_extension_service=appointment.is_extension_service,
             chief_complaint=appointment.chief_complaint,
             created_by=request.user,
             payment_method=Visit.PaymentMethod.ESEWA if appointment.payment_method == 'esewa' else Visit.PaymentMethod.CASH,

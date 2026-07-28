@@ -113,6 +113,7 @@ function lookupPatient(query) {
 <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     <input type="hidden" name="existing_patient_id" id="id_existing_patient_id" value="{% if existing_patient %}{{ existing_patient.id }}{% endif %}">
+    {% if extension_mode %}<input type="hidden" name="is_extension_service" value="1"><input type="hidden" name="extension_doctor_id" value="{{ extension_doctor_id }}"><div class="alert alert-info">Extension Service Registration: fee is applied from Finance-configured extension doctor fee.</div>{% endif %}
     {% if patient_form.errors or visit_form.errors %}
     <div class="alert alert-danger">
         <strong>Please fix the following:</strong>

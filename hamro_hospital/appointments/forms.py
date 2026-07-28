@@ -58,10 +58,11 @@ class AppointmentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.extension_mode = kwargs.pop('extension_mode', False)
         super().__init__(*args, **kwargs)
         self.fields['district'].queryset = District.objects.select_related('province').order_by('name')
         self.fields['department'].queryset = Department.objects.filter(is_active=True)
-        self.fields['doctor'].queryset = Doctor.objects.filter(is_active=True)
+        self.fields['doctor'].queryset = Doctor.objects.filter(is_active=True, is_extension_service=True) if self.extension_mode else Doctor.objects.filter(is_active=True)
         for field in ['first_name', 'last_name', 'phone_number']:
             self.fields[field].required = True
         self.fields['doctor'].required = False
@@ -114,7 +115,10 @@ class AppointmentForm(forms.ModelForm):
             cleaned_data['age'] = relativedelta(today, dob).years
 
         patient_type = cleaned_data.get('patient_type')
-        if patient_type == Appointment.PatientType.NEW:
+        doctor = cleaned_data.get('doctor')
+        if self.extension_mode and doctor:
+            cleaned_data['registration_fee'] = doctor.extension_new_fee if patient_type == Appointment.PatientType.NEW else doctor.extension_old_fee
+        elif patient_type == Appointment.PatientType.NEW:
             cleaned_data['registration_fee'] = settings.NEW_PATIENT_REGISTRATION_FEE
         else:
             cleaned_data['registration_fee'] = settings.OLD_PATIENT_REGISTRATION_FEE

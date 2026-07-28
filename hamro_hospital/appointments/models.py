@@ -95,6 +95,7 @@ class Appointment(models.Model):
 
     patient_type = models.CharField(max_length=10, choices=PatientType.choices, default=PatientType.NEW)
     registration_fee = models.DecimalField(max_digits=8, decimal_places=2)
+    is_extension_service = models.BooleanField(default=False)
 
     payment_method = models.CharField(
         max_length=15, choices=PaymentMethod.choices, default=PaymentMethod.CASH

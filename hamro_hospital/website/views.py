@@ -210,3 +210,20 @@ def assistant_api(request):
 
     # General fallback
     return JsonResponse({'response': "Hello! I am the Hamro Hospital public assistant. You can ask me about doctor availability, OPD/emergency timings, hospital locations, services, or contact details."})
+
+
+
+def extension_services(request):
+    departments = Department.objects.filter(is_active=True, doctors__is_extension_service=True, doctors__is_active=True).distinct()
+    return render(request, 'website/extension_services.html', {'departments': departments})
+
+
+def extension_department(request, slug):
+    department = get_object_or_404(Department, slug=slug, is_active=True)
+    doctors = department.doctors.filter(is_active=True, is_extension_service=True)
+    return render(request, 'website/extension_department.html', {'department': department, 'doctors': doctors})
+
+
+def extension_doctor(request, pk):
+    doctor = get_object_or_404(Doctor.objects.select_related('department'), pk=pk, is_active=True, is_extension_service=True)
+    return render(request, 'website/extension_doctor.html', {'doctor': doctor})

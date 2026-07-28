@@ -36,7 +36,7 @@ class DoctorForm(forms.ModelForm):
         fields = [
             'department', 'unit', 'full_name', 'qualification', 'specialization', 'experience_years',
             'consultation_fee', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days',
-            'available_time_start', 'available_time_end', 'is_active', 'is_featured',
+            'available_time_start', 'available_time_end', 'is_extension_service', 'extension_weekly_off_day', 'extension_morning_start', 'extension_morning_end', 'extension_morning_quota', 'extension_afternoon_start', 'extension_afternoon_end', 'extension_afternoon_quota', 'is_active', 'is_featured',
         ]
         widgets = {
             'department': forms.Select(attrs={'class': 'form-select'}),
@@ -54,6 +54,14 @@ class DoctorForm(forms.ModelForm):
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'available_time_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'available_time_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'is_extension_service': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'extension_weekly_off_day': forms.Select(attrs={'class': 'form-select'}),
+            'extension_morning_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_morning_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_morning_quota': forms.NumberInput(attrs={'class': 'form-control'}),
+            'extension_afternoon_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_afternoon_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_afternoon_quota': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -67,7 +75,7 @@ class DoctorForm(forms.ModelForm):
             self.fields['create_login_account'].initial = True
             self.fields['username'].initial = self.instance.user_account.username
             self.fields['password'].help_text = 'Leave blank to keep the current password.'
-        for optional in ['biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'unit', 'available_time_start', 'available_time_end']:
+        for optional in ['biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'unit', 'available_time_start', 'available_time_end', 'extension_weekly_off_day', 'extension_morning_start', 'extension_morning_end', 'extension_afternoon_start', 'extension_afternoon_end']:
             self.fields[optional].required = False
 
     def clean_username(self):
@@ -124,7 +132,7 @@ class DoctorForm(forms.ModelForm):
 class DoctorProfileForm(forms.ModelForm):
     class Meta:
         model = Doctor
-        fields = ['full_name', 'qualification', 'specialization', 'experience_years', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days', 'available_time_start', 'available_time_end']
+        fields = ['full_name', 'qualification', 'specialization', 'experience_years', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days', 'available_time_start', 'available_time_end', 'is_extension_service', 'extension_weekly_off_day', 'extension_morning_start', 'extension_morning_end', 'extension_morning_quota', 'extension_afternoon_start', 'extension_afternoon_end', 'extension_afternoon_quota']
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
             'qualification': forms.TextInput(attrs={'class': 'form-control'}),
@@ -139,4 +147,12 @@ class DoctorProfileForm(forms.ModelForm):
             'available_days': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'mon,tue,wed'}),
             'available_time_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'available_time_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'is_extension_service': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'extension_weekly_off_day': forms.Select(attrs={'class': 'form-select'}),
+            'extension_morning_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_morning_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_morning_quota': forms.NumberInput(attrs={'class': 'form-control'}),
+            'extension_afternoon_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_afternoon_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'extension_afternoon_quota': forms.NumberInput(attrs={'class': 'form-control'}),
         }

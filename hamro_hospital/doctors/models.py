@@ -52,6 +52,16 @@ class Doctor(models.Model):
     available_time_end = models.TimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
+    is_extension_service = models.BooleanField(default=False, help_text='Available for paid Extension Service consultations outside regular OPD hours.')
+    extension_new_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    extension_old_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    extension_weekly_off_day = models.CharField(max_length=3, choices=Weekday.choices, blank=True)
+    extension_morning_start = models.TimeField(null=True, blank=True)
+    extension_morning_end = models.TimeField(null=True, blank=True)
+    extension_morning_quota = models.PositiveIntegerField(default=0)
+    extension_afternoon_start = models.TimeField(null=True, blank=True)
+    extension_afternoon_end = models.TimeField(null=True, blank=True)
+    extension_afternoon_quota = models.PositiveIntegerField(default=0)
     is_featured = models.BooleanField(default=False, help_text='Show on homepage "Featured Doctors"')
 
     created_at = models.DateTimeField(auto_now_add=True)

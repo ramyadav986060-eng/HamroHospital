@@ -12,12 +12,14 @@ from appointments.models import Appointment
 
 
 def book_appointment(request):
-    """Public online appointment booking form."""
+    """Public online appointment / Extension Service booking form."""
+    extension_mode = request.GET.get('extension') == '1' or request.POST.get('extension') == '1'
     if request.method == 'POST':
-        form = AppointmentForm(request.POST)
+        form = AppointmentForm(request.POST, extension_mode=extension_mode)
         if form.is_valid():
             appointment = form.save(commit=False)
             appointment.registration_fee = form.cleaned_data['registration_fee']
+            appointment.is_extension_service = extension_mode
             if appointment.payment_method == Appointment.PaymentMethod.CASH:
                 from appointments.models import _generate_appointment_number
                 appointment.payment_status = Appointment.PaymentStatus.PENDING
@@ -44,9 +46,9 @@ def book_appointment(request):
         doctor_id = request.GET.get('doctor')
         if doctor_id and doctor_id.isdigit():
             initial['doctor'] = doctor_id
-        form = AppointmentForm(initial=initial)
+        form = AppointmentForm(initial=initial, extension_mode=extension_mode)
     return render(request, 'appointments/book_appointment.html', {
-        'form': form, 'new_fee': settings.NEW_PATIENT_REGISTRATION_FEE, 'old_fee': settings.OLD_PATIENT_REGISTRATION_FEE,
+        'form': form, 'new_fee': settings.NEW_PATIENT_REGISTRATION_FEE, 'old_fee': settings.OLD_PATIENT_REGISTRATION_FEE, 'extension_mode': extension_mode,
     })
 
 

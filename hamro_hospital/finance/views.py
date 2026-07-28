@@ -1,7 +1,8 @@
 import datetime
 
 from django.db.models import Sum
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
 
 from accounts.decorators import accounts_dept_required
 from billing.models import Bill, RefundRequest, DiscountRequest
@@ -56,3 +57,36 @@ def dashboard(request):
         'pending_refunds_count': RefundRequest.objects.filter(status=RefundRequest.Status.PENDING).count(),
         'pending_discounts_count': DiscountRequest.objects.filter(status=DiscountRequest.Status.PENDING).count(),
     })
+
+@accounts_dept_required
+def extension_fee_list(request):
+    from doctors.models import Doctor
+    doctors = Doctor.objects.select_related('department').filter(is_active=True).order_by('department__name', 'full_name')
+    return render(request, 'finance/extension_fee_list.html', {'doctors': doctors})
+
+
+@accounts_dept_required
+def extension_fee_edit(request, pk):
+    from django import forms
+    from doctors.models import Doctor
+    doctor = get_object_or_404(Doctor, pk=pk)
+
+    class ExtensionFeeForm(forms.ModelForm):
+        class Meta:
+            model = Doctor
+            fields = ['is_extension_service', 'extension_new_fee', 'extension_old_fee']
+            widgets = {
+                'is_extension_service': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                'extension_new_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+                'extension_old_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            }
+
+    if request.method == 'POST':
+        form = ExtensionFeeForm(request.POST, instance=doctor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Extension Service fee updated.')
+            return redirect('finance:extension_fee_list')
+    else:
+        form = ExtensionFeeForm(instance=doctor)
+    return render(request, 'finance/extension_fee_form.html', {'form': form, 'doctor': doctor})

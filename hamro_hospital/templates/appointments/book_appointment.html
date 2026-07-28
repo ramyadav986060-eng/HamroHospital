@@ -6,6 +6,7 @@
     <p class="text-center text-muted mb-4">Book your visit online in advance — separate from walk-in OPD registration.</p>
     <form method="post" novalidate class="mx-auto" style="max-width:800px;">
         {% csrf_token %}
+        {% if extension_mode %}<input type="hidden" name="extension" value="1"><div class="alert alert-info">Extension Service booking: fees are configured by Finance/Accounts.</div>{% endif %}
         {% if form.errors %}
         <div class="alert alert-danger">
             <strong>Please fix the following:</strong>

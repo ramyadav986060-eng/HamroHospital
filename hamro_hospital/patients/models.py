@@ -279,6 +279,7 @@ class Visit(models.Model):
     class PatientType(models.TextChoices):
         NEW = 'new', 'New Patient'
         OLD = 'old', 'Old Patient'
+        EXTENSION = 'extension', 'Extension Service'
 
     class PaymentMethod(models.TextChoices):
         CASH = 'cash', 'Cash'
@@ -301,6 +302,7 @@ class Visit(models.Model):
 
     patient_type = models.CharField(max_length=10, choices=PatientType.choices)
     registration_fee = models.DecimalField(max_digits=8, decimal_places=2)
+    is_extension_service = models.BooleanField(default=False)
     chief_complaint = models.CharField(max_length=255, blank=True)
     
     payment_method = models.CharField(
