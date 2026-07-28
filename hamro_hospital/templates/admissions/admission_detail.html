@@ -28,6 +28,8 @@
             <div class="mt-3 d-flex gap-2 flex-wrap">
                 <a href="{% url 'admissions:admission_slip' admission.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print Admission Slip</a>
                 <a href="{% url 'billing:create_bill' admission.patient.pk %}?bill_type=ipd&admission_id={{ admission.pk }}" class="btn btn-sm btn-outline-primary">Bill IPD Charges</a>
+                <a href="{% url 'admissions:admission_deposit_create' admission.pk %}" class="btn btn-sm btn-outline-success">Deposit</a>
+                <a href="{% url 'admissions:admission_transfer_bed' admission.pk %}" class="btn btn-sm btn-outline-warning">Transfer Bed</a>
                 <a href="{% url 'nursing:admission_notes' admission.pk %}" class="btn btn-sm btn-outline-secondary">Nursing Notes</a>
                 <a href="{% url 'documents:document_list' admission.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a>
             </div>
@@ -35,6 +37,19 @@
     </div>
     <div class="col-md-6">
 
+
+        {% if deposits %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Admission Deposits</h6>
+            <table class="table table-sm small"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th></th></tr></thead><tbody>{% for d in deposits %}<tr><td>{{ d.created_at|date:'Y-m-d H:i' }}</td><td>{{ d.get_deposit_type_display }}</td><td>NPR {{ d.amount }}</td><td><a href="{% url 'admissions:admission_deposit_receipt' d.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">Receipt</a></td></tr>{% endfor %}</tbody></table>
+        </div>
+        {% endif %}
+        {% if transfers %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Bed Transfer History</h6>
+            <table class="table table-sm small"><thead><tr><th>Date</th><th>From</th><th>To</th><th>By</th></tr></thead><tbody>{% for t in transfers %}<tr><td>{{ t.transferred_at|date:'Y-m-d H:i' }}</td><td>{{ t.from_ward }}{% if t.from_bed %} / {{ t.from_bed.bed_number }}{% endif %}</td><td>{{ t.to_ward }}{% if t.to_bed %} / {{ t.to_bed.bed_number }}{% endif %}</td><td>{{ t.transferred_by.get_full_name|default:t.transferred_by.username }}</td></tr>{% endfor %}</tbody></table>
+        </div>
+        {% endif %}
         {% if checklist_form %}
         <div class="tuh-card p-4 mb-4">
             <h6 class="fw-bold mb-3">Discharge Checklist</h6>

@@ -9,6 +9,9 @@ urlpatterns = [
     path('admit/<int:patient_id>/', views.admit_patient, name='admit_patient'),
     path('<int:pk>/', views.admission_detail, name='admission_detail'),
     path('<int:pk>/slip/', views.admission_slip, name='admission_slip'),
+    path('<int:pk>/deposit/', views.admission_deposit_create, name='admission_deposit_create'),
+    path('deposit/<int:pk>/receipt/', views.admission_deposit_receipt, name='admission_deposit_receipt'),
+    path('<int:pk>/transfer-bed/', views.admission_transfer_bed, name='admission_transfer_bed'),
     path('<int:pk>/discharge-checklist/', views.update_discharge_checklist, name='update_discharge_checklist'),
     path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
 

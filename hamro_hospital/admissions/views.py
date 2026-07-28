@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 
 from accounts.decorators import role_required, super_admin_required
 from accounts.models import Role, AuditLog
 from accounts.utils import write_audit_log
-from admissions.models import Admission, Ward, Bed, DischargeChecklist
-from admissions.forms import AdmissionForm, DischargeForm, WardForm, BedForm, DischargeChecklistForm
+from admissions.models import Admission, Ward, Bed, DischargeChecklist, AdmissionDeposit, BedTransfer
+from admissions.forms import AdmissionForm, DischargeForm, WardForm, BedForm, DischargeChecklistForm, AdmissionDepositForm, BedTransferForm
 
 # Doctors do not admit patients directly; they send Admission Referrals.
 admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.WARD_ADMISSION, Role.NURSING)
@@ -137,8 +138,11 @@ def admission_detail(request, pk):
         checklist.save(update_fields=['all_bills_paid', 'updated_at'])
     discharge_form = DischargeForm() if admission.status == Admission.Status.ADMITTED else None
     checklist_form = DischargeChecklistForm(instance=checklist) if admission.status == Admission.Status.ADMITTED else None
+    deposits = admission.deposits.select_related('received_by').all()
+    transfers = admission.bed_transfers.select_related('from_ward', 'from_bed', 'to_ward', 'to_bed', 'transferred_by').all()
     return render(request, 'admissions/admission_detail.html', {
         'admission': admission, 'discharge_form': discharge_form, 'checklist': checklist, 'checklist_form': checklist_form,
+        'deposits': deposits, 'transfers': transfers,
     })
 
 
@@ -149,6 +153,59 @@ def admission_slip(request, pk):
         Admission.objects.select_related('patient', 'ward', 'bed', 'department', 'admitting_doctor'), pk=pk,
     )
     return render(request, 'admissions/admission_slip.html', {'admission': admission})
+
+
+@admissions_staff_required
+def admission_deposit_create(request, pk):
+    admission = get_object_or_404(Admission, pk=pk)
+    if request.method == 'POST':
+        form = AdmissionDepositForm(request.POST)
+        if form.is_valid():
+            deposit = form.save(commit=False)
+            deposit.admission = admission
+            deposit.received_by = request.user
+            deposit.save()
+            from workflow.models import PatientTimeline
+            from workflow.utils import add_timeline
+            add_timeline(admission.patient, PatientTimeline.EventType.PAYMENT, f'Admission {deposit.get_deposit_type_display()}', f'NPR {deposit.amount}', actor=request.user, related_url=reverse('admissions:admission_deposit_receipt', args=[deposit.pk]), source=deposit)
+            messages.success(request, 'Admission deposit record saved.')
+            return redirect('admissions:admission_deposit_receipt', pk=deposit.pk)
+    else:
+        form = AdmissionDepositForm()
+    return render(request, 'admissions/deposit_form.html', {'form': form, 'admission': admission})
+
+
+@admissions_staff_required
+def admission_deposit_receipt(request, pk):
+    deposit = get_object_or_404(AdmissionDeposit.objects.select_related('admission__patient', 'received_by'), pk=pk)
+    receipt = {
+        'title': 'Admission Deposit Receipt', 'number': deposit.receipt_number or f'DEP-{deposit.pk:06d}',
+        'patient': deposit.admission.patient, 'department': 'Admission',
+        'service_name': deposit.get_deposit_type_display(), 'amount': deposit.amount,
+        'payment_status': 'Recorded', 'payment_method': deposit.payment_method,
+        'printed_by': deposit.received_by, 'barcode_url': deposit.admission.barcode.url if deposit.admission.barcode else '',
+    }
+    return render(request, 'admissions/deposit_receipt.html', {'deposit': deposit, 'receipt': receipt})
+
+
+@admissions_staff_required
+def admission_transfer_bed(request, pk):
+    admission = get_object_or_404(Admission, pk=pk)
+    if request.method == 'POST':
+        form = BedTransferForm(request.POST)
+        if form.is_valid():
+            transfer = form.save(commit=False)
+            transfer.admission = admission
+            transfer.transferred_by = request.user
+            transfer.save()
+            from workflow.models import PatientTimeline
+            from workflow.utils import add_timeline
+            add_timeline(admission.patient, PatientTimeline.EventType.ADMISSION, 'Bed transfer', f'{transfer.from_ward} / {transfer.from_bed} → {transfer.to_ward} / {transfer.to_bed}', actor=request.user, related_url=reverse('admissions:admission_detail', args=[admission.pk]), source=transfer)
+            messages.success(request, 'Bed transfer completed.')
+            return redirect('admissions:admission_detail', pk=admission.pk)
+    else:
+        form = BedTransferForm(initial={'to_ward': admission.ward_id})
+    return render(request, 'admissions/bed_transfer_form.html', {'form': form, 'admission': admission})
 
 
 @admissions_staff_required

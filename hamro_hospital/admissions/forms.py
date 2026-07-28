@@ -1,6 +1,6 @@
 from django import forms
 
-from admissions.models import Admission, Ward, Bed, DischargeChecklist
+from admissions.models import Admission, Ward, Bed, DischargeChecklist, AdmissionDeposit, BedTransfer
 from departments.models import Department
 from doctors.models import Doctor
 
@@ -84,3 +84,32 @@ class DischargeChecklistForm(forms.ModelForm):
         for name, field in self.fields.items():
             if name != 'remarks':
                 field.widget.attrs.update({'class': 'form-check-input'})
+
+class AdmissionDepositForm(forms.ModelForm):
+    class Meta:
+        model = AdmissionDeposit
+        fields = ['deposit_type', 'amount', 'payment_method', 'receipt_number', 'remarks']
+        widgets = {
+            'deposit_type': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'payment_method': forms.TextInput(attrs={'class': 'form-control'}),
+            'receipt_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'remarks': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class BedTransferForm(forms.ModelForm):
+    class Meta:
+        model = BedTransfer
+        fields = ['to_ward', 'to_bed', 'reason']
+        widgets = {
+            'to_ward': forms.Select(attrs={'class': 'form-select'}),
+            'to_bed': forms.Select(attrs={'class': 'form-select'}),
+            'reason': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['to_ward'].queryset = Ward.objects.filter(is_active=True)
+        self.fields['to_bed'].queryset = Bed.objects.filter(is_occupied=False)
+        self.fields['to_bed'].required = False
