@@ -217,3 +217,85 @@ Spot-checked key pages after login during implementation:
 The application is now a strong, integrated, production-prepared Hospital Management System foundation. It includes patient registration, barcode workflows, doctor referrals, department queues, pending billing, payment events, patient timeline, staff attendance, leave, payroll, admissions, discharge controls, insurance, lab/radiology verification and production deployment preparation.
 
 The system is ready for local acceptance testing and staged production configuration.
+
+## Additional Final Acceptance Verification
+
+Final acceptance checks were run after the reporting, payroll, attendance, ServiceOrder, WebSocket, Celery, and production-readiness updates.
+
+Verified with:
+
+```bash
+python manage.py check
+python manage.py migrate
+python manage.py test workflow
+```
+
+Result:
+
+```text
+System check identified no issues
+All migrations applied successfully
+Ran 6 workflow tests: OK
+```
+
+Spot-checked page loading after admin login:
+
+- Public website pages
+- Super Admin dashboard
+- Staff list
+- Staff attendance
+- Staff leave
+- Salary profiles
+- Salary generation
+- Salary payments
+- System readiness
+- Department management
+- Doctor management
+- Patient dashboard/search/list
+- Billing and Cash Counter
+- Laboratory dashboard and queue
+- Radiology dashboard and queue
+- Pharmacy dashboard and prescription queue
+- Admissions and wards/beds
+- Nursing dashboard
+- Operation Theatre dashboard
+- Blood Bank dashboard
+- Insurance dashboard
+- Finance dashboard
+- Reports
+- Workflow orders
+- Workflow payment events
+- Workflow department revenue
+- Referral queue
+- Medical Records dashboard
+
+All checked pages returned successfully.
+
+## Final Reporting and Export Status
+
+Implemented Excel and PDF export foundations for:
+
+- Registration reports
+- Department reports
+- Doctor reports
+- Cash Counter reports
+- Pharmacy reports
+- Laboratory reports
+- Nursing reports
+- Operation Theatre reports
+- Blood Bank reports
+- Staff attendance reports
+- Salary/payroll reports
+- Department revenue reports
+
+## Final Production Notes
+
+The code is prepared for production, but actual live deployment still requires real environment configuration:
+
+- Redis server URL for production WebSockets.
+- Celery worker and Celery beat processes.
+- Live eSewa merchant code and secret.
+- Fingerprint device SDK/API or CSV export format.
+- PostgreSQL database credentials if deploying on PostgreSQL.
+
+The project includes fallback/manual options so the workflows can be tested locally before live deployment.
