@@ -3,6 +3,7 @@ import datetime
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.decorators import laboratory_required, role_required
@@ -13,6 +14,8 @@ from documents.models import PatientDocument, DocumentCategory
 from laboratory.forms import LabResultForm, ManualLabRequestForm
 from patients.models import Patient
 from referrals.models import Referral
+from workflow.models import PatientTimeline
+from workflow.utils import add_timeline
 
 
 @laboratory_required
@@ -202,14 +205,20 @@ def update_result(request, pk):
                 patient_id_text=patient.patient_code,
             )
 
-            # Trigger Lab Report Uploaded notification
+            # Trigger Lab Report Uploaded notification back to the requesting doctor.
             if updated.status == RequestStatus.COMPLETED:
                 from accounts.utils import create_notification
+                target_user = None
+                if updated.consultation_id and updated.consultation.doctor and updated.consultation.doctor.user_account_id:
+                    target_user = updated.consultation.doctor.user_account
                 create_notification(
                     title="Lab Report Uploaded",
                     message=f"Lab report for {updated.test_name} has been uploaded for {patient.full_name}.",
-                    role=Role.DOCTOR,
+                    user=target_user,
+                    role=None if target_user else Role.DOCTOR,
+                    related_url=reverse('laboratory:print_report', args=[updated.pk]),
                 )
+                add_timeline(patient, PatientTimeline.EventType.LAB, f"Lab result completed: {updated.test_name}", updated.result_notes, actor=request.user, related_url=reverse('laboratory:print_report', args=[updated.pk]), source=updated)
 
             messages.success(request, 'Lab result updated.')
             return redirect('laboratory:queue')

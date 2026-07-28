@@ -16,6 +16,8 @@ from billing.forms import (
 from billing.models import Bill, BillItem, ReprintLog, PaymentMethod, RefundRequest, DiscountRequest
 from patients.models import Patient
 from website.models import HospitalService
+from workflow.utils import record_payment_event, add_timeline
+from workflow.models import PatientTimeline
 
 
 @cash_counter_required
@@ -217,6 +219,8 @@ def create_bill(request, patient_id):
                     s.save()
 
             bill.recalculate_total()
+            if bill.status == Bill.Status.PAID:
+                record_payment_event(bill, received_by=request.user, remarks='Bill created and paid')
 
             write_audit_log(
                 request, AuditLog.Action.PAYMENT,
@@ -284,6 +288,7 @@ def pay_selected_bills(request):
             bill.status = Bill.Status.PAID
             bill.cashier = request.user
             bill.save(update_fields=['payment_method', 'status', 'cashier'])
+            record_payment_event(bill, received_by=request.user, remarks='Cash Counter selected bill payment')
             count += 1
             write_audit_log(request, AuditLog.Action.PAYMENT, f"Pending bill paid: {bill.bill_number}", patient_id_text=bill.patient.patient_code, receipt_number=bill.bill_number, amount=bill.total_amount, payment_method=bill.get_payment_method_display())
             from accounts.utils import create_notification
@@ -304,6 +309,7 @@ def pay_pending_bill(request, pk):
         bill.status = Bill.Status.PAID
         bill.cashier = request.user
         bill.save(update_fields=['payment_method', 'status', 'cashier'])
+        record_payment_event(bill, received_by=request.user, remarks='Cash Counter pending bill payment')
         write_audit_log(
             request, AuditLog.Action.PAYMENT,
             f"Pending bill paid: {bill.bill_number} for {bill.patient.full_name}",

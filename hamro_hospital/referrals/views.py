@@ -12,6 +12,7 @@ from referrals.forms import ReferralForm
 from referrals.models import Referral
 from billing.models import Bill, BillItem
 from website.models import HospitalService
+from workflow.utils import create_orders_for_referral
 
 
 
@@ -69,6 +70,7 @@ def referral_create(request, patient_id=None, referral_type=None):
             if hasattr(request.user, 'doctor_profile'):
                 referral.referred_by = request.user.doctor_profile
             referral.save()
+            create_orders_for_referral(referral, actor=request.user)
             url = reverse('referrals:referral_detail', args=[referral.pk])
             target_role = REFERRAL_ROLE_MAP.get(referral.referral_type)
             if target_role:
@@ -152,9 +154,19 @@ def referral_generate_bill(request, pk):
         items = [line.strip() for line in (referral.requested_items or referral.reason).splitlines() if line.strip()]
         if not items:
             items = [referral.get_referral_type_display()]
-        for item in items:
-            svc, price = _service_price_for_item(item)
-            BillItem.objects.create(bill=bill, service=svc, service_name=item, unit_price=price, quantity=1)
+        orders = list(referral.service_orders.all())
+        if orders:
+            for order in orders:
+                svc, price = _service_price_for_item(order.service_name)
+                BillItem.objects.create(bill=bill, service=svc, service_name=order.service_name, unit_price=order.unit_price or price, quantity=order.quantity)
+                order.bill = bill
+                order.status = order.Status.PENDING_PAYMENT
+                order.payment_status = order.PaymentStatus.PENDING
+                order.save(update_fields=['bill', 'status', 'payment_status', 'updated_at'])
+        else:
+            for item in items:
+                svc, price = _service_price_for_item(item)
+                BillItem.objects.create(bill=bill, service=svc, service_name=item, unit_price=price, quantity=1)
         bill.recalculate_total()
         referral.related_bill = bill
         if referral.status == 'new':

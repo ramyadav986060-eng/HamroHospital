@@ -96,6 +96,9 @@
                 <div class="col-md-3 col-sm-6">
                     <a href="{% url 'patients:patient_section' patient.pk 'referrals' %}" class="btn btn-outline-primary w-100"><i class="bi bi-send d-block fs-4 mb-1"></i> Previous Referrals</a>
                 </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'timeline' %}" class="btn btn-outline-primary w-100"><i class="bi bi-list-check d-block fs-4 mb-1"></i> Timeline</a>
+                </div>
             </div>
         </div>
     </div>

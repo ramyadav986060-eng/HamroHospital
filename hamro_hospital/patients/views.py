@@ -330,6 +330,7 @@ def patient_section(request, pk, section):
         'visits': ('OPD Visit History', 'patients/_patient_visits.html'),
         'referrals': ('Previous Referrals', 'referrals/_patient_referrals.html'),
         'documents': ('Medical Records', 'documents/_patient_documents.html'),
+        'timeline': ('Patient Timeline', 'workflow/_patient_timeline.html'),
     }
     if section not in section_map:
         messages.error(request, 'Unknown patient section.')
@@ -379,6 +380,7 @@ def patient_section(request, pk, section):
         ],
         'referrals': [Role.SUPER_ADMIN, Role.DOCTOR, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.NURSING, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK],
         'documents': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.MEDICAL_RECORDS, Role.NURSING, Role.WARD_ADMISSION],
+        'timeline': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.MEDICAL_RECORDS, Role.NURSING, Role.WARD_ADMISSION],
     }
 
     if section in allowed_roles_for_section:
@@ -429,6 +431,8 @@ def patient_section(request, pk, section):
         context['records'] = Referral.objects.filter(patient=patient).select_related('referred_by', 'to_department', 'related_bill')
     elif section == 'documents':
         context['records'] = patient.documents.filter(is_active=True).select_related('uploaded_by')
+    elif section == 'timeline':
+        context['records'] = patient.timeline_events.select_related('actor').all()[:500]
 
     return render(request, section_template, context)
 

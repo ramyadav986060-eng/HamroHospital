@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'finance',
     'referrals',
     'medical_records',
+    'workflow.apps.WorkflowConfig',
 ]
 
 MIDDLEWARE = [

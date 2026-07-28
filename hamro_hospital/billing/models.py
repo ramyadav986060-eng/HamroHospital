@@ -50,9 +50,15 @@ class BillType(models.TextChoices):
 
 class Bill(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
+        DRAFT = 'draft', 'Draft'
+        PENDING = 'pending', 'Pending Payment'
+        PARTIAL = 'partial', 'Partially Paid'
         PAID = 'paid', 'Paid'
+        INSURANCE_PENDING = 'insurance_pending', 'Insurance Pending'
+        INSURANCE_APPROVED = 'insurance_approved', 'Insurance Approved'
+        REFUND_REQUESTED = 'refund_requested', 'Refund Requested'
         REFUNDED = 'refunded', 'Refunded'
+        CANCELLED = 'cancelled', 'Cancelled'
 
     bill_number = models.CharField(max_length=30, unique=True, editable=False, db_index=True)
     patient = models.ForeignKey('patients.Patient', on_delete=models.PROTECT, related_name='bills')
@@ -76,7 +82,7 @@ class Bill(models.Model):
     )
     insurance_coverage_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PAID)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PAID)
     barcode = models.ImageField(upload_to='billing/barcodes/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

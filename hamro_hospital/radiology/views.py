@@ -3,6 +3,7 @@ import datetime
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.decorators import radiology_required, role_required
@@ -13,6 +14,8 @@ from documents.models import PatientDocument, DocumentCategory
 from radiology.forms import RadiologyReportForm, ManualRadiologyRequestForm
 from patients.models import Patient
 from referrals.models import Referral
+from workflow.models import PatientTimeline
+from workflow.utils import add_timeline
 
 
 @radiology_required
@@ -183,14 +186,20 @@ def update_report(request, pk):
                 receipt_number=updated.radiology_number,
             )
 
-            # Trigger Radiology Report Uploaded notification
+            # Trigger Radiology Report Uploaded notification back to the requesting doctor.
             if updated.status == RequestStatus.COMPLETED:
                 from accounts.utils import create_notification
+                target_user = None
+                if updated.consultation_id and updated.consultation.doctor and updated.consultation.doctor.user_account_id:
+                    target_user = updated.consultation.doctor.user_account
                 create_notification(
                     title="Radiology Report Uploaded",
                     message=f"Radiology report for {updated.display_service_name} has been uploaded for {patient.full_name}.",
-                    role=Role.DOCTOR,
+                    user=target_user,
+                    role=None if target_user else Role.DOCTOR,
+                    related_url=reverse('radiology:print_report', args=[updated.pk]),
                 )
+                add_timeline(patient, PatientTimeline.EventType.RADIOLOGY, f"Radiology result completed: {updated.display_service_name}", updated.impression or updated.report_notes, actor=request.user, related_url=reverse('radiology:print_report', args=[updated.pk]), source=updated)
 
             messages.success(request, 'Radiology report updated.')
             return redirect('radiology:queue')
