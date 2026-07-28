@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
-from accounts.models import User, Role, HospitalSetting, StaffAttendance, StaffLeaveRequest
+from accounts.models import User, Role, HospitalSetting, StaffAttendance, StaffLeaveRequest, StaffSalaryProfile
 
 
 class StyledAuthenticationForm(AuthenticationForm):
@@ -112,6 +112,10 @@ class HospitalSettingForm(forms.ModelForm):
             'receipt_settings': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'print_settings': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'theme_color': forms.TextInput(attrs={'class': 'form-control', 'style': 'height: 38px;'}),
+            'staff_discount_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'staff_discount_percent': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'required_daily_working_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.25'}),
+            'default_weekend_days': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 
@@ -150,4 +154,21 @@ class StaffLeaveReviewForm(forms.ModelForm):
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
             'review_notes': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class StaffSalaryProfileForm(forms.ModelForm):
+    class Meta:
+        model = StaffSalaryProfile
+        fields = ['staff', 'bank_name', 'bank_account_name', 'bank_account_number', 'pan_number', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'overtime_rate_per_hour', 'is_active']
+        widgets = {
+            'staff': forms.Select(attrs={'class': 'form-select'}),
+            'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'bank_account_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'bank_account_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'pan_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'base_monthly_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'per_day_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'bonus_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'overtime_rate_per_hour': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

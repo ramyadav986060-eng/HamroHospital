@@ -20,6 +20,10 @@ urlpatterns = [
     path('staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
     path('staff/leave/<int:pk>/review/', views.staff_leave_review, name='staff_leave_review'),
     path('staff/api/lookup/', views.staff_lookup_api, name='staff_lookup_api'),
+    path('staff/salary/profiles/', views.staff_salary_profiles, name='staff_salary_profiles'),
+    path('staff/<int:staff_id>/salary-profile/', views.staff_salary_profile_edit, name='staff_salary_profile_edit'),
+    path('staff/salary/generate/', views.staff_salary_generate, name='staff_salary_generate'),
+    path('staff/salary/payments/', views.staff_salary_payments, name='staff_salary_payments'),
 
     path('audit-log/', views.audit_log_list, name='audit_log_list'),
     path('backups/', views.backup_list, name='backup_list'),

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from accounts.models import User, AuditLog, Notification, HospitalSetting, StaffAttendance, StaffLeaveRequest
+from accounts.models import User, AuditLog, Notification, HospitalSetting, StaffAttendance, StaffLeaveRequest, StaffSalaryProfile, StaffSalaryPayment
 
 
 @admin.register(User)
@@ -13,7 +13,7 @@ class CustomUserAdmin(UserAdmin):
         ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
 
 
@@ -30,7 +30,7 @@ class HospitalSettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone', 'emergency_contact', 'email', 'updated_display')
     fieldsets = (
         ('Basic Information', {'fields': ('name', 'logo', 'address', 'phone', 'emergency_contact', 'email', 'website')}),
-        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency')}),
+        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency', 'staff_discount_enabled', 'staff_discount_percent', 'required_daily_working_hours', 'default_weekend_days')}),
         ('Display / Printing', {'fields': ('opening_hours', 'footer_information', 'receipt_settings', 'print_settings', 'theme_color', 'default_timezone')}),
         ('Social Links', {'fields': ('facebook_url', 'twitter_url')}),
     )
@@ -73,3 +73,19 @@ class StaffLeaveRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', 'leave_type', 'start_date')
     search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name', 'reason')
     readonly_fields = ('created_at', 'reviewed_at')
+
+
+@admin.register(StaffSalaryProfile)
+class StaffSalaryProfileAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'bank_name', 'bank_account_number', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'is_active')
+    list_filter = ('is_active', 'bank_name')
+    search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name', 'bank_account_number')
+
+
+@admin.register(StaffSalaryPayment)
+class StaffSalaryPaymentAdmin(admin.ModelAdmin):
+    list_display = ('staff', 'year', 'month', 'present_days', 'leave_days', 'absent_days', 'net_amount', 'status')
+    list_filter = ('year', 'month', 'status')
+    search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name')
+    readonly_fields = ('created_at',)
+

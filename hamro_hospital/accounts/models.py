@@ -226,6 +226,8 @@ class HospitalSetting(models.Model):
     theme_color = models.CharField(max_length=20, default='#1a365d')
     staff_discount_enabled = models.BooleanField(default=True)
     staff_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=90)
+    required_daily_working_hours = models.DecimalField(max_digits=4, decimal_places=2, default=9)
+    default_weekend_days = models.CharField(max_length=30, default='sat', help_text='Comma-separated weekday codes for default holidays, e.g. sat or fri,sat')
 
     class Meta:
         db_table = 'accounts_hospital_setting'
@@ -273,7 +275,11 @@ class StaffAttendance(models.Model):
         if self.check_in and self.check_out:
             seconds = max(0, (self.check_out - self.check_in).total_seconds())
             self.total_working_hours = round(seconds / 3600, 2)
-            if self.total_working_hours >= 6:
+            try:
+                required_hours = HospitalSetting.get_solo().required_daily_working_hours
+            except Exception:
+                required_hours = 9
+            if self.total_working_hours >= required_hours:
                 self.status = self.Status.PRESENT
             elif self.total_working_hours > 0:
                 self.status = self.Status.PARTIAL
@@ -329,3 +335,70 @@ class StaffLeaveRequest(models.Model):
         self.reviewed_at = timezone.now()
         self.review_notes = notes
         self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_notes'])
+
+
+class StaffSalaryProfile(models.Model):
+    staff = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salary_profile')
+    bank_name = models.CharField(max_length=150, blank=True)
+    bank_account_name = models.CharField(max_length=150, blank=True)
+    bank_account_number = models.CharField(max_length=80, blank=True)
+    pan_number = models.CharField(max_length=80, blank=True)
+    base_monthly_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    per_day_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bonus_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    overtime_rate_per_hour = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'accounts_staff_salary_profile'
+
+    def __str__(self):
+        return f'Salary profile - {self.staff.staff_id}'
+
+
+class StaffSalaryPayment(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
+        APPROVED = 'approved', 'Approved'
+        PAID = 'paid', 'Paid'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    staff = models.ForeignKey(User, on_delete=models.CASCADE, related_name='salary_payments')
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField()
+    working_days = models.PositiveIntegerField(default=0)
+    present_days = models.PositiveIntegerField(default=0)
+    leave_days = models.PositiveIntegerField(default=0)
+    absent_days = models.PositiveIntegerField(default=0)
+    base_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bonus_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    overtime_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.DRAFT)
+    prepared_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='salary_payments_prepared')
+    paid_at = models.DateTimeField(null=True, blank=True)
+    remarks = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'accounts_staff_salary_payment'
+        unique_together = [('staff', 'year', 'month')]
+        ordering = ['-year', '-month', 'staff__first_name']
+        indexes = [models.Index(fields=['year', 'month', 'status']), models.Index(fields=['staff', 'year', 'month'])]
+
+    def __str__(self):
+        return f'{self.staff.staff_id} salary {self.year}-{self.month:02d}'
+
+    def calculate(self):
+        profile = getattr(self.staff, 'salary_profile', None)
+        if not profile:
+            return
+        if profile.per_day_salary:
+            self.base_amount = profile.per_day_salary * self.present_days
+            self.deductions = profile.per_day_salary * self.absent_days
+        else:
+            self.base_amount = profile.base_monthly_salary
+        self.bonus_amount = profile.bonus_amount
+        self.net_amount = self.base_amount + self.bonus_amount + self.overtime_amount - self.deductions

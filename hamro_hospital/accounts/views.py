@@ -382,3 +382,67 @@ def staff_lookup_api(request):
         'designation': staff.designation,
         'barcode_url': staff.staff_barcode.url if staff.staff_barcode else '',
     })
+
+@super_admin_required
+def staff_salary_profiles(request):
+    from accounts.models import StaffSalaryProfile
+    for staff in User.objects.filter(is_active_staff=True):
+        StaffSalaryProfile.objects.get_or_create(staff=staff)
+    profiles = StaffSalaryProfile.objects.select_related('staff', 'staff__department').all()
+    return render(request, 'accounts/staff_salary_profiles.html', {'profiles': profiles})
+
+
+@super_admin_required
+def staff_salary_profile_edit(request, staff_id):
+    from accounts.forms import StaffSalaryProfileForm
+    from accounts.models import StaffSalaryProfile
+    staff = get_object_or_404(User, pk=staff_id)
+    profile, _ = StaffSalaryProfile.objects.get_or_create(staff=staff)
+    if request.method == 'POST':
+        form = StaffSalaryProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Salary profile saved.')
+            return redirect('accounts:staff_salary_profiles')
+    else:
+        form = StaffSalaryProfileForm(instance=profile)
+    return render(request, 'accounts/staff_salary_profile_form.html', {'form': form, 'staff_member': staff})
+
+
+@super_admin_required
+def staff_salary_generate(request):
+    import calendar
+    from django.utils import timezone
+    from accounts.models import StaffAttendance, StaffSalaryPayment
+    year = int(request.POST.get('year') or request.GET.get('year') or timezone.now().year)
+    month = int(request.POST.get('month') or request.GET.get('month') or timezone.now().month)
+    if request.method == 'POST':
+        _, days_in_month = calendar.monthrange(year, month)
+        count = 0
+        for staff in User.objects.filter(is_active_staff=True).select_related('salary_profile'):
+            records = StaffAttendance.objects.filter(staff=staff, date__year=year, date__month=month)
+            payment, _ = StaffSalaryPayment.objects.get_or_create(staff=staff, year=year, month=month, defaults={'prepared_by': request.user})
+            payment.working_days = days_in_month
+            payment.present_days = records.filter(status=StaffAttendance.Status.PRESENT).count()
+            payment.leave_days = records.filter(status=StaffAttendance.Status.LEAVE).count()
+            payment.absent_days = max(0, days_in_month - payment.present_days - payment.leave_days)
+            payment.prepared_by = request.user
+            payment.calculate()
+            payment.save()
+            count += 1
+        messages.success(request, f'Salary generated for {count} staff for {year}-{month:02d}.')
+        return redirect('accounts:staff_salary_payments')
+    return render(request, 'accounts/staff_salary_generate.html', {'year': year, 'month': month})
+
+
+@super_admin_required
+def staff_salary_payments(request):
+    from accounts.models import StaffSalaryPayment
+    payments = StaffSalaryPayment.objects.select_related('staff', 'prepared_by').all()
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    if year:
+        payments = payments.filter(year=year)
+    if month:
+        payments = payments.filter(month=month)
+    return render(request, 'accounts/staff_salary_payments.html', {'payments': payments, 'year': year or '', 'month': month or ''})
