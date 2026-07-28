@@ -1,0 +1,194 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}New Bill - {{ patient.full_name }}{% endblock %}
+{% block page_title %}New Bill - {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4">
+    <div class="row g-3 align-items-center">
+        <div class="col-auto">
+            {% if patient.qr_code %}
+                <img src="{{ patient.qr_code.url }}" alt="QR Code" style="width:90px;height:90px;">
+            {% endif %}
+        </div>
+        <div class="col">
+            <h6 class="fw-bold mb-1">{{ patient.full_name }} <span class="text-muted">({{ patient.patient_code }})</span></h6>
+            <div class="text-muted small">{{ patient.get_gender_display }} &middot; Age {{ patient.age }} &middot; {{ patient.phone_number }} &middot; {{ patient.district.name }}</div>
+            <div class="mt-2">
+                {% if patient.has_insurance %}
+                    <span class="badge bg-info text-dark">Insured: {{ patient.insurance_company }}{% if patient.insurance_category %} ({{ patient.insurance_category.name }} - {{ patient.insurance_category.coverage_percent }}% covered){% endif %}</span>
+                {% else %}
+                    <span class="badge bg-secondary">No Insurance</span>
+                {% endif %}
+                {% if current_admission %}
+                    <span class="badge bg-warning text-dark">Currently Admitted: {{ current_admission.ward.name }}{% if current_admission.bed %} - Bed {{ current_admission.bed.bed_number }}{% endif %}</span>
+                {% else %}
+                    <span class="badge bg-light text-dark border">Not Admitted</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if billing_history %}
+    <hr>
+    <h6 class="fw-bold mb-2 small text-uppercase text-muted">Previous Billing History</h6>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Bill No.</th><th>Type</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for bill in billing_history %}
+                <tr>
+                    <td>{{ bill.bill_number }}</td>
+                    <td>{{ bill.get_bill_type_display }}</td>
+                    <td>NPR {{ bill.total_amount }}</td>
+                    <td>{{ bill.get_payment_method_display }}</td>
+                    <td>{{ bill.get_status_display }}</td>
+                    <td>{{ bill.created_at|date:"Y-m-d" }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% if patient.has_insurance %}
+<div class="alert alert-info">
+    Insurance on file: <strong>{{ patient.insurance_company }}</strong> - Policy {{ patient.insurance_policy_number }}
+</div>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="bill_type" value="{{ bill_type }}">
+    {% if admission_id %}<input type="hidden" name="admission_id" value="{{ admission_id }}">{% endif %}
+    {% if surgery_id %}<input type="hidden" name="surgery_id" value="{{ surgery_id }}">{% endif %}
+    {% if bill_type != 'opd' %}<div class="alert alert-secondary">Billing type: <strong>{{ bill_type|upper }}</strong></div>{% endif %}
+
+    {% if pending_visits or pending_labs or pending_radiologies or pending_surgeries %}
+    <div class="tuh-card p-4 mb-4 border border-warning shadow-sm">
+        <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-exclamation-triangle"></i> Pending Doctor Orders & Payments</h6>
+        <p class="text-muted small">The attending doctor has requested the following orders or outstanding visit payments. Check the boxes to add them directly to this bill.</p>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>Ordered Item</th>
+                        <th>Type</th>
+                        <th>Est. Price / Fee</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in pending_visits %}
+                    <tr>
+                        <td><input type="checkbox" name="pending_visit" value="{{ v.id }}" class="form-check-input border-warning" checked></td>
+                        <td><strong>OPD Registration Fee</strong> <small class="text-muted">({{ v.receipt_number }})</small></td>
+                        <td><span class="badge bg-secondary">Registration</span></td>
+                        <td>NPR {{ v.registration_fee }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for l in pending_labs %}
+                    <tr>
+                        <td><input type="checkbox" name="pending_lab" value="{{ l.id }}" class="form-check-input border-warning" checked></td>
+                        <td><strong>{{ l.test_name }}</strong> <small class="text-muted">(Requested: {{ l.requested_at|date:"Y-m-d" }})</small></td>
+                        <td><span class="badge bg-info text-dark">Laboratory</span></td>
+                        <td>NPR 300 <small class="text-muted">(Standard)</small></td>
+                    </tr>
+                    {% endfor %}
+                    {% for r in pending_radiologies %}
+                    <tr>
+                        <td><input type="checkbox" name="pending_radiology" value="{{ r.id }}" class="form-check-input border-warning" checked></td>
+                        <td><strong>{{ r.display_service_name }}</strong> <small class="text-muted">(Requested: {{ r.requested_at|date:"Y-m-d" }})</small></td>
+                        <td><span class="badge bg-primary">Radiology</span></td>
+                        <td>NPR 500 <small class="text-muted">(Standard)</small></td>
+                    </tr>
+                    {% endfor %}
+                    {% for s in pending_surgeries %}
+                    <tr>
+                        <td><input type="checkbox" name="pending_surgery" value="{{ s.id }}" class="form-check-input border-warning" checked></td>
+                        <td><strong>{{ s.surgery_name }}</strong> <small class="text-muted">(Scheduled: {{ s.scheduled_datetime|date:"Y-m-d H:i" }})</small></td>
+                        <td><span class="badge bg-danger">Operation</span></td>
+                        <td>NPR {{ s.charge_amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if counter_department %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> You are billing as the <strong>{{ counter_department|title }} Counter</strong>. Only {{ counter_department }} services can be billed from this screen - use the main Cashier for OPD, pharmacy, admission, or other payments.
+    </div>
+    {% else %}
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Select Services</h6>
+        <input type="text" id="service-search" class="form-control mb-3"
+               placeholder="Type to search services, e.g. &quot;X&quot; for X-Ray, &quot;U&quot; for Ultrasound, &quot;B&quot; for Blood Test..."
+               autocomplete="off">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="services-table">
+                <thead><tr><th></th><th>Service</th><th>Price (NPR)</th><th>Quantity</th></tr></thead>
+                <tbody>
+                {% for service in services %}
+                    <tr class="service-row" data-service-name="{{ service.name|lower }}" data-service-code="{{ service.service_code|lower }}">
+                        <td><input type="checkbox" name="service_id" value="{{ service.id }}" class="form-check-input"></td>
+                        <td>{{ service.name }} <small class="text-muted">({{ service.service_code }})</small></td>
+                        <td>{{ service.price }}</td>
+                        <td><input type="number" name="quantity_{{ service.id }}" value="1" min="1" class="form-control form-control-sm" style="width:80px;"></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted">No services configured. Ask Super Admin to add services in Django Admin.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p id="no-service-match" class="text-muted text-center" style="display:none;">No matching services.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-credit-card"></i> Payment</h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Payment Method</label>
+                {{ payment_form.payment_method }}
+            </div>
+            {% if not counter_department %}
+            <div class="col-md-6">
+                <label class="form-label">Counter Name</label>
+                {{ payment_form.counter_name }}
+            </div>
+            {% endif %}
+            <div class="col-md-6" id="insurance-company-wrapper">
+                <label class="form-label">Insurance Company (if applicable)</label>
+                {{ payment_form.insurance_company }}
+            </div>
+            <div class="col-md-6" id="insurance-coverage-wrapper">
+                <label class="form-label">Insurance Coverage Amount</label>
+                {{ payment_form.insurance_coverage_amount }}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Create Bill &amp; Print Receipt</button>
+    <a href="{% url 'billing:patient_lookup' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchBox = document.getElementById('service-search');
+    const rows = document.querySelectorAll('#services-table .service-row');
+    const noMatch = document.getElementById('no-service-match');
+    if (!searchBox) return;
+    searchBox.addEventListener('input', function () {
+        const q = searchBox.value.trim().toLowerCase();
+        let visibleCount = 0;
+        rows.forEach(function (row) {
+            const matches = !q || row.dataset.serviceName.includes(q) || row.dataset.serviceCode.includes(q);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount += 1;
+        });
+        if (noMatch) noMatch.style.display = visibleCount === 0 ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

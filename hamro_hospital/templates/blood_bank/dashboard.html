@@ -1,0 +1,67 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Blood Bank - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Blood Bank Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'blood_bank:inventory_list' %}"><i class="bi bi-droplet"></i> Inventory</a>
+    <a class="nav-link" href="{% url 'blood_bank:unit_add' %}"><i class="bi bi-plus-circle"></i> Add Blood Unit</a>
+    <a class="nav-link" href="{% url 'blood_bank:patient_lookup' %}"><i class="bi bi-search"></i> Issue Blood</a>
+    <a class="nav-link" href="{% url 'blood_bank:request_queue' %}"><i class="bi bi-clipboard2-pulse"></i> Blood Requests</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <a href="{% url 'blood_bank:request_queue' %}?status=pending" class="text-decoration-none">
+        <div class="stat-card orange"><i class="bi bi-hourglass-split fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_requests_count }}</h2><small>Pending Requests</small></div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green"><i class="bi bi-droplet-fill fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ available_count }}</h2><small>Available Units</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card orange"><i class="bi bi-exclamation-triangle fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ near_expiry_count }}</h2><small>Near Expiry (7 days)</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-arrow-up-right fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ issued_today_count }}</h2><small>Issued Today</small></div>
+    </div>
+</div>
+
+{% if pending_requests %}
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-clipboard2-pulse"></i> Pending Blood Requests</h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Group / Component</th><th>Units</th><th>Urgency</th><th>Requested By</th><th></th></tr></thead>
+            <tbody>
+            {% for r in pending_requests %}
+                <tr>
+                    <td>{{ r.patient.full_name }} <small class="text-muted">({{ r.patient.patient_code }})</small></td>
+                    <td>{{ r.blood_group_needed }} - {{ r.get_component_display }}</td>
+                    <td>{{ r.units_needed }}</td>
+                    <td><span class="badge badge-{% if r.urgency == 'emergency' %}danger{% elif r.urgency == 'urgent' %}warning{% else %}success{% endif %}-soft">{{ r.get_urgency_display }}</span></td>
+                    <td class="small">{{ r.doctor_display }}</td>
+                    <td><a href="{% url 'blood_bank:issue_blood' r.patient.pk %}?request_id={{ r.pk }}" class="btn btn-sm btn-primary">Issue Blood</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="tuh-card p-4">
+    <h5 class="mb-3">Stock by Blood Group</h5>
+    <div class="row g-3">
+        {% for group, count in stock_by_group.items %}
+        <div class="col-md-3 col-sm-6">
+            <div class="border rounded p-3 text-center">
+                <h4 class="fw-bold mb-0">{{ group }}</h4>
+                <small class="text-muted">{{ count }} unit{{ count|pluralize }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

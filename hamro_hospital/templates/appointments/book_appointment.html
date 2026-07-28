@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Hospital Extension Service - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-1">Hospital Extension Service</h1>
+    <p class="text-center text-muted mb-4">Book your visit online in advance — separate from walk-in OPD registration.</p>
+    <form method="post" novalidate class="mx-auto" style="max-width:800px;">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>Please fix the following:</strong>
+            <ul class="mb-0">
+                {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Your Details</h6>
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">First Name *</label>{{ form.first_name }}</div>
+                <div class="col-md-6"><label class="form-label">Last Name *</label>{{ form.last_name }}</div>
+                <div class="col-md-4"><label class="form-label">Gender *</label>{{ form.gender }}</div>
+                <div class="col-md-4"><label class="form-label">Age</label>{{ form.age }}</div>
+                <div class="col-md-4"><label class="form-label">Or Date of Birth</label>{{ form.date_of_birth }}</div>
+                <div class="col-md-6"><label class="form-label">Phone Number *</label>{{ form.phone_number }}</div>
+                <div class="col-md-6"><label class="form-label">Email</label>{{ form.email }}</div>
+                <div class="col-md-4"><label class="form-label">District *</label>{{ form.district }}</div>
+                <div class="col-md-4"><label class="form-label">Municipality</label>{{ form.municipality }}</div>
+                <div class="col-md-4"><label class="form-label">Ward Number</label>{{ form.ward_number }}</div>
+                <div class="col-md-4"><label class="form-label">Tole / Street</label>{{ form.local_address }}</div>
+            </div>
+        </div>
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Appointment Details</h6>
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">Department *</label>{{ form.department }}</div>
+                <div class="col-md-4"><label class="form-label">Doctor</label>{{ form.doctor }}</div>
+                <div class="col-md-4"><label class="form-label">Patient Type *</label>{{ form.patient_type }}</div>
+                <div class="col-md-6"><label class="form-label">Preferred Date *</label>{{ form.preferred_date }}</div>
+                <div class="col-md-6"><label class="form-label">Preferred Time</label>{{ form.preferred_time }}</div>
+                <div class="col-12"><label class="form-label">Chief Complaint</label>{{ form.chief_complaint }}</div>
+            </div>
+        </div>
+
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-wallet2"></i> Choose Payment Method</h6>
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label">Preferred Payment Method *</label>
+                    {{ form.payment_method }}
+                    <div class="form-text text-muted" style="font-size: 0.75rem;">Choose eSewa for instant online payment, or "Cash on Arrival" to pay physically when you arrive.</div>
+                </div>
+            </div>
+            <div class="alert alert-info mt-3 mb-0" id="fee-alert-box">
+                Registration Fee: <strong>NPR <span id="fee-display" data-new-fee="{{ new_fee }}" data-old-fee="{{ old_fee }}">{{ new_fee }}</span></strong>
+                <small class="d-block text-muted" id="payment-explanation">Paid securely online via our secure checkout in the next step.</small>
+            </div>
+        </div>
+
+        <div id="doctor-availability" class="alert alert-secondary mt-3 mb-4 d-none">
+            <strong>Available:</strong> <span id="doctor-days"></span>
+            &middot; <span id="doctor-hours"></span>
+            &middot; Consultation Fee: NPR <span id="doctor-fee"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-submit-booking"><i class="bi bi-credit-card"></i> Proceed to Online Payment</button>
+    </form>
+</section>
+<script>
+(function () {
+    var deptField = document.getElementById('id_department');
+    var doctorField = document.getElementById('id_doctor');
+    var dateField = document.getElementById('id_preferred_date');
+    var infoBox = document.getElementById('doctor-availability');
+    var payMethodField = document.getElementById('id_payment_method');
+    var submitBtn = document.getElementById('btn-submit-booking');
+    var explainText = document.getElementById('payment-explanation');
+    var dayNames = {sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat'};
+
+    if (dateField) {
+        var today = new Date().toISOString().split('T')[0];
+        dateField.setAttribute('min', today);
+    }
+
+    var allDoctorOptions = doctorField ? Array.prototype.slice.call(doctorField.options) : [];
+
+    function filterDoctorsByDepartment() {
+        if (!deptField || !doctorField) return;
+        var deptId = deptField.value;
+        doctorField.innerHTML = '';
+        allDoctorOptions.forEach(function (opt) {
+            if (!opt.value || !deptId || opt.getAttribute('data-department') === deptId) {
+                doctorField.appendChild(opt.cloneNode(true));
+            }
+        });
+        updateDoctorInfo();
+    }
+
+    function updateDoctorInfo() {
+        if (!doctorField || !infoBox) return;
+        var selected = doctorField.options[doctorField.selectedIndex];
+        if (!selected || !selected.value) {
+            infoBox.classList.add('d-none');
+            return;
+        }
+        var days = (selected.getAttribute('data-days') || '').split(',').filter(Boolean)
+            .map(function (d) { return dayNames[d] || d; }).join(', ');
+        var start = selected.getAttribute('data-start') || '';
+        var end = selected.getAttribute('data-end') || '';
+        var fee = selected.getAttribute('data-fee') || '0';
+        document.getElementById('doctor-days').textContent = days || 'Not specified';
+        document.getElementById('doctor-hours').textContent = (start && end) ? (start + ' - ' + end) : 'Hours not specified';
+        document.getElementById('doctor-fee').textContent = fee;
+        infoBox.classList.remove('d-none');
+    }
+
+    function updatePaymentUI() {
+        if (!payMethodField || !submitBtn || !explainText) return;
+        var method = payMethodField.value;
+        if (method === 'cash') {
+            submitBtn.innerHTML = '<i class="bi bi-calendar-check"></i> Book Appointment (Pay Cash on Arrival)';
+            explainText.textContent = 'You will pay the registration fee physically at the Registration Counter when you arrive.';
+        } else {
+            submitBtn.innerHTML = '<i class="bi bi-credit-card"></i> Proceed to Online Payment';
+            explainText.textContent = 'Paid securely online via our secure checkout in the next step.';
+        }
+    }
+
+    if (deptField) {
+        deptField.addEventListener('change', filterDoctorsByDepartment);
+        filterDoctorsByDepartment();
+    }
+    if (doctorField) {
+        doctorField.addEventListener('change', updateDoctorInfo);
+    }
+    if (payMethodField) {
+        payMethodField.addEventListener('change', updatePaymentUI);
+        updatePaymentUI();
+    }
+})();
+</script>
+{% endblock %}

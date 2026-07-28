@@ -1,0 +1,41 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Finance - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Finance Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'finance:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'billing:refund_review_list' %}"><i class="bi bi-arrow-counterclockwise"></i> Refund Requests {% if pending_refunds_count %}<span class="badge bg-danger">{{ pending_refunds_count }}</span>{% endif %}</a>
+    <a class="nav-link" href="{% url 'billing:discount_review_list' %}"><i class="bi bi-percent"></i> Discount Requests {% if pending_discounts_count %}<span class="badge bg-warning text-dark">{{ pending_discounts_count }}</span>{% endif %}</a>
+    <a class="nav-link" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Reports</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card green"><i class="bi bi-cash-coin fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total }}</h2><small>Today's Revenue</small></div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ month_total }}</h2><small>This Month's Revenue</small></div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card orange"><i class="bi bi-arrow-counterclockwise fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_refunds_count }}</h2><small>Pending Refunds</small></div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card orange"><i class="bi bi-percent fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_discounts_count }}</h2><small>Pending Discounts</small></div>
+    </div>
+</div>
+<div class="tuh-card p-4">
+    <h5 class="mb-3">Revenue by Bill Type (This Month)</h5>
+    <div class="row g-3">
+        {% for bt, total in revenue_by_type.items %}
+        <div class="col-md-2 col-sm-4">
+            <div class="border rounded p-3 text-center">
+                <div class="text-uppercase small text-muted">{{ bt }}</div>
+                <strong>NPR {{ total }}</strong>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Pharmacy Report{% endblock %}
+{% block page_title %}Pharmacy Report{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link " href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Dashboard</a>
+    <a class="nav-link " href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> Registrations</a>
+    <a class="nav-link " href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link " href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link " href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> Cash Counters</a>
+    <a class="nav-link active" href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> Pharmacy</a>
+    <a class="nav-link " href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> Laboratory</a>
+    <a class="nav-link " href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> Nursing</a>
+    <a class="nav-link " href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> Operation Theatre</a>
+    <a class="nav-link " href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> Blood Bank</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="mb-3 text-end"><a href="{% url 'reports:pharmacy_report' %}?export=excel" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Export Excel</a></div>
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card blue"><h6>Total Sales</h6><h3 class="fw-bold">{{ total_sales }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card green click-amount-card" onclick="showFullValue('Total Revenue', 'NPR {{total_revenue|floatformat:2}}')"><h6>Total Revenue</h6><h3 class="fw-bold">NPR {{total_revenue|short_amount}}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card orange click-amount-card" onclick="showFullValue('Cash', 'NPR {{totals_by_method.cash|floatformat:2}}')"><h6>Cash</h6><h3 class="fw-bold">NPR {{totals_by_method.cash|short_amount}}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card gray click-amount-card" onclick="showFullValue('Insurance', 'NPR {{totals_by_method.insurance|floatformat:2}}')"><h6>Insurance</h6><h3 class="fw-bold">NPR {{totals_by_method.insurance|short_amount}}</h3></div></div>
+</div>
+{% endblock %}

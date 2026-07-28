@@ -1,0 +1,80 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Documents - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Documents{% endblock %}
+{% block portal_content %}
+<form method="get" class="mb-3">
+    <select name="category" class="form-select" style="max-width: 320px;" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for value, label in categories %}<option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle table-responsive-stack">
+            <thead><tr><th>Title</th><th>Category</th><th>Department</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            {% for doc in documents %}
+                <tr>
+                    <td data-label="Title"><span class="text-truncate-cell" title="{{ doc.title }}">{{ doc.title }}</span></td>
+                    <td data-label="Category"><span class="badge badge-info-soft">{{ doc.get_category_display }}</span></td>
+                    <td data-label="Department">{{ doc.department_note|default:"—" }}</td>
+                    <td data-label="Date" class="small text-muted">{{ doc.uploaded_at|date:"M d, Y H:i" }}</td>
+                    <td data-label="Actions" class="text-nowrap">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal" data-bs-target="#docViewerModal"
+                                data-doc-title="{{ doc.title }}"
+                                data-doc-url="{% url 'patient_portal:my_document_download' doc.pk %}"
+                                title="Preview this document">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                        <a href="{% url 'patient_portal:my_document_download' doc.pk %}" class="btn btn-sm btn-outline-secondary" title="Download to your device">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No documents on file yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Shared document preview modal -->
+<div class="modal fade details-modal" id="docViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="doc-viewer">
+                <div class="doc-viewer-toolbar">
+                    <i class="bi bi-file-earmark-text icon-md text-primary"></i>
+                    <span class="doc-title" id="docViewerTitle">Document</span>
+                    <div class="doc-actions">
+                        <a href="#" id="docViewerDownload" class="btn btn-sm btn-primary" title="Download"><i class="bi bi-download"></i> Download</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" title="Close">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </button>
+                    </div>
+                </div>
+                <iframe id="docViewerFrame" class="doc-viewer-frame" src="about:blank"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modal = document.getElementById('docViewerModal');
+    if (!modal) return;
+    modal.addEventListener('show.bs.modal', function (event) {
+        var btn = event.relatedTarget;
+        var url = btn.getAttribute('data-doc-url');
+        var title = btn.getAttribute('data-doc-title');
+        document.getElementById('docViewerTitle').textContent = title;
+        document.getElementById('docViewerDownload').setAttribute('href', url);
+        document.getElementById('docViewerFrame').setAttribute('src', url);
+    });
+    modal.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('docViewerFrame').setAttribute('src', 'about:blank');
+    });
+});
+</script>
+{% endblock %}

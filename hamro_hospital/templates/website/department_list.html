@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Departments - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">Our Departments</h1>
+    <div class="row g-4">
+        {% for dept in departments %}
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'website:department_detail' dept.slug %}" class="text-decoration-none">
+                <div class="tuh-card p-4 h-100">
+                    <div class="tuh-icon-circle mb-3"><i class="{{ dept.icon_class|default:'bi bi-hospital' }}"></i></div>
+                    <h5 class="text-dark">{{ dept.name }}</h5>
+                    <p class="text-muted small">{{ dept.description|truncatewords:20 }}</p>
+                    <span class="badge badge-success-soft">NPR {{ dept.consultation_fee }} consultation</span>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No departments published yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

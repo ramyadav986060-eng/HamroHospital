@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ department.name }} - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <div class="tuh-card p-4 p-md-5 mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="tuh-icon-circle" style="width:70px;height:70px;font-size:2rem;"><i class="{{ department.icon_class|default:'bi bi-hospital' }}"></i></div>
+            <div>
+                <h1 class="fw-bold mb-0">{{ department.name }}</h1>
+                {% if units %}
+                    <div class="mt-1">
+                        {% for unit in units %}<span class="badge badge-blue-soft me-1">{{ unit.name }}</span>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <p class="text-muted">{{ department.description }}</p>
+        <a href="{% url 'appointments:book_appointment' %}?department={{ department.id }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar-check"></i> Book an Appointment in {{ department.name }}
+        </a>
+    </div>
+
+    <h4 class="fw-bold mb-3">Available Doctors</h4>
+    <div class="row g-4 mb-5">
+        {% for doctor in doctors %}
+        <div class="col-md-4">
+            <div class="tuh-card p-4 text-center h-100">
+                {% if doctor.photo %}
+                    <img src="{{ doctor.photo.url }}" class="rounded-circle mb-3" width="80" height="80" style="object-fit:cover;" alt="">
+                {% else %}
+                    <div class="tuh-icon-circle mx-auto mb-3"><i class="bi bi-person"></i></div>
+                {% endif %}
+                <h6 class="mb-0">Dr. {{ doctor.full_name }}</h6>
+                <small class="text-muted d-block mb-1">{{ doctor.specialization }}</small>
+                {% if doctor.unit %}<span class="badge badge-secondary-soft mb-2">{{ doctor.unit.name }}</span>{% endif %}
+                <div><a href="{% url 'website:doctor_detail' doctor.pk %}" class="btn btn-sm btn-outline-primary">View Profile</a></div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No doctors currently listed for this department.</p>
+        {% endfor %}
+    </div>
+
+    {% if doctors %}
+    <h4 class="fw-bold mb-3"><i class="bi bi-calendar-week"></i> OPD Schedule</h4>
+    <div class="tuh-card p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Doctor</th><th>Unit</th>
+                        <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in doctors %}
+                    <tr>
+                        <td><span class="text-truncate-cell" title="Dr. {{ doctor.full_name }}">Dr. {{ doctor.full_name }}</span></td>
+                        <td>{{ doctor.unit.name|default:"—" }}</td>
+                        {% for day in doctor.weekly_schedule %}
+                        <td class="small text-center" data-bs-toggle="tooltip" title="{% if day.schedule %}{{ day.schedule.start_time|time:'g:i A' }} - {{ day.schedule.end_time|time:'g:i A' }}{% else %}Not available{% endif %}">
+                            {% if day.schedule %}
+                                <span class="badge badge-success-soft">{{ day.schedule.start_time|time:"g:iA" }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="text-muted small mt-2"><i class="bi bi-info-circle"></i> Schedule is indicative — please call ahead to confirm, especially around public holidays.</p>
+    {% endif %}
+</section>
+{% endblock %}

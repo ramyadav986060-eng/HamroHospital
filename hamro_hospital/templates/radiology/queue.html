@@ -1,0 +1,58 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Radiology Queue{% endblock %}
+{% block page_title %}Radiology Request Queue{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'radiology:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'radiology:queue' %}"><i class="bi bi-list-check"></i> Request Queue</a>
+    <a class="nav-link" href="{% url 'radiology:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All (except completed)</option>
+            {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="col-auto"><input type="text" id="id_q" name="q" value="{{ q }}" class="form-control" placeholder="Patient ID, name, or number"></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Number</th><th>Patient</th><th>Service</th><th>Doctor / Referred By</th><th>Urgency</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for r in requests %}
+                <tr>
+                    <td>{{ r.radiology_number }}</td>
+                    <td>{{ r.patient_obj.full_name }} <small class="text-muted">({{ r.patient_obj.patient_code }})</small></td>
+                    <td>{{ r.display_service_name }}{% if r.is_manual %} <span class="badge badge-secondary-soft">Walk-in</span>{% endif %}</td>
+                    <td class="small">{{ r.doctor_display }}</td>
+                    <td><span class="badge badge-{% if r.urgency == 'stat' %}danger{% elif r.urgency == 'urgent' %}warning{% else %}success{% endif %}-soft">{{ r.get_urgency_display }}</span></td>
+                    <td><span class="badge badge-{% if r.status == 'requested' %}orange{% elif r.status == 'completed' %}green{% else %}blue{% endif %}-soft">{{ r.get_status_display }}</span></td>
+                    <td class="d-flex gap-1">
+                        {% if r.status == 'requested' %}
+                            <a href="#" data-bs-toggle="collapse" data-bs-target="#detail-{{ r.pk }}" class="btn btn-sm btn-outline-secondary">Review</a>
+                            <a href="{% url 'radiology:accept_request' r.pk %}" class="btn btn-sm btn-success">Accept</a>
+                        {% else %}
+                            <a href="{% url 'radiology:update_report' r.pk %}" class="btn btn-sm btn-primary">Update</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if r.status == 'requested' %}
+                <tr class="collapse" id="detail-{{ r.pk }}"><td colspan="7" class="bg-light small">
+                    <strong>Department:</strong> {{ r.department_display }} &nbsp;|&nbsp;
+                    <strong>Clinical Note:</strong> {{ r.clinical_note|default:r.consultation.clinical_notes|default:"—" }}
+                    {% if r.referral_letter %} &nbsp;|&nbsp; <a href="{{ r.referral_letter.url }}" target="_blank">View Referral Letter</a>{% endif %}
+                </td></tr>
+                {% endif %}
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No pending imaging requests.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

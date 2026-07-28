@@ -1,0 +1,31 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctor Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'consultations:queue' %}"><i class="bi bi-clock-history"></i> Consultation Queue</a>
+    <a class="nav-link" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> Send Referral</a>
+    <a class="nav-link" href="{% url 'blood_bank:doctor_patient_lookup' %}"><i class="bi bi-droplet"></i> Request Blood Bank</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+{% if not doctor_profile %}
+<div class="alert alert-warning">Your staff account is not yet linked to a Doctor profile. Ask Super Admin to link it.</div>
+{% else %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card blue">
+            <i class="bi bi-calendar-check fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ todays_visits }}</h2>
+            <small>Today's OPD Visits</small>
+        </div>
+    </div>
+</div>
+<div class="tuh-card p-4">
+    <h5 class="fw-bold"><i class="bi bi-clock-history"></i> Consultation Queue</h5>
+    <p class="text-muted">Review today's patients and record diagnosis, prescriptions, and lab/radiology requests.</p>
+    <a href="{% url 'consultations:queue' %}" class="btn btn-primary">Open Consultation Queue</a>
+</div>
+{% endif %}
+{% endblock %}

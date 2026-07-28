@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Pharmacy Bill - {{ sale.sale_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+{% if is_reprint %}
+<div class="alert alert-warning no-print text-center mb-3">
+    <strong><i class="bi bi-exclamation-triangle"></i> This is a REPRINT of bill {{ sale.sale_number }}.</strong>
+</div>
+{% endif %}
+
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header">
+        <div class="brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div>
+                <h1>{{ HOSPITAL_NAME }}</h1>
+                <h2>Pharmacy Bill</h2>
+                <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div class="doc-no-label">Sale No.</div>
+            <div class="doc-no">{{ sale.sale_number }}</div>
+            {% if sale.barcode %}<img class="barcode" src="{{ sale.barcode.url }}" alt="Barcode">{% endif %}
+        </div>
+    </div>
+
+    <div class="tuh-print-banner">
+        <i class="bi bi-capsule"></i> PHARMACY BILL
+        <span class="status-pill {% if sale.payment_method %}paid{% endif %}">{{ sale.get_payment_method_display }}</span>
+    </div>
+
+    <div class="tuh-meta-card">
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-fill"></i> Patient</div>
+            <div class="row-val">{% if sale.patient %}<strong>{{ sale.patient.full_name }}</strong> ({{ sale.patient.patient_code }}){% else %}Walk-in Customer{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-calendar3"></i> Date</div>
+            <div class="row-val">{{ sale.created_at|date:"F d, Y  h:i a" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-prescription2"></i> Prescription Source</div>
+            <div class="row-val">{{ sale.get_prescription_source_display }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-badge"></i> Sold By</div>
+            <div class="row-val">{% if sale.sold_by %}{{ sale.sold_by.get_full_name|default:sale.sold_by.username }}{% else %}Pharmacy Counter{% endif %}</div>
+        </div>
+    </div>
+
+    <table class="tuh-print-table">
+        <thead>
+            <tr><th>Medicine</th><th>Qty</th><th>Unit Price (NPR)</th><th>Total (NPR)</th></tr>
+        </thead>
+        <tbody>
+        {% for item in sale.items.all %}
+            <tr>
+                <td>{{ item.medicine_name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.line_total }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr><td colspan="3" class="text-end">TOTAL AMOUNT</td><td>NPR {{ sale.total_amount }}</td></tr>
+        </tfoot>
+    </table>
+
+    <div class="tuh-print-footer">
+        <div class="tuh-footer-cols">
+            <div class="footer-col"><i class="bi bi-person-circle"></i>
+                <div><div class="f-title">Prepared By</div><div>{% if sale.sold_by %}{{ sale.sold_by.get_full_name|default:sale.sold_by.username }}{% else %}Pharmacy Counter{% endif %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-printer"></i>
+                <div><div class="f-title">Printed On</div><div>{% now "M d, Y h:i A" %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-telephone-fill"></i>
+                <div><div class="f-title">For Assistance</div><div>{{ HOSPITAL_EMERGENCY_PHONE }}</div></div>
+            </div>
+        </div>
+        <div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div>
+    </div>
+    <div class="corner-decoration"></div>
+</div>
+
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=sale.sale_number %}
+{% endblock %}

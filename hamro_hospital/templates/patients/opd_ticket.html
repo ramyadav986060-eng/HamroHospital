@@ -1,0 +1,495 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}OPD Ticket - {{ visit.receipt_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<style>
+    /* Styling to perfectly match the provided high-fidelity design */
+    body {
+        background-color: #f1f5f9;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    
+    .tuh-opd-wrapper {
+        max-width: 750px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        padding: 30px;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Header styling */
+    .tuh-opd-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border-bottom: none;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .tuh-opd-header .logo-container img {
+        height: 100px;
+        width: 100px;
+        object-fit: contain;
+    }
+    .tuh-opd-header .header-text {
+        flex-grow: 1;
+    }
+    .tuh-opd-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1a365d;
+        margin: 0;
+        letter-spacing: 1px;
+    }
+    .tuh-opd-header h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e40af;
+        margin: 2px 0 8px 0;
+        letter-spacing: 0.5px;
+    }
+    .tuh-opd-header .header-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 5px 0;
+    }
+    .tuh-opd-header .header-divider .line {
+        height: 1px;
+        background-color: #10b981;
+        flex-grow: 1;
+    }
+    .tuh-opd-header .header-divider i {
+        color: #10b981;
+        font-size: 14px;
+    }
+    .tuh-opd-header .location {
+        font-size: 14px;
+        color: #475569;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .tuh-opd-header .doc-meta {
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .tuh-opd-header .doc-meta .doc-no-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .tuh-opd-header .doc-meta .doc-no {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1a365d;
+        margin: 2px 0 6px 0;
+    }
+    .tuh-opd-header .doc-meta img.barcode {
+        height: 42px;
+        max-width: 190px;
+        object-fit: contain;
+    }
+
+    /* Ticket Title Banner */
+    .tuh-banner {
+        background-color: #1e3a8a;
+        color: #ffffff;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .tuh-banner::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 40px;
+        background-color: #0d9488;
+        clip-path: polygon(100% 0, 0 0, 100% 100%);
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+    }
+    .tuh-banner .banner-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    /* Metadata Card style */
+    .tuh-meta-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 5px 15px;
+        margin-bottom: 20px;
+    }
+    .tuh-meta-card .row-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .tuh-meta-card .row-item:last-child {
+        border-bottom: none;
+    }
+    .tuh-meta-card .row-label {
+        width: 35%;
+        font-weight: 600;
+        color: #334155;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .tuh-meta-card .row-label i {
+        color: #1e3a8a;
+        font-size: 16px;
+    }
+    .tuh-meta-card .row-val {
+        width: 65%;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 500;
+        border-left: 1px solid #e2e8f0;
+        padding-left: 15px;
+    }
+    .tuh-meta-card .row-val.blue-highlight {
+        color: #2563eb;
+        font-weight: 700;
+    }
+
+    /* Queue & QR Section */
+    .tuh-qr-queue-section {
+        display: grid;
+        grid-template-columns: 1.2fr 1.8fr;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    .tuh-qr-box {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .tuh-qr-box h3 {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.5px;
+    }
+    .tuh-qr-box img {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+    }
+    
+    .tuh-queue-card {
+        background-color: #eff6ff;
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        position: relative;
+    }
+    .tuh-queue-card .icon-container {
+        background-color: #1e3a8a;
+        color: #ffffff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .tuh-queue-card .queue-text h3 {
+        font-size: 15px;
+        font-weight: 800;
+        color: #1e3a8a;
+        margin: 0 0 4px 0;
+    }
+    .tuh-queue-card .queue-text p {
+        font-size: 13px;
+        color: #475569;
+        margin: 0;
+        line-height: 1.4;
+    }
+    .tuh-queue-card .queue-text strong {
+        color: #2563eb;
+    }
+    .tuh-queue-card .pulse-wave {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        opacity: 0.15;
+        width: 80px;
+    }
+
+    /* Footer section */
+    .tuh-opd-footer {
+        border-top: 2px solid #1e3a8a;
+        padding-top: 15px;
+    }
+    .tuh-footer-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .footer-col {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: #475569;
+    }
+    .footer-col i {
+        font-size: 16px;
+        color: #1e3a8a;
+    }
+    .footer-col .f-title {
+        font-weight: bold;
+        color: #1e3a8a;
+    }
+    .tuh-slogan {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #10b981;
+        letter-spacing: 2px;
+        margin-top: 5px;
+    }
+
+    /* Tab decoration right-corner slash */
+    .corner-decoration {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 120px;
+        height: 12px;
+        background-color: #0d9488;
+        clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+    /* Actions row */
+    .tuh-action-row {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    /* Print styles strictly optimized for 1 page */
+    @media print {
+        body {
+            background-color: #ffffff;
+            padding: 0;
+            margin: 0;
+        }
+        .tuh-opd-wrapper {
+            margin: 0;
+            padding: 20px;
+            box-shadow: none;
+            border: none;
+            max-width: 100%;
+            height: auto;
+            page-break-inside: avoid;
+        }
+        .no-print {
+            display: none !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 0.8cm;
+        }
+    }
+</style>
+
+{% if is_reprint %}
+<div class="alert alert-warning no-print text-center mb-3">
+    <strong><i class="bi bi-exclamation-triangle"></i> This is a REPRINT of ticket {{ visit.receipt_number }}.</strong>
+</div>
+{% endif %}
+
+<div class="tuh-opd-wrapper" id="tuhDoc">
+    <!-- Header Block -->
+    <div class="tuh-opd-header">
+        <div class="logo-container">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }} Logo">
+        </div>
+        <div class="header-text">
+            <h1>{{ HOSPITAL_NAME }}</h1>
+            <h2>OUTPATIENT DEPARTMENT</h2>
+            <div class="header-divider">
+                <div class="line"></div>
+                <i class="bi bi-activity"></i>
+                <div class="line"></div>
+            </div>
+            <div class="location">
+                <i class="bi bi-geo-alt-fill text-danger"></i> {{ HOSPITAL_ADDRESS }}
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div class="doc-no-label">Receipt No.</div>
+            <div class="doc-no">{{ visit.receipt_number }}</div>
+            {% if visit.barcode %}<img class="barcode" src="{{ visit.barcode.url }}" alt="Barcode">{% endif %}
+        </div>
+    </div>
+
+    <!-- OPD Title Banner -->
+    <div class="tuh-banner">
+        <div class="banner-left">
+            <i class="bi bi-person-fill-gear"></i> OPD VISIT TICKET
+        </div>
+    </div>
+
+    <!-- Metadata Card -->
+    <div class="tuh-meta-card">
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-badge"></i> Patient ID</div>
+            <div class="row-val"><strong>{{ patient.patient_code }}</strong></div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-fill"></i> Patient Name</div>
+            <div class="row-val"><strong>{{ patient.full_name }}</strong></div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-building"></i> Department</div>
+            <div class="row-val blue-highlight">{{ visit.department.name }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-heart"></i> Doctor</div>
+            <div class="row-val blue-highlight">{% if visit.doctor %}Dr. {{ visit.doctor.full_name }}{% else %}To be assigned{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-file-earmark-text"></i> Visit No.</div>
+            <div class="row-val">{{ visit.receipt_number }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-calendar3"></i> Date</div>
+            <div class="row-val">{{ visit.visit_date|date:"F d, Y" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-clock"></i> Time</div>
+            <div class="row-val">{{ visit.visit_time|time:"h:i a" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-cash-coin"></i> Registration Fee</div>
+            <div class="row-val blue-highlight">NPR {{ visit.registration_fee }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-credit-card"></i> Payment</div>
+            <div class="row-val">
+                {{ visit.get_payment_method_display }} &middot;
+                {% if visit.payment_status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Payment Pending{% if visit.payment_method == 'cash' %} - Cash Payment at Hospital{% endif %}</span>
+                {% else %}
+                    <span class="badge bg-success">Payment Completed</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-chat-dots-fill"></i> Chief Complaint</div>
+            <div class="row-val">{{ visit.chief_complaint|default:"Routine checkup / general complaint" }}</div>
+        </div>
+    </div>
+
+    <!-- Queue & QR Section -->
+    <div class="tuh-qr-queue-section">
+        <div class="tuh-qr-box">
+            <h3>PATIENT QR</h3>
+            {% if patient.qr_code %}
+                <img src="{{ patient.qr_code.url }}" alt="Patient QR Code">
+            {% endif %}
+        </div>
+        <div class="tuh-queue-card">
+            <div class="icon-container">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="queue-text">
+                <h3>PLEASE WAIT</h3>
+                <p>Please wait for your number to be called at the <strong>{{ visit.department.name }}</strong> counter.</p>
+                <div class="mt-2" style="font-size: 12px; color: #1e3a8a;">
+                    <strong>Token Number:</strong> <span class="badge bg-primary fs-6">{{ visit.token_number }}</span>
+                </div>
+            </div>
+            <!-- Heartbeat SVG overlay at bottom right -->
+            <svg class="pulse-wave" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,15 L30,15 L35,5 L40,25 L45,12 L50,18 L55,15 L100,15" fill="none" stroke="#2563eb" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Footer Block -->
+    <div class="tuh-opd-footer">
+        <div class="tuh-footer-cols">
+            <div class="footer-col">
+                <i class="bi bi-person-circle"></i>
+                <div>
+                    <div class="f-title">Created By</div>
+                    <div>
+                        {% if visit.created_by %}
+                            {{ visit.created_by.get_full_name|default:visit.created_by.username }}
+                            {% if visit.created_by.phone_number %}<br><small class="text-muted">Tel: {{ visit.created_by.phone_number }}</small>{% endif %}
+                        {% else %}
+                            Registration Counter
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="footer-col">
+                <i class="bi bi-printer"></i>
+                <div>
+                    <div class="f-title">Printed</div>
+                    <div>{% now "M d, Y H:i" %}</div>
+                </div>
+            </div>
+            <div class="footer-col">
+                <i class="bi bi-telephone-fill"></i>
+                <div>
+                    <div class="f-title">For Assistance</div>
+                    <div>{{ HOSPITAL_EMERGENCY_PHONE }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tuh-slogan">
+            CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL
+        </div>
+    </div>
+    
+    <!-- Colored corner decoration -->
+    <div class="corner-decoration"></div>
+</div>
+
+<!-- Back and Action controls for UI view -->
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=visit.receipt_number %}
+<div class="text-center no-print mb-5">
+    <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-link"><i class="bi bi-person"></i> View Patient Profile</a>
+</div>
+{% endblock %}

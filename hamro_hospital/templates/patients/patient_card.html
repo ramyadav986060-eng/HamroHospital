@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Patient ID Card - {{ patient.patient_code }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<style>
+    /* Styling to perfectly match the high-fidelity patient ID card CR80 sample (24840.png) */
+    body {
+        background-color: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    /* Standard CR80 Card: 85.6mm x 54mm with rounded corners */
+    .tuh-id-card-pvc {
+        width: 85.6mm;
+        height: 54mm;
+        border: 1px solid #e2e8f0;
+        border-radius: 3.5mm;
+        background-color: #ffffff;
+        box-sizing: border-box;
+        padding: 3mm 4mm;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Card header */
+    .tuh-id-header {
+        display: flex;
+        align-items: center;
+        gap: 2mm;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 1.5mm;
+    }
+    .tuh-id-header img {
+        height: 8mm;
+        width: 8mm;
+        object-fit: contain;
+    }
+    .tuh-id-header .header-title {
+        line-height: 1.15;
+    }
+    .tuh-id-header h1 {
+        font-size: 8.5pt;
+        font-weight: 800;
+        color: #1a365d;
+        margin: 0;
+        letter-spacing: 0.2px;
+    }
+    .tuh-id-header h2 {
+        font-size: 6.5pt;
+        font-weight: 600;
+        color: #475569;
+        margin: 0;
+        letter-spacing: 0.1px;
+    }
+
+    /* Card main body */
+    .tuh-id-body {
+        display: grid;
+        grid-template-columns: 1fr 24mm;
+        gap: 3mm;
+        align-items: center;
+        flex-grow: 1;
+        padding-top: 2mm;
+        padding-bottom: 1.5mm;
+    }
+
+    /* Patient Details (Left side) */
+    .patient-details {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2mm;
+    }
+    .patient-details .p-name {
+        font-size: 10pt;
+        font-weight: 800;
+        color: #1e3a8a;
+        margin: 0;
+        line-height: 1.1;
+    }
+    .patient-details .p-id {
+        font-size: 7.5pt;
+        font-weight: 600;
+        color: #475569;
+        margin: 0;
+    }
+    .patient-details .p-vitals {
+        font-size: 7pt;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1.5mm;
+    }
+    .patient-details .blood-group-badge {
+        background-color: #881337; /* Dark red badge same as image */
+        color: #ffffff;
+        font-size: 6.5pt;
+        font-weight: 800;
+        padding: 0.2mm 1.5mm;
+        border-radius: 1mm;
+    }
+    .patient-details .p-phone {
+        font-size: 7pt;
+        font-weight: 500;
+        color: #334155;
+        margin: 0;
+    }
+    .patient-details .p-address {
+        font-size: 7pt;
+        color: #334155;
+        margin: 0;
+        font-weight: 500;
+    }
+    .patient-details .p-emergency {
+        font-size: 7pt;
+        color: #475569;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* QR Code & ID (Right side) */
+    .qr-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 1mm;
+    }
+    .qr-container img {
+        width: 17mm;
+        height: 17mm;
+        object-fit: contain;
+        border: 0.5px solid #e2e8f0;
+        padding: 0.8mm;
+        background-color: #ffffff;
+        border-radius: 1mm;
+    }
+    .qr-container .qr-text {
+        font-size: 5.5pt;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.2px;
+    }
+
+    /* Barcode strip (bottom of card, above the footer) */
+    .barcode-strip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 0.6mm;
+    }
+    .barcode-strip img {
+        height: 6.5mm;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    /* Card Footer Slogan */
+    .tuh-id-footer {
+        border-top: 0.3mm solid #e2e8f0;
+        padding-top: 1mm;
+        text-align: center;
+        font-size: 6.2pt;
+        font-weight: 800;
+        color: #0d9488;
+        letter-spacing: 1.5px;
+    }
+
+    /* Sticker variant: identical design, square-cut corners for die-cut label stock */
+    .tuh-id-card-pvc.mode-sticker {
+        border-radius: 0;
+    }
+
+    /* Mode toggle */
+    .tuh-mode-toggle {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 18px;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 8px;
+    }
+    .tuh-mode-toggle button {
+        border: none;
+        background: transparent;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        cursor: pointer;
+    }
+    .tuh-mode-toggle button.active {
+        background: #1e3a8a;
+        color: #ffffff;
+    }
+
+    /* Action bar controls */
+    .tuh-id-actions {
+        margin-top: 25px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    /* Print styling rules */
+    @media print {
+        body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .tuh-id-card-pvc {
+            box-shadow: none;
+            border: 1px solid #94a3b8;
+            margin: 0;
+            page-break-inside: avoid;
+        }
+        .no-print {
+            display: none !important;
+        }
+        @page {
+            size: 86mm 54mm;
+            margin: 0;
+        }
+    }
+</style>
+
+<div class="d-flex flex-column align-items-center justify-content-center">
+    <!-- Card / Sticker mode toggle (does not print) -->
+    <div class="tuh-mode-toggle no-print">
+        <button type="button" id="tuhModePvc" class="active" onclick="tuhSetCardMode('pvc')"><i class="bi bi-credit-card-2-front"></i> PVC Card (CR80)</button>
+        <button type="button" id="tuhModeSticker" onclick="tuhSetCardMode('sticker')"><i class="bi bi-stickies"></i> Sticker</button>
+    </div>
+
+    <!-- Beautiful CR80 Patient ID Card Container -->
+    <div class="tuh-id-card-pvc" id="tuhDoc">
+        <!-- Logo and Hospital Branding Header -->
+        <div class="tuh-id-header">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="Logo">
+            <div class="header-title">
+                <h1>{{ HOSPITAL_NAME|default:"Hamro Hospital" }}</h1>
+                <h2>Patient ID Card &bull; {{ HOSPITAL_ADDRESS|default:"Maharajgunj, Kathmandu, Nepal" }}</h2>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <div class="tuh-id-body">
+            <!-- Left demographic list block -->
+            <div class="patient-details">
+                <p class="p-name">{{ patient.full_name }}</p>
+                <p class="p-id">ID: {{ patient.patient_code }}</p>
+                <p class="p-vitals">
+                    {{ patient.get_gender_display }}, {{ patient.age }} yrs 
+                    {% if patient.blood_group %}
+                        <span class="blood-group-badge">{{ patient.blood_group }}</span>
+                    {% endif %}
+                </p>
+                <p class="p-phone"><i class="bi bi-telephone-fill"></i> {{ patient.phone_number }}</p>
+                <p class="p-address"><i class="bi bi-geo-alt-fill"></i> {{ patient.district.name }}, Nepal</p>
+                <p class="p-emergency">Emergency: {{ patient.emergency_contact_name|default:"—" }}{% if patient.emergency_contact_phone %} ({{ patient.emergency_contact_phone }}){% endif %}</p>
+            </div>
+
+            <!-- Right QR code block -->
+            <div class="qr-container">
+                {% if patient.qr_code %}
+                    <img src="{{ patient.qr_code.url }}" alt="Patient QR Code">
+                {% endif %}
+                <span class="qr-text">{{ patient.patient_code }}</span>
+            </div>
+        </div>
+
+        <!-- Barcode strip -->
+        {% if patient.barcode %}
+        <div class="barcode-strip">
+            <img src="{{ patient.barcode.url }}" alt="Patient Barcode">
+        </div>
+        {% endif %}
+
+        <!-- Slogan Footer -->
+        <div class="tuh-id-footer">
+            CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL
+        </div>
+    </div>
+
+    <!-- UI Action row (Hidden during printing) -->
+    {% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=patient.patient_code|add:'-ID-Card' hide_jpg=True %}
+    <div class="text-center no-print mb-5">
+        <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-link"><i class="bi bi-person"></i> View Patient Profile</a>
+    </div>
+</div>
+<script>
+    function tuhSetCardMode(mode) {
+        var card = document.getElementById('tuhDoc');
+        var pvcBtn = document.getElementById('tuhModePvc');
+        var stickerBtn = document.getElementById('tuhModeSticker');
+        if (mode === 'sticker') {
+            card.classList.add('mode-sticker');
+            stickerBtn.classList.add('active');
+            pvcBtn.classList.remove('active');
+        } else {
+            card.classList.remove('mode-sticker');
+            pvcBtn.classList.add('active');
+            stickerBtn.classList.remove('active');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ patient.full_name }} - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Patient Details{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'patients:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'patients:patient_register' %}"><i class="bi bi-person-plus"></i> Register Patient</a>
+    <a class="nav-link active" href="{% url 'patients:patient_search' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link" href="{% url 'patients:patient_list' %}"><i class="bi bi-people"></i> View Patients</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="tuh-card p-4 text-center">
+            {% if patient.photo %}
+                <img src="{{ patient.photo.url }}" class="rounded-circle mb-3" width="100" height="100" style="object-fit:cover;" alt="">
+            {% else %}
+                <div class="tuh-icon-circle mx-auto mb-3" style="width:100px;height:100px;font-size:2.5rem;"><i class="bi bi-person"></i></div>
+            {% endif %}
+            <h5 class="mb-0">{{ patient.full_name }}</h5>
+            <p class="text-muted mb-2">{{ patient.patient_code }}</p>
+            {% if patient.qr_code %}<img src="{{ patient.qr_code.url }}" width="120" alt="QR Code">{% endif %}
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <a href="{% url 'patients:patient_card' patient.pk %}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-printer"></i> Patient Card</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="tuh-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <h6 class="fw-bold mb-3">Details</h6>
+                <div>
+                    {% if within_edit_window %}
+                        <span class="badge badge-success-soft mb-2">Free-edit window open (within 24h)</span>
+                    {% endif %}
+                    <a href="{% url 'patients:patient_edit' patient.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'patients:patient_new_visit' patient.pk %}" class="btn btn-sm btn-primary">New Visit</a>
+                    <a href="{% url 'admissions:admit_patient' patient.pk %}" class="btn btn-sm btn-outline-danger">Admit</a>
+                    <a href="{% url 'documents:document_list' patient.pk %}" class="btn btn-sm btn-outline-secondary">Documents</a>
+                </div>
+            </div>
+            <dl class="row mb-0 small">
+                <dt class="col-sm-4">Gender</dt><dd class="col-sm-8">{{ patient.get_gender_display }}</dd>
+                <dt class="col-sm-4">Age / DOB</dt><dd class="col-sm-8">{{ patient.age }} yrs ({{ patient.date_of_birth }})</dd>
+                <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ patient.phone_number }}</dd>
+                <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ patient.local_address }} {{ patient.municipality }}{% if patient.ward_number %}, Ward {{ patient.ward_number }}{% endif %}, {{ patient.district.name }}, {{ patient.district.province.name }}</dd>
+                <dt class="col-sm-4">Blood Group</dt><dd class="col-sm-8">{{ patient.get_blood_group_display|default:"-" }}</dd>
+                <dt class="col-sm-4">Known Allergies</dt><dd class="col-sm-8">{{ patient.known_allergies|default:"None recorded" }}</dd>
+                <dt class="col-sm-4">Insurance</dt>
+                <dd class="col-sm-8">
+                    {% if patient.has_insurance %}
+                        {{ patient.insurance_company }} - Policy {{ patient.insurance_policy_number }}
+                    {% else %}No{% endif %}
+                </dd>
+            </dl>
+        </div>
+
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3">Patient Records</h6>
+            <p class="text-muted small mb-3">Each section opens on its own page.</p>
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'billing' %}" class="btn btn-outline-primary w-100"><i class="bi bi-receipt d-block fs-4 mb-1"></i> Billing</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'insurance' %}" class="btn btn-outline-primary w-100"><i class="bi bi-shield-check d-block fs-4 mb-1"></i> Insurance</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'admission' %}" class="btn btn-outline-primary w-100"><i class="bi bi-hospital d-block fs-4 mb-1"></i> Admission</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'laboratory' %}" class="btn btn-outline-primary w-100"><i class="bi bi-clipboard2-pulse d-block fs-4 mb-1"></i> Laboratory Reports</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'radiology' %}" class="btn btn-outline-primary w-100"><i class="bi bi-camera d-block fs-4 mb-1"></i> Radiology Reports</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'blood_bank' %}" class="btn btn-outline-primary w-100"><i class="bi bi-droplet d-block fs-4 mb-1"></i> Blood Bank History</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'pharmacy' %}" class="btn btn-outline-primary w-100"><i class="bi bi-capsule-pill d-block fs-4 mb-1"></i> Pharmacy</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'medical_reports' %}" class="btn btn-outline-primary w-100"><i class="bi bi-file-medical d-block fs-4 mb-1"></i> Medical Reports</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'appointments' %}" class="btn btn-outline-primary w-100"><i class="bi bi-calendar-check d-block fs-4 mb-1"></i> Appointments</a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'patients:patient_section' patient.pk 'visits' %}" class="btn btn-outline-primary w-100"><i class="bi bi-clock-history d-block fs-4 mb-1"></i> OPD Visit History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

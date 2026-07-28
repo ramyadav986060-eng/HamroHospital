@@ -1,0 +1,129 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Audit Trail - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}System Audit Trail{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link active" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4 bg-light border shadow-sm" id="auditFilterForm">
+    <div class="row g-3 align-items-center">
+        <!-- Date Preset Filter -->
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small fw-bold">Date Preset</label>
+            <select name="date_filter" class="form-select form-select-sm" id="dateFilterSelect">
+                <option value="current_year" {% if date_filter == 'current_year' %}selected{% endif %}>Current Year</option>
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today's Records</option>
+                <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                <option value="7_days" {% if date_filter == '7_days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="custom_date" {% if date_filter == 'custom_date' %}selected{% endif %}>Custom Date</option>
+                <option value="custom_range" {% if date_filter == 'custom_range' %}selected{% endif %}>Custom Range</option>
+            </select>
+        </div>
+        
+        <!-- Custom date inputs -->
+        <div class="col-md-2 col-sm-6" id="startDateWrapper" style="display:none;">
+            <label class="form-label small fw-bold" id="startDateLabel">Date</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2 col-sm-6" id="endDateWrapper" style="display:none;">
+            <label class="form-label small fw-bold">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
+        </div>
+
+        <!-- Action Category -->
+        <div class="col-md-2 col-sm-6">
+            <label class="form-label small fw-bold">Action Category</label>
+            <select name="action" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Actions</option>
+                {% for value, label in actions %}
+                    <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Fast search -->
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small fw-bold">Fast Search</label>
+            <div class="input-group input-group-sm">
+                <input type="text" id="id_q" name="q" value="{{ q }}" class="form-control" placeholder="ID, Receipt #, description...">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filter</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="tuh-card p-4">
+    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+        <table class="table table-hover align-middle small table-sm">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                    <th>Patient</th>
+                    <th>Receipt</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+                <tr>
+                    <td class="text-muted" style="white-space: nowrap;">{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="fw-bold">{{ log.user|default:"System" }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ log.role_at_time|default:"system"|title }}</span></td>
+                    <td><span class="badge bg-primary-soft text-primary">{{ log.get_action_display }}</span></td>
+                    <td>{{ log.description }}</td>
+                    <td><code>{{ log.patient_id_text|default:"-" }}</code></td>
+                    <td><code>{{ log.receipt_number|default:"-" }}</code></td>
+                    <td class="fw-bold">{% if log.amount %}NPR {{ log.amount }}{% else %}-{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No audit records found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('dateFilterSelect');
+    const startWrapper = document.getElementById('startDateWrapper');
+    const endWrapper = document.getElementById('endDateWrapper');
+    const startLabel = document.getElementById('startDateLabel');
+
+    function updateInputs() {
+        const val = select.value;
+        if (val === 'custom_date') {
+            startWrapper.style.display = 'block';
+            endWrapper.style.display = 'none';
+            startLabel.textContent = 'Date';
+        } else if (val === 'custom_range') {
+            startWrapper.style.display = 'block';
+            endWrapper.style.display = 'block';
+            startLabel.textContent = 'Start Date';
+        } else {
+            startWrapper.style.display = 'none';
+            endWrapper.style.display = 'none';
+        }
+    }
+
+    select.addEventListener('change', function() {
+        updateInputs();
+        if (select.value !== 'custom_date' && select.value !== 'custom_range') {
+            document.getElementById('auditFilterForm').submit();
+        }
+    });
+    updateInputs();
+});
+</script>
+{% endblock %}

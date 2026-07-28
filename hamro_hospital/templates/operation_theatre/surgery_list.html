@@ -1,0 +1,42 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}All Surgeries{% endblock %}
+{% block page_title %}All Surgeries{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'operation_theatre:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'operation_theatre:surgery_list' %}"><i class="bi bi-list-check"></i> All Surgeries</a>
+    <a class="nav-link" href="{% url 'operation_theatre:patient_lookup' %}"><i class="bi bi-search"></i> Schedule Surgery</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Surgery #</th><th>Patient</th><th>Surgery</th><th>Surgeon</th><th>Scheduled</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for s in surgeries %}
+                <tr>
+                    <td>{{ s.surgery_number }}</td>
+                    <td>{{ s.patient.full_name }}</td>
+                    <td>{{ s.surgery_name }}</td>
+                    <td>Dr. {{ s.surgeon.full_name }}</td>
+                    <td>{{ s.scheduled_datetime|date:"M d, Y H:i" }}</td>
+                    <td>{{ s.get_status_display }}</td>
+                    <td><a href="{% url 'operation_theatre:surgery_detail' s.pk %}" class="btn btn-sm btn-primary">Open</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No surgeries found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

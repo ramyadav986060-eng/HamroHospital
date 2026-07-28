@@ -1,0 +1,37 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Request Blood Bank - Find Patient{% endblock %}
+{% block page_title %}Request Blood Bank - Find Patient{% endblock %}
+{% block dashboard_content %}
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<form method="get" class="row g-2 mb-3" id="patientSearchForm">
+    <div class="col-auto"><input type="text" id="id_q" name="q" value="{{ q }}" class="form-control" placeholder="Patient ID, name, or phone"></div>
+    <div class="col-auto"><button class="btn btn-primary">Search</button></div>
+</form>
+<script>
+document.addEventListener('tuh:patient-scanned', function (e) {
+    if (e.detail && e.detail.id) {
+        window.location.href = "{% url 'blood_bank:doctor_request_create' 0 %}".replace('0', e.detail.id);
+    }
+});
+</script>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Patient ID</th><th>Name</th><th>Blood Group</th><th>Phone</th><th></th></tr></thead>
+            <tbody>
+            {% for p in patients %}
+                <tr>
+                    <td>{{ p.patient_code }}</td>
+                    <td>{{ p.full_name }}</td>
+                    <td>{{ p.blood_group|default:"Unknown" }}</td>
+                    <td>{{ p.phone_number }}</td>
+                    <td><a href="{% url 'blood_bank:doctor_request_create' p.pk %}" class="btn btn-sm btn-primary">Request Blood</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Search for a patient.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

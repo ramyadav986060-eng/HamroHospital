@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block navbar %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block messages %}{% endblock %}
+{% block body_attrs %} class="app-body"{% endblock %}
+{% block content %}
+<div class="app-shell">
+    <aside class="app-sidebar" id="appSidebar">
+        <div class="app-sidebar-brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div class="brand-text">
+                <strong>{{ HOSPITAL_NAME }}</strong>
+                <span>Management System</span>
+            </div>
+            <button type="button" class="app-sidebar-toggle" aria-label="Collapse sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
+        <div class="app-sidebar-nav">
+
+            <nav class="nav flex-column" id="universalSidebar">
+                <a class="nav-link" href="{{ user_dashboard_url }}"><i class="bi bi-speedometer2"></i> <span>Main Dashboard</span></a>
+                
+                {% if request.user.role == 'super_admin' %}
+                <!-- Super Admin Menu -->
+                <div class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#menuDepartments" role="button" aria-expanded="false" aria-controls="menuDepartments">
+                        <i class="bi bi-diagram-3"></i> <span>Departments</span> <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div class="collapse" id="menuDepartments" data-bs-parent="#universalSidebar">
+                        <div class="ps-4">
+                            <a class="nav-link small py-1" href="{% url 'departments:department_list' %}">Manage Departments</a>
+                            <a class="nav-link small py-1" href="{% url 'departments:department_create' %}">Add New</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#menuDoctors" role="button" aria-expanded="false" aria-controls="menuDoctors">
+                        <i class="bi bi-person-badge"></i> <span>Doctors</span> <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div class="collapse" id="menuDoctors" data-bs-parent="#universalSidebar">
+                        <div class="ps-4">
+                            <a class="nav-link small py-1" href="{% url 'doctors:doctor_list' %}">Manage Doctors</a>
+                            <a class="nav-link small py-1" href="{% url 'doctors:doctor_create' %}">Add New</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#menuReports" role="button" aria-expanded="false" aria-controls="menuReports">
+                        <i class="bi bi-bar-chart"></i> <span>Reports & Finance</span> <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div class="collapse" id="menuReports" data-bs-parent="#universalSidebar">
+                        <div class="ps-4">
+                            <a class="nav-link small py-1" href="{% url 'reports:revenue_dashboard' %}">Revenue Dashboard</a>
+                            <a class="nav-link small py-1" href="{% url 'reports:department_report' %}">Department Reports</a>
+                            <a class="nav-link small py-1" href="{% url 'reports:doctor_report' %}">Doctor Reports</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#menuSettings" role="button" aria-expanded="false" aria-controls="menuSettings">
+                        <i class="bi bi-gear"></i> <span>System Settings</span> <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div class="collapse" id="menuSettings" data-bs-parent="#universalSidebar">
+                        <div class="ps-4">
+                            <a class="nav-link small py-1" href="{% url 'accounts:staff_list' %}">Staff Accounts</a>
+                            <a class="nav-link small py-1" href="{% url 'accounts:hospital_settings' %}">Hospital Settings</a>
+                            <a class="nav-link small py-1" href="{% url 'website:service_list' %}">Website Services</a>
+                            <a class="nav-link small py-1" href="{% url 'accounts:backup_list' %}">Backups</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Display context-specific sidebar block appended if needed -->
+                <hr class="border-secondary opacity-25 mx-3 my-2">
+                {% block sidebar %}
+                {% endblock %}
+            </nav>
+            
+            <script>
+            // Keep dashboard navigation consistent: the sidebar stays visible,
+            // the current module submenu auto-expands, and the active link is highlighted.
+            document.addEventListener("DOMContentLoaded", function() {
+                const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+                document.querySelectorAll('#universalSidebar a.nav-link[href]').forEach(function(link) {
+                    try {
+                        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '') || '/';
+                        if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
+                            link.classList.add('fw-bold', 'text-primary', 'active');
+                            const collapseEl = link.closest('.collapse');
+                            if (collapseEl && window.bootstrap && bootstrap.Collapse) {
+                                new bootstrap.Collapse(collapseEl, {toggle: false}).show();
+                                const trigger = document.querySelector('[href="#' + collapseEl.id + '"]');
+                                if (trigger) trigger.setAttribute('aria-expanded', 'true');
+                            }
+                        }
+                    } catch (e) { /* ignore malformed hrefs */ }
+                });
+            });
+            </script>
+
+        </div>
+        <div class="app-sidebar-foot">
+            <div class="tip-box"><i class="bi bi-heart-pulse"></i> Caring for {{ HOSPITAL_NAME }} patients, every day.</div>
+        </div>
+    </aside>
+    <div class="app-sidebar-overlay"></div>
+
+    <div class="app-main">
+        <header class="app-topbar">
+            <button type="button" class="app-icon-btn app-mobile-toggle" aria-label="Open menu">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="app-topbar-title">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle px-2 py-1" onclick="history.back()" title="Go Back">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <small>Welcome back, {{ request.user.get_full_name|default:request.user.username }} &middot; {{ request.user.get_role_display }}</small>
+            </div>
+            <div class="app-topbar-actions">
+                <a href="{% url 'website:home' %}" class="app-icon-btn d-none d-md-flex" title="View public site">
+                    <i class="bi bi-globe2"></i>
+                </a>
+                <button type="button" class="app-icon-btn theme-toggle-btn" aria-label="Toggle dark mode">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="app-icon-btn dropdown-toggle" type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border:1px solid var(--border);">
+                        <i class="bi bi-bell"></i>
+                        {% if unread_count > 0 %}<span class="dot"></span>{% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notifDropdown" style="width: 300px; max-height: 380px; overflow-y: auto;">
+                        <li class="dropdown-header fw-bold border-bottom pb-2">Notifications</li>
+                        {% for n in unread_notifications %}
+                            <li>
+                                <div class="dropdown-item py-2 border-bottom" style="white-space: normal;">
+                                    <div class="fw-bold small">{{ n.title }}</div>
+                                    <div class="text-muted text-wrap" style="font-size: 0.75rem;">{{ n.message }}</div>
+                                    <div class="text-muted mt-1" style="font-size: 0.65rem;">{{ n.created_at|date:"Y-m-d H:i" }}</div>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="text-center py-3 text-muted small">No new notifications.</li>
+                        {% endfor %}
+                        {% if unread_count > 0 %}
+                            <li class="text-center pt-2">
+                                <a href="{% url 'accounts:mark_all_read' %}" class="btn btn-sm btn-link text-primary text-decoration-none">Mark all as read</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="app-user-chip dropdown-toggle border-0" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="app-user-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}</span>
+                        <span class="d-none d-md-block text-start">
+                            <span class="name d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                            <span class="role">{{ request.user.get_role_display }}</span>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{{ user_dashboard_url }}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'accounts:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% block dashboard_content %}{% endblock %}
+        </main>
+    </div>
+
+
+    <!-- Global Amount Modal -->
+    <div class="modal fade" id="valueModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+          <div class="modal-header border-0 pb-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pb-4">
+            <p class="text-muted mb-1 fw-bold" id="valueModalLabel"></p>
+            <h3 class="value-modal-amount mb-0" id="valueModalAmount"></h3>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    function showFullValue(label, amount) {
+        document.getElementById('valueModalLabel').innerText = label;
+        document.getElementById('valueModalAmount').innerText = amount;
+        new bootstrap.Modal(document.getElementById('valueModal')).show();
+    }
+    </script>
+</div>
+{% endblock %}

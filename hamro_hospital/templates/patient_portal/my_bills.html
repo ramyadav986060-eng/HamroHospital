@@ -1,0 +1,25 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Bills - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Bills{% endblock %}
+{% block portal_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Bill #</th><th>Date</th><th>Method</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+            {% for bill in bills %}
+                <tr>
+                    <td>{{ bill.bill_number }}</td>
+                    <td>{{ bill.created_at|date:"M d, Y" }}</td>
+                    <td>{{ bill.get_payment_method_display }}</td>
+                    <td>NPR {{ bill.total_amount }}</td>
+                    <td><a href="{% url 'patient_portal:my_bill_receipt' bill.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">View Receipt</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No bills on file yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

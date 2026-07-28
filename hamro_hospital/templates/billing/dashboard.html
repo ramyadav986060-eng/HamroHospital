@@ -1,0 +1,95 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Cash Counter - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Cash Counter{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'billing:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'billing:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient / Bill</a>
+    <a class="nav-link" href="{% url 'billing:todays_collections' %}"><i class="bi bi-cash-stack"></i> Today's Collections</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Bills Today</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Total Collected (Today)\', \'NPR {{ todays_total|floatformat:2 }}\')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Collected</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card orange click-amount-card" onclick="showFullValue(\'eSewa Collected\', \'NPR {{ totals_by_method.esewa|floatformat:2 }}\')"><i class="bi bi-credit-card fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.esewa|short_amount }}</h2><small>eSewa</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card gray click-amount-card" onclick="showFullValue(\'Insurance Billed\', \'NPR {{ totals_by_method.insurance|floatformat:2 }}\')"><i class="bi bi-shield-check fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.insurance|short_amount }}</h2><small>Insurance</small></div>
+    </div>
+</div>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Bills This Month</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Month\', \'NPR {{ monthly_total|floatformat:2 }}\')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Bills This Year</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green click-amount-card" onclick="showFullValue(\'Revenue This Year\', \'NPR {{ yearly_total|floatformat:2 }}\')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div>
+    </div>
+</div>
+<div class="mb-4"><a href="{% url 'billing:patient_lookup' %}" class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Find Patient to Bill</a></div>
+<div class="tuh-card p-4">
+    <h6 class="fw-bold mb-3">Today's Bills</h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead><tr><th>Bill #</th><th>Patient</th><th>Method</th><th>Amount</th><th></th></tr></thead>
+            <tbody>
+            {% for bill in todays_bills %}
+                <tr>
+                    <td>{{ bill.bill_number }}</td>
+                    <td>{{ bill.patient.full_name }}</td>
+                    <td>{{ bill.get_payment_method_display }}</td>
+                    <td>NPR {{ bill.total_amount }}</td>
+                    <td><a href="{% url 'billing:reprint_receipt' bill.pk %}" class="btn btn-sm btn-outline-secondary">Reprint</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No bills yet today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-calculator"></i> Cash Denomination Calculator</h6>
+    <div class="row g-2">
+        <div class="col-12">
+            <div class="row g-2" id="tuhDenomRows">
+                <!-- filled by JS -->
+            </div>
+        </div>
+    </div>
+    <div class="mt-3 fw-bold">Total Cash: NPR <span id="tuhDenomTotal">0</span></div>
+</div>
+<script>
+(function () {
+    var notes = [1000, 500, 100, 50, 20, 10, 5, 1];
+    var rows = document.getElementById('tuhDenomRows');
+    notes.forEach(function (note) {
+        var col = document.createElement('div');
+        col.className = 'col-md-3 col-6';
+        col.innerHTML = '<label class="form-label small mb-0">NPR ' + note + ' x</label>' +
+            '<input type="number" min="0" class="form-control form-control-sm tuh-denom-input" data-note="' + note + '" value="0">';
+        rows.appendChild(col);
+    });
+    rows.addEventListener('input', function () {
+        var total = 0;
+        document.querySelectorAll('.tuh-denom-input').forEach(function (el) {
+            total += (parseInt(el.value, 10) || 0) * parseInt(el.dataset.note, 10);
+        });
+        document.getElementById('tuhDenomTotal').textContent = total;
+    });
+})();
+</script>
+{% endblock %}

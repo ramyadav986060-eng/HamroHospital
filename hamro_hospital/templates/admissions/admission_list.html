@@ -1,0 +1,107 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Admissions - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}In-Patient Admissions{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'admissions:admission_list' %}"><i class="bi bi-hospital"></i> Admissions</a>
+    <a class="nav-link" href="{% url 'admissions:ward_list' %}"><i class="bi bi-building"></i> Wards &amp; Beds</a>
+    <a class="nav-link" href="{% url 'admissions:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-hospital fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ currently_admitted_count }}</h2><small>Currently Admitted</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green"><i class="bi bi-calendar-day fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Admissions Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Admissions This Month</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Admissions This Year</small></div></div>
+</div>
+<form method="get" class="mb-3 d-flex gap-2 align-items-center">
+    <select name="status" class="form-select w-auto" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <label class="small fw-bold mb-0">Date:</label>
+    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control form-control-sm" style="max-width:180px;">
+    <button class="btn btn-sm btn-primary">Go</button>
+    {% if selected_date %}<a href="{% url 'admissions:admission_list' %}" class="btn btn-sm btn-outline-secondary">Clear Date</a>{% endif %}
+</form>
+
+{% if recommended_admissions %}
+<div class="tuh-card p-4 mb-4 border border-warning shadow-sm">
+    <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-exclamation-triangle"></i> Doctor Recommended Admissions (Pending)</h5>
+    <p class="text-muted small">Attending doctors have recommended these patients for Ward/IPD Admission during consultations. Click "Admit Patient" to allocate ward and bed.</p>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Diagnosis</th>
+                    <th>Recommended By</th>
+                    <th>Department</th>
+                    <th>Recommended Date</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in recommended_admissions %}
+                <tr>
+                    <td><strong>{{ r.visit.patient.full_name }}</strong><br><small class="text-muted">ID: {{ r.visit.patient.patient_code }}</small></td>
+                    <td>{{ r.diagnosis }}</td>
+                    <td>Dr. {{ r.doctor.full_name }}</td>
+                    <td><span class="badge bg-primary">{{ r.visit.department.name }}</span></td>
+                    <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'admissions:admit_patient' r.visit.patient.pk %}" class="btn btn-sm btn-success"><i class="bi bi-box-arrow-in-right"></i> Admit Patient</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if discharge_queue %}
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-box-arrow-right"></i> Discharge Queue - Currently Admitted</h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Ward / Bed</th><th>Admitted</th><th>Length of Stay</th><th></th></tr></thead>
+            <tbody>
+            {% for a in discharge_queue %}
+                <tr>
+                    <td>{{ a.patient.full_name }} <small class="text-muted">({{ a.patient.patient_code }})</small></td>
+                    <td>{{ a.ward.name }}{% if a.bed %} / Bed {{ a.bed.bed_number }}{% endif %}</td>
+                    <td class="small text-muted">{{ a.admission_date|date:"M d, Y" }}</td>
+                    <td>{{ a.length_of_stay_days }} day(s)</td>
+                    <td><a href="{% url 'admissions:admission_detail' a.pk %}" class="btn btn-sm btn-outline-danger">Discharge</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Admission #</th><th>Patient</th><th>Ward / Bed</th><th>Status</th><th>Admitted</th><th></th></tr></thead>
+            <tbody>
+            {% for a in admissions %}
+                <tr>
+                    <td>{{ a.admission_number }}</td>
+                    <td>{{ a.patient.full_name }}</td>
+                    <td>{{ a.ward.name }}{% if a.bed %} / Bed {{ a.bed.bed_number }}{% endif %}</td>
+                    <td><span class="badge badge-success-soft">{{ a.get_status_display }}</span></td>
+                    <td class="small text-muted">{{ a.admission_date|date:"M d, Y" }}</td>
+                    <td><a href="{% url 'admissions:admission_detail' a.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No admissions yet. Admit a patient from their patient detail page.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

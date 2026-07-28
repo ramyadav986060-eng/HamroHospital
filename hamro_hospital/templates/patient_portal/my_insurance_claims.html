@@ -1,0 +1,25 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Insurance Claims - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Insurance Claims{% endblock %}
+{% block portal_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Claim #</th><th>Company</th><th>Claimed</th><th>Approved</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for claim in claims %}
+                <tr>
+                    <td>{{ claim.claim_number }}</td>
+                    <td>{{ claim.insurance_company }}</td>
+                    <td>NPR {{ claim.amount_claimed }}</td>
+                    <td>{% if claim.approved_amount %}NPR {{ claim.approved_amount }}{% else %}-{% endif %}</td>
+                    <td><span class="badge badge-success-soft">{{ claim.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No insurance claims on file.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

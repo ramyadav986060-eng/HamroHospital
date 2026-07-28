@@ -1,0 +1,58 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ admission.admission_number }}{% endblock %}
+{% block page_title %}Admission {{ admission.admission_number }}{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="tuh-card p-4">
+            {% if admission.barcode %}
+            <div class="text-end mb-3">
+                <img src="{{ admission.barcode.url }}" alt="Admission Barcode" style="max-width:180px; height:40px;">
+                <div style="font-size: 8px; color: #475569; letter-spacing: 0.5px; margin-top: 2px;" class="pe-4">{{ admission.admission_number }}</div>
+            </div>
+            {% endif %}
+            <dl class="row small mb-0">
+                <dt class="col-sm-5">Patient</dt><dd class="col-sm-7">{{ admission.patient.full_name }} ({{ admission.patient.patient_code }})</dd>
+                <dt class="col-sm-5">Department</dt><dd class="col-sm-7">{{ admission.department.name }}</dd>
+                <dt class="col-sm-5">Ward / Bed</dt><dd class="col-sm-7">{{ admission.ward.name }}{% if admission.bed %} / Bed {{ admission.bed.bed_number }}{% endif %}</dd>
+                <dt class="col-sm-5">Admitting Doctor</dt><dd class="col-sm-7">{% if admission.admitting_doctor %}Dr. {{ admission.admitting_doctor.full_name }}{% else %}-{% endif %}</dd>
+                <dt class="col-sm-5">Reason</dt><dd class="col-sm-7">{{ admission.reason_for_admission }}</dd>
+                <dt class="col-sm-5">Diagnosis</dt><dd class="col-sm-7">{{ admission.diagnosis|default:"-" }}</dd>
+                <dt class="col-sm-5">Status</dt><dd class="col-sm-7"><span class="badge badge-success-soft">{{ admission.get_status_display }}</span></dd>
+                <dt class="col-sm-5">Admitted</dt><dd class="col-sm-7">{{ admission.admission_date|date:"M d, Y H:i" }}</dd>
+                <dt class="col-sm-5">Length of Stay</dt><dd class="col-sm-7">{{ admission.length_of_stay_days }} day(s)</dd>
+                {% if admission.discharge_date %}
+                <dt class="col-sm-5">Discharged</dt><dd class="col-sm-7">{{ admission.discharge_date|date:"M d, Y H:i" }} - {{ admission.get_discharge_condition_display }}</dd>
+                {% endif %}
+            </dl>
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                <a href="{% url 'admissions:admission_slip' admission.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print Admission Slip</a>
+                <a href="{% url 'billing:create_bill' admission.patient.pk %}?bill_type=ipd&admission_id={{ admission.pk }}" class="btn btn-sm btn-outline-primary">Bill IPD Charges</a>
+                <a href="{% url 'nursing:admission_notes' admission.pk %}" class="btn btn-sm btn-outline-secondary">Nursing Notes</a>
+                <a href="{% url 'documents:document_list' admission.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        {% if discharge_form %}
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3">Discharge Patient</h6>
+            <form method="post" action="{% url 'admissions:discharge_patient' admission.pk %}">
+                {% csrf_token %}
+                <div class="mb-3"><label class="form-label">Condition</label>{{ discharge_form.discharge_condition }}</div>
+                <div class="mb-3"><label class="form-label">Discharge Summary</label>{{ discharge_form.discharge_summary }}</div>
+                <div class="mb-3"><label class="form-label">Follow-up Instructions</label>{{ discharge_form.follow_up_instructions }}</div>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> Discharge</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold">Discharge Summary</h6>
+            <p>{{ admission.discharge_summary|default:"-" }}</p>
+            <h6 class="fw-bold">Follow-up Instructions</h6>
+            <p>{{ admission.follow_up_instructions|default:"-" }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

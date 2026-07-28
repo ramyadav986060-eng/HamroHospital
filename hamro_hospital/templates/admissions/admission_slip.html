@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admission Slip - {{ admission.admission_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header">
+        <div class="brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div>
+                <h1>{{ HOSPITAL_NAME }}</h1>
+                <h2>Admission Slip</h2>
+                <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div class="doc-no-label">Admission No.</div>
+            <div class="doc-no">{{ admission.admission_number }}</div>
+            {% if admission.barcode %}<img class="barcode" src="{{ admission.barcode.url }}" alt="Barcode">{% endif %}
+        </div>
+    </div>
+
+    <div class="tuh-print-banner">
+        <i class="bi bi-hospital"></i> ADMISSION SLIP
+        <span class="status-pill {% if admission.status == 'admitted' %}pending{% else %}paid{% endif %}">{{ admission.get_status_display }}</span>
+    </div>
+
+    <div class="tuh-meta-card">
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-fill"></i> Patient</div>
+            <div class="row-val"><strong>{{ admission.patient.full_name }}</strong> ({{ admission.patient.patient_code }})</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-diagram-3"></i> Department</div>
+            <div class="row-val">{{ admission.department.name }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-door-open"></i> Ward / Bed</div>
+            <div class="row-val">{{ admission.ward.name }}{% if admission.bed %} &middot; Bed {{ admission.bed.bed_number }}{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-badge"></i> Admitting Doctor</div>
+            <div class="row-val">{% if admission.admitting_doctor %}Dr. {{ admission.admitting_doctor.full_name }}{% else %}-{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-calendar3"></i> Admitted</div>
+            <div class="row-val">{{ admission.admission_date|date:"F d, Y  h:i a" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-clipboard2-pulse"></i> Reason for Admission</div>
+            <div class="row-val">{{ admission.reason_for_admission }}</div>
+        </div>
+        {% if admission.diagnosis %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-clipboard2-heart"></i> Diagnosis</div>
+            <div class="row-val">{{ admission.diagnosis }}</div>
+        </div>
+        {% endif %}
+        {% if admission.discharge_date %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-box-arrow-right"></i> Discharged</div>
+            <div class="row-val">{{ admission.discharge_date|date:"F d, Y  h:i a" }} &mdash; {{ admission.get_discharge_condition_display }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if admission.discharge_summary or admission.follow_up_instructions %}
+    <div class="tuh-section-title">Discharge Summary &amp; Follow-Up</div>
+    <div class="tuh-body-text">{{ admission.discharge_summary|default:"-" }}
+{% if admission.follow_up_instructions %}
+
+Follow-up: {{ admission.follow_up_instructions }}{% endif %}</div>
+    {% endif %}
+
+    <div class="tuh-print-footer">
+        <div class="tuh-footer-cols">
+            <div class="footer-col"><i class="bi bi-person-circle"></i>
+                <div><div class="f-title">Prepared By</div><div>{% if admission.created_by %}{{ admission.created_by.get_full_name|default:admission.created_by.username }}{% else %}Registration Counter{% endif %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-printer"></i>
+                <div><div class="f-title">Printed On</div><div>{% now "M d, Y h:i A" %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-telephone-fill"></i>
+                <div><div class="f-title">For Assistance</div><div>{{ HOSPITAL_EMERGENCY_PHONE }}</div></div>
+            </div>
+        </div>
+        <div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div>
+    </div>
+    <div class="corner-decoration"></div>
+</div>
+
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=admission.admission_number %}
+{% endblock %}

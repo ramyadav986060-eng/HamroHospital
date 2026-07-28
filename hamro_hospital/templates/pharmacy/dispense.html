@@ -1,0 +1,54 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Dispense - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Dispense Medicine - {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+{% if latest_consultation %}
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold mb-2"><i class="bi bi-file-medical"></i> Latest Digital Prescription</h6>
+    <ul class="small mb-0">
+        {% for item in latest_consultation.prescription_items.all %}
+            <li>{{ item.medicine_name }} - {{ item.dosage }}, {{ item.frequency }}, {{ item.duration }} ({{ item.instructions }})</li>
+        {% empty %}
+            <li class="text-muted">No prescription items on file.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-capsule-pill"></i> Select Medicines</h6>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th></th><th>Medicine</th><th>Stock</th><th>Price</th><th>Quantity</th></tr></thead>
+                <tbody>
+                {% for medicine in medicines %}
+                    <tr class="{% if medicine.is_out_of_stock %}table-danger{% elif medicine.is_low_stock %}table-warning{% endif %}">
+                        <td><input type="checkbox" name="medicine_id" value="{{ medicine.id }}" class="form-check-input" {% if medicine.is_out_of_stock %}disabled{% endif %}></td>
+                        <td>{{ medicine.name }} <small class="text-muted">({{ medicine.medicine_code }}) {{ medicine.strength }}</small></td>
+                        <td>{{ medicine.current_stock }}</td>
+                        <td>NPR {{ medicine.selling_price }}</td>
+                        <td><input type="number" name="quantity_{{ medicine.id }}" value="1" min="1" max="{{ medicine.current_stock }}" class="form-control form-control-sm" style="width:80px;"></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No medicines in catalogue yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3">Prescription Source &amp; Payment</h6>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Prescription Source</label>{{ sale_form.prescription_source }}</div>
+            <div class="col-md-4"><label class="form-label">Manual Prescription Copy</label>{{ sale_form.manual_prescription_copy }}</div>
+            <div class="col-md-4"><label class="form-label">Payment Method</label>{{ sale_form.payment_method }}</div>
+            <div class="col-md-4"><label class="form-label">Insurance Company (if applicable)</label>{{ sale_form.insurance_company }}</div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Complete Sale &amp; Print Receipt</button>
+</form>
+{% endblock %}

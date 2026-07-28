@@ -1,0 +1,35 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Wards &amp; Beds{% endblock %}
+{% block page_title %}Wards &amp; Beds{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'admissions:admission_list' %}"><i class="bi bi-hospital"></i> Admissions</a>
+    <a class="nav-link active" href="{% url 'admissions:ward_list' %}"><i class="bi bi-building"></i> Wards &amp; Beds</a>
+    <a class="nav-link" href="{% url 'admissions:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+{% if request.user.is_superuser or request.user.role == 'super_admin' %}
+<div class="d-flex justify-content-end gap-2 mb-3">
+    <a href="{% url 'admissions:ward_create' %}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Add Ward</a>
+    <a href="{% url 'admissions:bed_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Bed</a>
+</div>
+{% endif %}
+<div class="row g-4">
+    {% for ward in wards %}
+    <div class="col-md-4">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold">{{ ward.name }} <span class="badge badge-success-soft">{{ ward.get_ward_type_display }}</span></h6>
+            <p class="text-muted small mb-2">{{ ward.available_beds }} / {{ ward.total_beds }} beds available</p>
+            <ul class="list-unstyled small mb-0">
+                {% for bed in ward.beds.all %}
+                    <li>Bed {{ bed.bed_number }} - {% if bed.is_occupied %}<span class="text-danger">Occupied</span>{% else %}<span class="text-success">Free</span>{% endif %}</li>
+                {% empty %}<li class="text-muted">No beds added yet.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">No wards created yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Dr. {{ doctor.full_name }} - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <div class="tuh-card p-4 p-md-5 mb-4">
+        <div class="row g-4">
+            <div class="col-md-3 text-center">
+                {% if doctor.photo %}
+                    <img src="{{ doctor.photo.url }}" class="rounded-circle mb-3" width="140" height="140" style="object-fit:cover;" alt="">
+                {% else %}
+                    <div class="tuh-icon-circle mx-auto" style="width:140px;height:140px;font-size:3.5rem;"><i class="bi bi-person"></i></div>
+                {% endif %}
+            </div>
+            <div class="col-md-9">
+                <h1 class="fw-bold mb-1">Dr. {{ doctor.full_name }}</h1>
+                <p class="text-muted mb-2">{{ doctor.qualification }}</p>
+                <div class="mb-3">
+                    <span class="badge badge-success-soft">{{ doctor.department.name }}</span>
+                    {% if doctor.unit %}<span class="badge badge-secondary-soft">{{ doctor.unit.name }}</span>{% endif %}
+                </div>
+                {% if doctor.short_introduction %}<p class="fw-medium">{{ doctor.short_introduction }}</p>{% endif %}
+                <p class="mb-1"><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+                <p class="mb-1"><strong>Experience:</strong> {{ doctor.experience_years }} years</p>
+                {% if doctor.contact_number %}<p class="mb-1"><strong>Contact:</strong> {{ doctor.contact_number }}</p>{% endif %}
+                {% if doctor.biography %}<p class="text-muted mt-3">{{ doctor.biography }}</p>{% endif %}
+                <div class="mt-4">
+                    <a href="{% url 'appointments:book_appointment' %}?doctor={{ doctor.id }}&department={{ doctor.department.id }}" class="btn btn-primary btn-lg"><i class="bi bi-calendar-plus"></i> Book Appointment with Dr. {{ doctor.full_name }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-calendar-week"></i> OPD Schedule</h5>
+        {% with schedule=doctor.weekly_schedule %}
+        {% if doctor.schedules.exists %}
+        <div class="table-responsive">
+            <table class="table table-sm text-center align-middle mb-0">
+                <thead><tr>{% for day in schedule %}<th>{{ day.label|slice:":3" }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                    <tr>
+                        {% for day in schedule %}
+                        <td>
+                            {% if day.schedule %}
+                                <span class="badge badge-success-soft d-block">{{ day.schedule.start_time|time:"g:iA" }}<br>{{ day.schedule.end_time|time:"g:iA" }}</span>
+                            {% else %}
+                                <span class="text-muted">Off</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% if doctor.available_days_list %}<p class="mb-1"><strong>Available Days:</strong> {{ doctor.available_days_list|join:', ' }}</p>{% endif %}
+            {% if doctor.available_time_start %}<p class="mb-0"><strong>Available Time:</strong> {{ doctor.available_time_start }} - {{ doctor.available_time_end }}</p>{% endif %}
+        {% endif %}
+        {% endwith %}
+    </div>
+</section>
+{% endblock %}

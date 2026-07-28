@@ -1,0 +1,77 @@
+{% extends 'dashboard_base.html' %}
+
+{% block title %}Referrals Queue - {{ HOSPITAL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 mb-0 text-gray-800">Incoming Referrals</h2>
+        <p class="text-muted mb-0">Manage referrals assigned to departments</p>
+    </div>
+    <div>
+        <form method="get" class="d-inline-flex gap-2">
+            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="new" {% if request.GET.status == 'new' %}selected{% endif %}>New</option>
+                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="tuh-card p-0">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Patient</th>
+                    <th>Referred By</th>
+                    <th>Target Dept</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referral in referrals %}
+                <tr>
+                    <td>{{ referral.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ referral.patient.get_full_name }}</div>
+                        <small class="text-muted">{{ referral.patient.patient_code }}</small>
+                    </td>
+                    <td>{{ referral.referred_by.full_name|default:"Unknown" }}</td>
+                    <td>{{ referral.to_department.name|default:"General" }}</td>
+                    <td><span class="text-truncate-cell" title="{{ referral.reason }}">{{ referral.reason }}</span></td>
+                    <td>
+                        {% if referral.status == 'new' %}
+                            <span class="badge badge-info-soft">New</span>
+                        {% elif referral.status == 'in_progress' %}
+                            <span class="badge badge-warning-soft">In Progress</span>
+                        {% else %}
+                            <span class="badge badge-success-soft">Completed</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{% url 'referrals:referral_update_status' referral.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                <option value="new" {% if referral.status == 'new' %}selected{% endif %}>New</option>
+                                <option value="in_progress" {% if referral.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if referral.status == 'completed' %}selected{% endif %}>Complete</option>
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No referrals found in the queue.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

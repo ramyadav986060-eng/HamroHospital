@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}OT Slip - {{ surgery.surgery_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header">
+        <div class="brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div>
+                <h1>{{ HOSPITAL_NAME }}</h1>
+                <h2>Operation Theatre Slip</h2>
+                <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div class="doc-no-label">Surgery No.</div>
+            <div class="doc-no">{{ surgery.surgery_number }}</div>
+            {% if surgery.barcode %}<img class="barcode" src="{{ surgery.barcode.url }}" alt="Barcode">{% endif %}
+        </div>
+    </div>
+
+    <div class="tuh-print-banner">
+        <i class="bi bi-bandaid"></i> OPERATION THEATRE SLIP
+        <span class="status-pill {% if surgery.status == 'completed' %}paid{% else %}pending{% endif %}">{{ surgery.get_status_display }}</span>
+    </div>
+
+    <div class="tuh-meta-card">
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-fill"></i> Patient</div>
+            <div class="row-val"><strong>{{ surgery.patient.full_name }}</strong> ({{ surgery.patient.patient_code }})</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-clipboard2-pulse"></i> Surgery</div>
+            <div class="row-val">{{ surgery.surgery_name }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-badge"></i> Surgeon</div>
+            <div class="row-val">Dr. {{ surgery.surgeon.full_name }}{% if surgery.assistant_surgeons %} &middot; Assisted by {{ surgery.assistant_surgeons }}{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-door-open"></i> OT Room</div>
+            <div class="row-val">{{ surgery.ot_room|default:"-" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-capsule"></i> Anesthesia</div>
+            <div class="row-val">{{ surgery.get_anesthesia_type_display|default:"-" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-calendar3"></i> Scheduled</div>
+            <div class="row-val">{{ surgery.scheduled_datetime|date:"F d, Y  h:i a" }}</div>
+        </div>
+        {% if surgery.completed_at %}
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-check2-circle"></i> Completed</div>
+            <div class="row-val">{{ surgery.completed_at|date:"F d, Y  h:i a" }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if surgery.pre_op_notes or surgery.operative_notes or surgery.post_op_notes %}
+    <div class="tuh-section-title">Operative Notes</div>
+    <div class="tuh-body-text">{% if surgery.pre_op_notes %}Pre-op: {{ surgery.pre_op_notes }}
+{% endif %}{% if surgery.operative_notes %}Operative: {{ surgery.operative_notes }}
+{% endif %}{% if surgery.post_op_notes %}Post-op: {{ surgery.post_op_notes }}{% endif %}</div>
+    {% endif %}
+
+    <table class="tuh-print-table">
+        <tfoot>
+            <tr><td class="text-end">SURGERY CHARGE</td><td>NPR {{ surgery.charge_amount }}</td></tr>
+        </tfoot>
+    </table>
+
+    <div class="tuh-print-footer">
+        <div class="tuh-footer-cols">
+            <div class="footer-col"><i class="bi bi-person-circle"></i>
+                <div><div class="f-title">Prepared By</div><div>{% if surgery.created_by %}{{ surgery.created_by.get_full_name|default:surgery.created_by.username }}{% else %}Operation Theatre{% endif %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-printer"></i>
+                <div><div class="f-title">Printed On</div><div>{% now "M d, Y h:i A" %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-telephone-fill"></i>
+                <div><div class="f-title">For Assistance</div><div>{{ HOSPITAL_EMERGENCY_PHONE }}</div></div>
+            </div>
+        </div>
+        <div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div>
+    </div>
+    <div class="corner-decoration"></div>
+</div>
+
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=surgery.surgery_number %}
+{% endblock %}

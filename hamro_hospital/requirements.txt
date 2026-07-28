@@ -1,0 +1,12 @@
+Django>=5.0,<5.1
+django-jazzmin>=3.0
+Pillow>=10.0
+qrcode>=7.4
+python-barcode>=0.15
+reportlab>=4.0
+python-dotenv>=1.0
+requests>=2.31
+openpyxl>=3.1
+
+# Optional PostgreSQL driver; SQLite remains the default development database.
+psycopg[binary]>=3.1

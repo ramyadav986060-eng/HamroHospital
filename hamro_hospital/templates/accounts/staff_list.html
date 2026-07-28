@@ -1,0 +1,42 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Staff Accounts - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Staff Accounts{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link active" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'accounts:staff_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Staff Member</a>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for s in staff %}
+                <tr>
+                    <td>{{ s.username }}</td>
+                    <td>{{ s.get_full_name|default:"-" }}</td>
+                    <td><span class="badge badge-success-soft">{{ s.get_role_display }}</span></td>
+                    <td>{{ s.phone_number|default:"-" }}</td>
+                    <td>
+                        {% if s.is_active_staff %}<span class="badge badge-success-soft">Active</span>
+                        {% else %}<span class="badge badge-danger-soft">Deactivated</span>{% endif %}
+                    </td>
+                    <td><a href="{% url 'accounts:staff_edit' s.pk %}" class="btn btn-sm btn-outline-primary">Edit</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No staff accounts yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

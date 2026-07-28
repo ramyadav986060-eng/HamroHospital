@@ -1,0 +1,42 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Registration Report{% endblock %}
+{% block page_title %}Registration Report{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link " href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Dashboard</a>
+    <a class="nav-link active" href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> Registrations</a>
+    <a class="nav-link " href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link " href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link " href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> Cash Counters</a>
+    <a class="nav-link " href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> Pharmacy</a>
+    <a class="nav-link " href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> Laboratory</a>
+    <a class="nav-link " href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> Nursing</a>
+    <a class="nav-link " href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> Operation Theatre</a>
+    <a class="nav-link " href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> Blood Bank</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto"><input type="date" name="from" value="{{ date_from }}" class="form-control"></div>
+    <div class="col-auto"><input type="date" name="to" value="{{ date_to }}" class="form-control"></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+    <div class="col-auto"><a href="?from={{ date_from }}&to={{ date_to }}&export=excel" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Export Excel</a></div>
+</form>
+<p class="text-muted">Total registration fees in range: <strong>NPR {{ total_fees }}</strong> | Total patients ever: <strong>{{ total_new_patients }}</strong></p>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-sm small">
+            <thead><tr><th>Receipt #</th><th>Patient</th><th>Department</th><th>Type</th><th>Fee</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for v in visits %}
+                <tr><td>{{ v.receipt_number }}</td><td>{{ v.patient.full_name }}</td><td>{{ v.department.name }}</td><td>{{ v.get_patient_type_display }}</td><td>NPR {{ v.registration_fee }}</td><td>{{ v.visit_date }}</td></tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No registrations found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

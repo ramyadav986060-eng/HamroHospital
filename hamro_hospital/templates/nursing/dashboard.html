@@ -1,0 +1,79 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Nursing - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Nursing Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'nursing:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'nursing:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<form method="get" action="{% url 'nursing:search_patient' %}" class="tuh-card p-3 mb-4 d-flex gap-2" id="nursingSearchForm">
+    <input type="text" id="id_q" name="q" class="form-control form-control-lg" placeholder="Search by Patient ID, QR Code, Phone Number, or Name">
+    <button class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Search</button>
+</form>
+<script>
+document.addEventListener('tuh:patient-scanned', function () { document.getElementById('nursingSearchForm').submit(); });
+</script>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-hospital fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ active_count }}</h2><small>My Assigned Patients</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green"><i class="bi bi-box-arrow-in-right fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_admissions_count }}</h2><small>Today's Admissions</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card gray"><i class="bi bi-box-arrow-right fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_discharges_count }}</h2><small>Today's Discharges</small></div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="#pending-notes" class="text-decoration-none">
+        <div class="stat-card orange"><i class="bi bi-journal-medical fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_notes_count }}</h2><small>Pending Nursing Notes (Today)</small></div>
+        </a>
+    </div>
+</div>
+
+{% if pending_notes %}
+<div class="tuh-card p-4 mb-4 border border-warning" id="pending-notes">
+    <h6 class="fw-bold text-warning mb-3"><i class="bi bi-exclamation-triangle"></i> Pending Nursing Notes Today</h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Ward / Bed</th><th></th></tr></thead>
+            <tbody>
+            {% for a in pending_notes %}
+                <tr>
+                    <td>{{ a.patient.full_name }} <small class="text-muted">({{ a.patient.patient_code }})</small></td>
+                    <td>{{ a.ward.name }}{% if a.bed %} - Bed {{ a.bed.bed_number }}{% endif %}</td>
+                    <td><a href="{% url 'nursing:admission_notes' a.pk %}" class="btn btn-sm btn-warning">Record Note</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="tuh-card p-4">
+    <h5 class="mb-3">Ward Round - Active Admissions</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Patient</th><th>Ward / Bed</th><th>Admission #</th><th>Admitted</th><th></th></tr></thead>
+            <tbody>
+            {% for a in active_admissions %}
+                <tr>
+                    <td>{{ a.patient.full_name }} <small class="text-muted">({{ a.patient.patient_code }})</small></td>
+                    <td>{{ a.ward.name }}{% if a.bed %} - Bed {{ a.bed.bed_number }}{% endif %}</td>
+                    <td>{{ a.admission_number }}</td>
+                    <td class="small text-muted">{{ a.admission_date|date:"M d, H:i" }}</td>
+                    <td><a href="{% url 'nursing:admission_notes' a.pk %}" class="btn btn-sm btn-primary">Notes & Vitals</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No patients currently admitted.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

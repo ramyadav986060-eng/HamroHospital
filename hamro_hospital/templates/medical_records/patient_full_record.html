@@ -1,0 +1,127 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ patient.full_name }} - Full Record{% endblock %}
+{% block page_title %}{{ patient.full_name }} ({{ patient.patient_code }}) - Complete Digital File{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'medical_records:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'medical_records:patient_search' %}"><i class="bi bi-search"></i> Find Patient Record</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<style>
+.emr-section > summary { cursor: pointer; list-style: none; }
+.emr-section > summary::-webkit-details-marker { display: none; }
+.emr-section > summary .bi-chevron-right { transition: transform .15s; }
+.emr-section[open] > summary .bi-chevron-right { transform: rotate(90deg); }
+</style>
+<div class="mb-3">
+    <a href="{% url 'documents:document_list' patient.pk %}" class="btn btn-sm btn-outline-primary">Manage Documents</a>
+</div>
+
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold">Personal Details</h6>
+    <dl class="row small mb-0">
+        <dt class="col-sm-2">Full Name</dt><dd class="col-sm-4">{{ patient.full_name }}</dd>
+        <dt class="col-sm-2">Phone</dt><dd class="col-sm-4">{{ patient.phone_number }}</dd>
+        <dt class="col-sm-2">Gender</dt><dd class="col-sm-4">{{ patient.get_gender_display }}</dd>
+        <dt class="col-sm-2">Date of Birth</dt><dd class="col-sm-4">{{ patient.date_of_birth }}</dd>
+        <dt class="col-sm-2">Blood Group</dt><dd class="col-sm-4">{{ patient.blood_group|default:"-" }}</dd>
+    </dl>
+</div>
+
+<details class="tuh-card p-4 mb-3 emr-section" open>
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-clipboard2-pulse"></i> OPD / Consultation History</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Notes</th></tr></thead>
+        <tbody>
+        {% for c in consultations %}
+            <tr><td>{{ c.created_at|date:"M d, Y" }}</td><td>Dr. {{ c.doctor.full_name }}</td><td>{{ c.diagnosis|default:"-" }}</td><td>{{ c.clinical_notes|truncatewords:15 }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="text-muted text-center">No consultations recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-hospital"></i> Admission History</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Admission #</th><th>Ward</th><th>Admitted</th><th>Discharged</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for a in admissions %}
+            <tr><td>{{ a.admission_number }}</td><td>{{ a.ward.name }}</td><td>{{ a.admission_date|date:"M d, Y" }}</td><td>{{ a.discharge_date|date:"M d, Y"|default:"-" }}</td><td>{{ a.get_status_display }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="text-muted text-center">No admissions recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-scissors"></i> Operation Records</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Surgery #</th><th>Surgery</th><th>Surgeon</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for s in surgeries %}
+            <tr><td>{{ s.surgery_number }}</td><td>{{ s.surgery_name }}</td><td>Dr. {{ s.surgeon.full_name }}</td><td>{{ s.scheduled_datetime|date:"M d, Y" }}</td><td>{{ s.get_status_display }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="text-muted text-center">No operations recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-flask"></i> Laboratory Reports</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Test</th><th>Requested</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for l in lab_requests %}
+            <tr><td>{{ l.test_name }}{% if l.is_manual %} <span class="badge badge-secondary-soft">Walk-in</span>{% endif %}</td><td>{{ l.requested_at|date:"M d, Y" }}</td><td>{{ l.get_status_display }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="text-muted text-center">No lab requests recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-camera"></i> Radiology Reports</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Scan</th><th>Requested</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for r in radiology_requests %}
+            <tr><td>{{ r.display_service_name }}{% if r.is_manual %} <span class="badge badge-secondary-soft">Walk-in</span>{% endif %}</td><td>{{ r.requested_at|date:"M d, Y" }}</td><td>{{ r.get_status_display }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="text-muted text-center">No radiology requests recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-capsule"></i> Prescriptions</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Medicine</th><th>Dosage</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for item in prescription_items %}
+            <tr><td>{{ item.medicine_name }}</td><td>{{ item.dosage }}</td><td>{{ item.consultation.created_at|date:"M d, Y" }}</td></tr>
+        {% empty %}<tr><td colspan="3" class="text-muted text-center">No prescriptions recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 mb-3 emr-section">
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-receipt"></i> Billing History</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Bill #</th><th>Type</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for b in bills %}
+            <tr><td>{{ b.bill_number }}</td><td>{{ b.get_bill_type_display }}</td><td>NPR {{ b.total_amount }}</td><td>{{ b.get_status_display }}</td><td>{{ b.created_at|date:"M d, Y" }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="text-muted text-center">No bills recorded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+
+<details class="tuh-card p-4 emr-section" open>
+    <summary class="fw-bold d-flex justify-content-between align-items-center"><span><i class="bi bi-file-earmark-pdf"></i> Documents / PDF Attachments</span><i class="bi bi-chevron-right"></i></summary>
+    <div class="table-responsive mt-3">
+        <table class="table table-sm"><thead><tr><th>Title</th><th>Category</th><th>Uploaded</th><th></th></tr></thead>
+        <tbody>
+        {% for d in documents %}
+            <tr><td>{{ d.title }}</td><td>{{ d.get_category_display }}</td><td>{{ d.uploaded_at|date:"M d, Y" }}</td><td><a href="{% url 'documents:document_view' d.pk %}" target="_blank">View</a></td></tr>
+        {% empty %}<tr><td colspan="4" class="text-muted text-center">No documents uploaded.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</details>
+{% endblock %}

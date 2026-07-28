@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Invoice/Bill - {{ bill.bill_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<style>
+    /* Styling to perfectly match the high-fidelity Billing Invoice design (16346a3a-c59d-48c0-916b-e1cdd533e882.png) */
+    body {
+        background-color: #f1f5f9;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    
+    .tuh-invoice-wrapper {
+        max-width: 750px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        padding: 35px;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Header styling */
+    .tuh-invoice-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .header-left img.logo {
+        height: 80px;
+        width: 80px;
+        object-fit: contain;
+    }
+    .header-left .hospital-info h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: #1a365d;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+    .header-left .hospital-info h2 {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e40af;
+        margin: 1px 0 4px 0;
+    }
+    .header-left .location {
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .header-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+        gap: 2px;
+    }
+    .header-right .qr-code {
+        width: 65px;
+        height: 65px;
+        object-fit: contain;
+        margin-bottom: 5px;
+    }
+    .header-right .inv-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+        margin: 0;
+    }
+    .header-right .inv-number {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+    .header-right .barcode-img {
+        height: 35px;
+        max-width: 170px;
+        object-fit: contain;
+        margin-top: 3px;
+    }
+
+    /* Sub-header Divider line with vital waveform */
+    .tuh-invoice-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .tuh-invoice-divider .line {
+        height: 1.5px;
+        background-color: #10b981;
+        flex-grow: 1;
+    }
+    .tuh-invoice-divider i {
+        color: #10b981;
+        font-size: 13px;
+    }
+
+    /* Invoice / Bill Header Banner */
+    .tuh-invoice-title {
+        text-align: center;
+        margin-bottom: 25px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    .tuh-invoice-title .dot {
+        width: 6px;
+        height: 6px;
+        background-color: #10b981;
+        border-radius: 50%;
+    }
+    .tuh-invoice-title h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #1a365d;
+        margin: 0;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    /* Metadata Block */
+    .tuh-invoice-meta-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        background-color: #ffffff;
+    }
+    .meta-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .meta-item {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+    }
+    .meta-item .m-icon {
+        width: 24px;
+        color: #1a365d;
+        font-size: 14px;
+    }
+    .meta-item .m-label {
+        width: 120px;
+        font-weight: 500;
+        color: #475569;
+    }
+    .meta-item .m-val {
+        color: #0f172a;
+        font-weight: 600;
+    }
+    .meta-item .m-val.green-highlight {
+        color: #10b981;
+    }
+
+    /* Services Table styling */
+    .tuh-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+    }
+    .tuh-items-table th {
+        background-color: #1e3a8a;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 10px 15px;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+    .tuh-items-table th:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+    .tuh-items-table th:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+    
+    .tuh-items-table td {
+        padding: 12px 15px;
+        font-size: 13px;
+        color: #334155;
+        font-weight: 500;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .tuh-items-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Total block */
+    .tuh-total-box {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 25px;
+    }
+    .tuh-total-inner {
+        background-color: #eff6ff;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        padding: 12px 30px;
+        border: 1px solid #bfdbfe;
+    }
+    .tuh-total-inner span {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e3a8a;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .tuh-total-inner h4 {
+        font-size: 18px;
+        font-weight: 800;
+        color: #1e3a8a;
+        margin: 0;
+    }
+
+    /* Words notes card */
+    .tuh-words-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .words-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .words-left i {
+        font-size: 20px;
+        color: #2563eb;
+    }
+    .words-left div h6 {
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        margin: 0 0 2px 0;
+        text-transform: uppercase;
+    }
+    .words-left div p {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+    .words-right {
+        border-left: 1px solid #e2e8f0;
+        padding-left: 20px;
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+    }
+
+    /* Print Footers */
+    .tuh-invoice-footer {
+        border-top: 1px dashed #cbd5e1;
+        padding-top: 15px;
+        margin-bottom: 10px;
+    }
+    .tuh-footer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+    }
+    .f-col {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: #475569;
+    }
+    .f-col i {
+        font-size: 15px;
+        color: #1a365d;
+    }
+    .f-col .fc-title {
+        font-weight: bold;
+        color: #1a365d;
+        margin-bottom: 1px;
+    }
+    
+    .tuh-bottom-bar {
+        background-color: #0d9488;
+        color: #ffffff;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 6px 0;
+        margin-top: 25px;
+        border-radius: 4px;
+    }
+
+    /* Actions bar */
+    .tuh-invoice-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    /* Print styles optimized strictly for 1 A4 page */
+    @media print {
+        body {
+            background-color: #ffffff;
+            padding: 0;
+            margin: 0;
+        }
+        .tuh-invoice-wrapper {
+            margin: 0;
+            padding: 20px;
+            box-shadow: none;
+            border: none;
+            max-width: 100%;
+            height: auto;
+            page-break-inside: avoid;
+        }
+        .no-print {
+            display: none !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 0.8cm;
+        }
+    }
+</style>
+
+{% if is_reprint %}
+<div class="alert alert-warning no-print text-center mb-3">
+    <strong><i class="bi bi-exclamation-triangle"></i> This is a REPRINT of Invoice {{ bill.bill_number }}.</strong>
+</div>
+{% endif %}
+
+<div class="tuh-invoice-wrapper" id="tuhDoc">
+    <!-- Header Grid block (Dynamic & High Fidelity) -->
+    <div class="tuh-invoice-header">
+        <div class="header-left">
+            <img class="logo" src="{{ HOSPITAL_LOGO_URL }}" alt="Hospital Logo">
+            <div class="hospital-info">
+                <h1>{{ HOSPITAL_NAME|default:"Hamro Hospital" }}</h1>
+                <h2>{{ HOSPITAL_NAME|default:"Hamro Hospital" }}</h2>
+                <div class="location">
+                    <i class="bi bi-geo-alt-fill text-danger"></i> {{ HOSPITAL_ADDRESS }}
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            {% if bill.patient.qr_code %}
+                <img class="qr-code" src="{{ bill.patient.qr_code.url }}" alt="Patient QR">
+            {% endif %}
+            <p class="inv-label">Invoice No.</p>
+            <p class="inv-number">{{ bill.bill_number }}</p>
+            {% if bill.barcode %}
+                <img class="barcode-img" src="{{ bill.barcode.url }}" alt="Invoice Barcode">
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Separator wave divider line -->
+    <div class="tuh-invoice-divider">
+        <div class="line"></div>
+        <i class="bi bi-activity"></i>
+        <div class="line"></div>
+    </div>
+
+    <!-- Title Header -->
+    <div class="tuh-invoice-title">
+        <div class="dot"></div>
+        <h2>INVOICE / BILL</h2>
+        <div class="dot"></div>
+    </div>
+
+    <!-- Patient Metadata Grid Card -->
+    <div class="tuh-invoice-meta-grid">
+        <div class="meta-list">
+            <div class="meta-item">
+                <i class="bi bi-person-fill m-icon"></i>
+                <span class="m-label">Patient</span>
+                <span class="m-val">{{ bill.patient.full_name }} ({{ bill.patient.patient_code }})</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-telephone-fill m-icon"></i>
+                <span class="m-label">Phone Number</span>
+                <span class="m-val">{{ bill.patient.phone_number }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-calendar3 m-icon"></i>
+                <span class="m-label">Date</span>
+                <span class="m-val">{{ bill.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-credit-card-fill m-icon"></i>
+                <span class="m-label">Payment Method</span>
+                <span class="m-val">{{ bill.get_payment_method_display }}</span>
+            </div>
+        </div>
+        <div class="meta-list">
+            <div class="meta-item">
+                <i class="bi bi-file-earmark-text m-icon"></i>
+                <span class="m-label">Bill Type</span>
+                <span class="m-val">{{ bill.get_bill_type_display }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-shield-check m-icon"></i>
+                <span class="m-label">Payment Status</span>
+                <span class="m-val green-highlight">Paid</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-building m-icon"></i>
+                <span class="m-label">Department</span>
+                <span class="m-val">{% if bill.admission %}{{ bill.admission.department.name }}{% else %}General Outpatient{% endif %}</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-shop m-icon"></i>
+                <span class="m-label">Counter</span>
+                <span class="m-val">{{ bill.counter_name }} - {{ bill.cashier.get_full_name|default:bill.cashier.username }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billed Items Table -->
+    <table class="tuh-items-table">
+        <thead>
+            <tr>
+                <th style="width: 80px;">#</th>
+                <th>Service / Test</th>
+                <th style="width: 100px; text-align: center;">Qty</th>
+                <th style="width: 150px; text-align: right;">Unit Price (NPR)</th>
+                <th style="width: 150px; text-align: right;">Total (NPR)</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in bill.items.all %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ item.service_name }}</strong></td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td style="text-align: right;">{{ item.unit_price }}</td>
+                <td style="text-align: right;">{{ item.line_total }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No items billed.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Calculated Total Box -->
+    <div class="tuh-total-box">
+        <div class="tuh-total-inner" style="flex-direction: column; align-items: stretch; gap: 8px;">
+            <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Total Amount</span><h4 style="margin:0;">NPR {{ bill.total_amount }}</h4></div>
+            {% if bill.discount_total %}
+            <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Discount</span><h4 style="margin:0;">- NPR {{ bill.discount_total }}</h4></div>
+            {% endif %}
+            {% if bill.insurance_coverage_amount %}
+            <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Insurance Coverage</span><h4 style="margin:0;">- NPR {{ bill.insurance_coverage_amount }}</h4></div>
+            {% endif %}
+            <div style="display:flex; justify-content: space-between; gap: 40px; border-top: 1px solid #bfdbfe; padding-top: 6px;"><span>Final Amount Paid</span><h4 style="margin:0;">NPR {{ bill.final_amount_paid }}</h4></div>
+        </div>
+    </div>
+
+    <!-- In Words & Thanks Notes box -->
+    <div class="tuh-words-card">
+        <div class="words-left">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+                <h6>Amount in Words:</h6>
+                <p>{{ amount_in_words }}</p>
+            </div>
+        </div>
+        <div class="words-right">
+            Thank you for choosing<br><strong>Hamro Hospital</strong>.
+        </div>
+    </div>
+
+    <!-- Footer cols block -->
+    <div class="tuh-invoice-footer">
+        <div class="tuh-footer-grid">
+            <div class="f-col">
+                <i class="bi bi-person-fill-check"></i>
+                <div>
+                    <div class="fc-title">Prepared By</div>
+                    <div>{{ bill.cashier.get_full_name|default:bill.cashier.username }}</div>
+                </div>
+            </div>
+            <div class="f-col">
+                <i class="bi bi-calendar-event"></i>
+                <div>
+                    <div class="fc-title">Printed On</div>
+                    <div>{% now "M d, Y I:i A" %}</div>
+                </div>
+            </div>
+            <div class="f-col">
+                <i class="bi bi-telephone-fill"></i>
+                <div>
+                    <div class="fc-title">For Assistance</div>
+                    <div>{{ HOSPITAL_EMERGENCY_PHONE }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slogan bar -->
+        <p class="text-center mt-3 fw-bold small text-uppercase" style="color: #0d9488; letter-spacing: 1px; margin-bottom: 0;">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</p>
+    </div>
+
+    <!-- Bottom computer-generated green bar notice -->
+    <div class="tuh-bottom-bar">
+        This is a computer-generated invoice from Hamro Hospital. Thank you.
+    </div>
+</div>
+
+<!-- Actions row -->
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=bill.bill_number %}
+{% endblock %}

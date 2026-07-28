@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Radiology Report - {{ radiology_request.radiology_number }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header">
+        <div class="brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div>
+                <h1>{{ HOSPITAL_NAME }}</h1>
+                <h2>Radiology Report</h2>
+                <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div class="doc-no-label">Report No.</div>
+            <div class="doc-no">{{ radiology_request.radiology_number }}</div>
+            {% if radiology_request.barcode %}<img class="barcode" src="{{ radiology_request.barcode.url }}" alt="Barcode">{% endif %}
+        </div>
+    </div>
+
+    <div class="tuh-print-banner">
+        <i class="bi bi-file-earmark-medical"></i> RADIOLOGY REPORT
+        <span class="status-pill paid">{{ radiology_request.get_status_display }}</span>
+    </div>
+
+    <div class="tuh-meta-card">
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-fill"></i> Patient</div>
+            <div class="row-val"><strong>{{ radiology_request.patient_obj.full_name }}</strong> ({{ radiology_request.patient_obj.patient_code }})</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-camera"></i> Service</div>
+            <div class="row-val highlight">{{ radiology_request.display_service_name }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-building"></i> Department</div>
+            <div class="row-val">{{ radiology_request.department_display }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-send"></i> Requested</div>
+            <div class="row-val">{{ radiology_request.requested_at|date:"F d, Y  h:i a" }}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-check2-circle"></i> Completed</div>
+            <div class="row-val">{% if radiology_request.completed_at %}{{ radiology_request.completed_at|date:"F d, Y  h:i a" }}{% else %}Pending{% endif %}</div>
+        </div>
+        <div class="row-item">
+            <div class="row-label"><i class="bi bi-person-badge"></i> Processed By</div>
+            <div class="row-val">{% if radiology_request.processed_by %}{{ radiology_request.processed_by.get_full_name|default:radiology_request.processed_by.username }}{% else %}—{% endif %}</div>
+        </div>
+    </div>
+
+    <div class="tuh-section-title">Findings</div>
+    <div class="tuh-body-text">{{ radiology_request.findings|default:"No findings recorded."|linebreaks }}</div>
+
+    <div class="tuh-section-title">Impression</div>
+    <div class="tuh-body-text">{{ radiology_request.impression|default:"No impression recorded."|linebreaks }}</div>
+
+    <div class="tuh-print-footer">
+        <div class="tuh-footer-cols">
+            <div class="footer-col"><i class="bi bi-person-circle"></i>
+                <div><div class="f-title">Verified By</div><div>{% if radiology_request.processed_by %}{{ radiology_request.processed_by.get_full_name|default:radiology_request.processed_by.username }}{% else %}Radiology{% endif %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-printer"></i>
+                <div><div class="f-title">Printed On</div><div>{% now "M d, Y h:i A" %}</div></div>
+            </div>
+            <div class="footer-col"><i class="bi bi-telephone-fill"></i>
+                <div><div class="f-title">For Assistance</div><div>{{ HOSPITAL_EMERGENCY_PHONE }}</div></div>
+            </div>
+        </div>
+        <div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div>
+    </div>
+    <div class="corner-decoration"></div>
+</div>
+
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=radiology_request.radiology_number %}
+{% endblock %}

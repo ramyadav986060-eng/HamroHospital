@@ -1,0 +1,38 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{% if is_today %}Today's Collections{% else %}Collections - {{ selected_date }}{% endif %}{% endblock %}
+{% block page_title %}{% if is_today %}Today's Collections{% else %}Collections History{% endif %}{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'billing:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'billing:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient / Bill</a>
+    <a class="nav-link active" href="{% url 'billing:todays_collections' %}"><i class="bi bi-cash-stack"></i> Today's Collections</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-3 d-flex gap-2 align-items-center">
+    <label class="small fw-bold mb-0">View history for:</label>
+    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control form-control-sm" style="max-width:180px;">
+    <button class="btn btn-sm btn-primary">Go</button>
+    {% if not is_today %}<a href="{% url 'billing:todays_collections' %}" class="btn btn-sm btn-outline-secondary">Back to Today</a>{% endif %}
+</form>
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card blue"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.cash }}</h4><small>Cash</small></div></div>
+    <div class="col-md-3"><div class="stat-card green"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.esewa }}</h4><small>eSewa</small></div></div>
+    <div class="col-md-3"><div class="stat-card orange"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.insurance }}</h4><small>Insurance</small></div></div>
+    <div class="col-md-3"><div class="stat-card gray"><h4 class="fw-bold mb-0">NPR {{ grand_total }}</h4><small>Grand Total</small></div></div>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover small">
+            <thead><tr><th>Bill #</th><th>Patient</th><th>Method</th><th>Amount</th><th>Time</th></tr></thead>
+            <tbody>
+            {% for bill in bills %}
+                <tr><td>{{ bill.bill_number }}</td><td>{{ bill.patient.full_name }}</td><td>{{ bill.get_payment_method_display }}</td><td>NPR {{ bill.total_amount }}</td><td>{{ bill.created_at|date:"H:i" }}</td></tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No collections yet today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
