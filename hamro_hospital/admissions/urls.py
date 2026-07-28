@@ -14,6 +14,7 @@ urlpatterns = [
     path('<int:pk>/transfer-bed/', views.admission_transfer_bed, name='admission_transfer_bed'),
     path('<int:pk>/discharge-checklist/', views.update_discharge_checklist, name='update_discharge_checklist'),
     path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
+    path('<int:pk>/discharge-package.pdf', views.discharge_package_pdf, name='discharge_package_pdf'),
 
     path('wards/', views.ward_list, name='ward_list'),
     path('wards/add/', views.ward_create, name='ward_create'),

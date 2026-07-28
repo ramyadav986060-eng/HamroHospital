@@ -32,6 +32,7 @@
                 <a href="{% url 'admissions:admission_transfer_bed' admission.pk %}" class="btn btn-sm btn-outline-warning">Transfer Bed</a>
                 <a href="{% url 'nursing:admission_notes' admission.pk %}" class="btn btn-sm btn-outline-secondary">Nursing Notes</a>
                 <a href="{% url 'documents:document_list' admission.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a>
+                <a href="{% url 'admissions:discharge_package_pdf' admission.pk %}" class="btn btn-sm btn-outline-dark" target="_blank">Discharge Package</a>
             </div>
         </div>
     </div>
