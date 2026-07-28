@@ -49,6 +49,9 @@ def dashboard(request):
 
     incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.LABORATORY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
 
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.LABORATORY).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+
     return render(request, 'laboratory/dashboard.html', {
         'pending_count': pending.count(),
         'accepted_count': accepted.count(),
@@ -61,6 +64,7 @@ def dashboard(request):
         'selected_date': selected_date, 'is_today': selected_date == today, 'history': history,
         'recent_uploads': recent_uploads,
         'incoming_referrals': incoming_referrals,
+        'service_orders': service_orders,
     })
 
 

@@ -37,10 +37,14 @@ def dashboard(request):
         category__in=[DocumentCategory.OPERATION_RECORD, DocumentCategory.CONSENT_FORM],
     ).select_related('patient', 'uploaded_by').order_by('-uploaded_at')[:10]
 
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.OPERATION_THEATRE).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+
     return render(request, 'operation_theatre/dashboard.html', {
         'today_list': today_list, 'in_progress': in_progress,
         'scheduled_count': scheduled.count(), 'in_progress_count': in_progress.count(),
         'completed_today_count': completed_today.count(), 'recent_uploads': recent_uploads,
+        'service_orders': service_orders,
     })
 
 

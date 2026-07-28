@@ -5,11 +5,29 @@
     <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Requested</th><th>Payment</th><th></th></tr></thead><tbody>{% for ref in incoming_referrals %}<tr><td>{{ ref.patient.full_name }}<br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td><td>{{ ref.requested_items|default:ref.reason|linebreaksbr }}</td><td>{% if ref.related_bill %}<span class="badge {% if ref.related_bill.status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ ref.related_bill.get_status_display }}</span>{% else %}<span class="badge bg-secondary">No bill</span>{% endif %}</td><td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-primary">Open</a></td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No incoming referrals.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 
+
+<div class="tuh-card p-4 mt-4 border border-info">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
+        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
+    </div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+
 {% endblock %}
 {% block page_title %}Radiology Dashboard
 <div class="tuh-card p-4 mt-4 border border-primary">
     <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-send"></i> Incoming Doctor Referrals</h6>
     <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Requested</th><th>Payment</th><th></th></tr></thead><tbody>{% for ref in incoming_referrals %}<tr><td>{{ ref.patient.full_name }}<br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td><td>{{ ref.requested_items|default:ref.reason|linebreaksbr }}</td><td>{% if ref.related_bill %}<span class="badge {% if ref.related_bill.status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ ref.related_bill.get_status_display }}</span>{% else %}<span class="badge bg-secondary">No bill</span>{% endif %}</td><td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-primary">Open</a></td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No incoming referrals.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+
+
+<div class="tuh-card p-4 mt-4 border border-info">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
+        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
+    </div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 
 {% endblock %}
@@ -26,6 +44,15 @@
 <div class="tuh-card p-4 mt-4 border border-primary">
     <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-send"></i> Incoming Doctor Referrals</h6>
     <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Requested</th><th>Payment</th><th></th></tr></thead><tbody>{% for ref in incoming_referrals %}<tr><td>{{ ref.patient.full_name }}<br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td><td>{{ ref.requested_items|default:ref.reason|linebreaksbr }}</td><td>{% if ref.related_bill %}<span class="badge {% if ref.related_bill.status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ ref.related_bill.get_status_display }}</span>{% else %}<span class="badge bg-secondary">No bill</span>{% endif %}</td><td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-primary">Open</a></td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No incoming referrals.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+
+
+<div class="tuh-card p-4 mt-4 border border-info">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
+        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
+    </div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 
 {% endblock %}
@@ -95,6 +122,15 @@ document.addEventListener('tuh:patient-scanned', function () { document.getEleme
 <div class="tuh-card p-4 mt-4 border border-primary">
     <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-send"></i> Incoming Doctor Referrals</h6>
     <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Requested</th><th>Payment</th><th></th></tr></thead><tbody>{% for ref in incoming_referrals %}<tr><td>{{ ref.patient.full_name }}<br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td><td>{{ ref.requested_items|default:ref.reason|linebreaksbr }}</td><td>{% if ref.related_bill %}<span class="badge {% if ref.related_bill.status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ ref.related_bill.get_status_display }}</span>{% else %}<span class="badge bg-secondary">No bill</span>{% endif %}</td><td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-primary">Open</a></td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No incoming referrals.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+
+
+<div class="tuh-card p-4 mt-4 border border-info">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
+        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
+    </div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 
 {% endblock %}

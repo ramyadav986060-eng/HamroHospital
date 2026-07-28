@@ -22,6 +22,9 @@ def dashboard(request):
     pending_requests = BloodRequest.objects.filter(
         status=BloodRequestStatus.PENDING,
     ).select_related('patient', 'requested_by')
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.BLOOD_BANK).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+
     return render(request, 'blood_bank/dashboard.html', {
         'available_count': available.count(),
         'near_expiry_count': near_expiry.count(),
@@ -29,6 +32,7 @@ def dashboard(request):
         'stock_by_group': stock_by_group,
         'pending_requests': pending_requests,
         'pending_requests_count': pending_requests.count(),
+        'service_orders': service_orders,
     })
 
 

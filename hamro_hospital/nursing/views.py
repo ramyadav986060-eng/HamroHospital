@@ -34,6 +34,9 @@ def dashboard(request):
     ).values_list('admission_id', flat=True)
     pending_notes = active_admissions.exclude(pk__in=admissions_with_note_today)
 
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.NURSING).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+
     return render(request, 'nursing/dashboard.html', {
         'active_admissions': active_admissions,
         'active_count': active_admissions.count(),
@@ -41,6 +44,7 @@ def dashboard(request):
         'todays_discharges_count': todays_discharges.count(),
         'pending_notes': pending_notes,
         'pending_notes_count': pending_notes.count(),
+        'service_orders': service_orders,
     })
 
 

@@ -91,6 +91,8 @@ def dashboard(request):
     yearly_sales = PharmacySale.objects.filter(created_at__date__gte=year_start)
     active_medicines = Medicine.objects.filter(is_active=True)
     incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.PHARMACY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.PHARMACY).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
     return render(request, 'pharmacy/dashboard.html', {
         'todays_count': todays_sales.count(),
         'todays_total': sum(totals_by_method.values()),
@@ -102,6 +104,7 @@ def dashboard(request):
         'low_stock_count': sum(1 for m in active_medicines if m.is_low_stock),
         'out_of_stock_count': active_medicines.filter(current_stock=0).count(),
         'incoming_referrals': incoming_referrals,
+        'service_orders': service_orders,
     })
 
 
@@ -140,7 +143,9 @@ def dispense(request, patient_id):
             for mid in selected_ids:
                 medicine = medicines.get(pk=mid)
                 batch_id = request.POST.get(f'batch_{mid}')
-                if batch_id:
+                if medicine.batches.exists() and not batch_id:
+                    insufficient.append(f'{medicine.name} (select batch)')
+                elif batch_id:
                     batch = medicine.batches.filter(pk=batch_id).first()
                     if not batch or batch.quantity_available < quantities[mid]:
                         insufficient.append(f'{medicine.name} (batch)')

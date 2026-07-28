@@ -35,6 +35,9 @@ def dashboard(request):
 
     incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.RADIOLOGY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
 
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.RADIOLOGY).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+
     return render(request, 'radiology/dashboard.html', {
         'pending_count': pending.count(),
         'accepted_count': accepted.count(),
@@ -43,6 +46,7 @@ def dashboard(request):
         'urgent_count': urgent.count(),
         'recent_uploads': recent_uploads,
         'incoming_referrals': incoming_referrals,
+        'service_orders': service_orders,
     })
 
 

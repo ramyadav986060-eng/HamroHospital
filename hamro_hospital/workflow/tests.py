@@ -37,3 +37,38 @@ class WorkflowEngineTests(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.payment_status, ServiceOrder.PaymentStatus.PAID)
         self.assertTrue(PaymentEvent.objects.filter(bill=bill).exists())
+
+class AdmissionWorkflowTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='admission1', password='pass12345', role=Role.WARD_ADMISSION, is_staff=True)
+        province = Province.objects.create(number=4, name='Gandaki')
+        district = District.objects.create(province=province, name='Kaski')
+        self.patient = Patient.objects.create(first_name='Admit', last_name='Patient', gender='F', date_of_birth='1985-01-01', phone_number='9800000002', district=district)
+        self.department = Department.objects.create(name='Medicine', slug='medicine-test', description='Medicine', consultation_fee=0)
+        from admissions.models import Ward, Bed, Admission
+        self.Ward, self.Bed, self.Admission = Ward, Bed, Admission
+        self.ward1 = Ward.objects.create(name='General A', ward_type='general', daily_rate=100)
+        self.ward2 = Ward.objects.create(name='ICU A', ward_type='icu', daily_rate=5000)
+        self.bed1 = Bed.objects.create(ward=self.ward1, bed_number='1', is_occupied=True)
+        self.bed2 = Bed.objects.create(ward=self.ward2, bed_number='2', is_occupied=False)
+        self.admission = Admission.objects.create(patient=self.patient, department=self.department, ward=self.ward1, bed=self.bed1, reason_for_admission='Observation', created_by=self.user)
+
+    def test_deposit_and_bed_transfer(self):
+        from admissions.models import AdmissionDeposit, BedTransfer
+        deposit = AdmissionDeposit.objects.create(admission=self.admission, amount=1000, received_by=self.user)
+        self.assertEqual(deposit.amount, 1000)
+        transfer = BedTransfer.objects.create(admission=self.admission, to_ward=self.ward2, to_bed=self.bed2, transferred_by=self.user)
+        self.bed1.refresh_from_db(); self.bed2.refresh_from_db(); self.admission.refresh_from_db()
+        self.assertFalse(self.bed1.is_occupied)
+        self.assertTrue(self.bed2.is_occupied)
+        self.assertEqual(self.admission.ward_id, self.ward2.id)
+
+    def test_discharge_checklist_completion(self):
+        from admissions.models import DischargeChecklist
+        checklist = DischargeChecklist.objects.create(
+            admission=self.admission, all_bills_paid=True, lab_reports_complete=True,
+            radiology_reports_complete=True, medicine_charges_complete=True,
+            discharge_summary_prepared=True, nursing_clearance=True,
+            insurance_clearance=True, bed_release_ready=True,
+        )
+        self.assertTrue(checklist.is_complete)

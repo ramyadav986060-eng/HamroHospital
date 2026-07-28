@@ -45,6 +45,11 @@ class Referral(models.Model):
     class Meta:
         db_table = 'referrals_referral'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['referral_type', 'status']),
+            models.Index(fields=['patient', 'created_at']),
+            models.Index(fields=['created_by', 'created_at']),
+        ]
 
     def __str__(self):
         return f"Referral for {self.patient} to {self.to_department}"

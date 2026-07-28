@@ -89,6 +89,11 @@ class Bill(models.Model):
     class Meta:
         db_table = 'billing_bill'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['payment_method', 'created_at']),
+            models.Index(fields=['bill_type', 'created_at']),
+        ]
 
     def __str__(self):
         return f"{self.bill_number} - {self.patient.full_name}"

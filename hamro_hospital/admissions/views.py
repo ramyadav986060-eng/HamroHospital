@@ -57,6 +57,8 @@ def admission_list(request):
     monthly_revenue = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID, created_at__date__gte=month_start).aggregate(t=Sum('total_amount'))['t'] or 0
     yearly_revenue = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID, created_at__date__gte=year_start).aggregate(t=Sum('total_amount'))['t'] or 0
     pending_admissions_count = admission_referrals.count()
+    from workflow.models import ServiceOrder
+    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.ADMISSION).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
 
     return render(request, 'admissions/admission_list.html', {
         'admissions': admissions, 'statuses': Admission.Status.choices, 'selected_status': status,
@@ -71,6 +73,7 @@ def admission_list(request):
         'yearly_revenue': yearly_revenue,
         'recommended_admissions': recommended_admissions,
         'admission_referrals': admission_referrals,
+        'service_orders': service_orders,
         'discharge_queue': currently_admitted.order_by('admission_date')[:15],
     })
 
