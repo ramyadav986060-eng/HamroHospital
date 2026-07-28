@@ -120,7 +120,7 @@ def patient_lookup(request):
 @pharmacy_required
 def dispense(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
-    medicines = Medicine.objects.filter(is_active=True)
+    medicines = Medicine.objects.filter(is_active=True).prefetch_related('batches')
 
     # Pull the most recent consultation's prescription for convenience (Digital source)
     latest_consultation = (
@@ -139,7 +139,12 @@ def dispense(request, patient_id):
             insufficient = []
             for mid in selected_ids:
                 medicine = medicines.get(pk=mid)
-                if medicine.current_stock < quantities[mid]:
+                batch_id = request.POST.get(f'batch_{mid}')
+                if batch_id:
+                    batch = medicine.batches.filter(pk=batch_id).first()
+                    if not batch or batch.quantity_available < quantities[mid]:
+                        insufficient.append(f'{medicine.name} (batch)')
+                elif medicine.current_stock < quantities[mid]:
                     insufficient.append(medicine.name)
             if insufficient:
                 messages.error(request, f"Insufficient stock for: {', '.join(insufficient)}")
@@ -158,9 +163,16 @@ def dispense(request, patient_id):
                     for mid in selected_ids:
                         medicine = Medicine.objects.select_for_update().get(pk=mid)
                         qty = quantities[mid]
+                        batch = None
+                        batch_id = request.POST.get(f'batch_{mid}')
+                        if batch_id:
+                            batch = medicine.batches.select_for_update().filter(pk=batch_id).first()
+                            if batch:
+                                batch.quantity_available -= qty
+                                batch.save(update_fields=['quantity_available'])
                         medicine.current_stock -= qty
                         medicine.save(update_fields=['current_stock'])
-                        StockLedger.objects.create(medicine=medicine, movement_type=StockLedger.MovementType.SALE, quantity_change=-qty, balance_after=medicine.current_stock, reference=sale.sale_number, created_by=request.user)
+                        StockLedger.objects.create(medicine=medicine, batch=batch, movement_type=StockLedger.MovementType.SALE, quantity_change=-qty, balance_after=medicine.current_stock, reference=sale.sale_number, created_by=request.user)
                         PharmacySaleItem.objects.create(
                             sale=sale, medicine=medicine, medicine_name=medicine.name,
                             unit_price=medicine.selling_price, quantity=qty,

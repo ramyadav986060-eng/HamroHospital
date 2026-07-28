@@ -74,3 +74,38 @@ def admission_timeline(sender, instance, created, **kwargs):
                 'related_url': reverse('admissions:admission_detail', args=[instance.pk]),
             },
         )
+
+@receiver(post_save, sender='pharmacy.PharmacySale')
+def pharmacy_sale_timeline(sender, instance, created, **kwargs):
+    if created and instance.patient_id:
+        add_timeline(instance.patient, PatientTimeline.EventType.PHARMACY, f'Pharmacy sale {instance.sale_number}', f'NPR {instance.total_amount}', actor=instance.sold_by, related_url=reverse('pharmacy:receipt', args=[instance.pk]), source=instance)
+
+
+@receiver(post_save, sender='documents.PatientDocument')
+def document_timeline(sender, instance, created, **kwargs):
+    if created and instance.patient_id:
+        add_timeline(instance.patient, PatientTimeline.EventType.DOCUMENT, f'Document uploaded: {instance.title}', instance.get_category_display(), actor=instance.uploaded_by, related_url=reverse('documents:document_view', args=[instance.pk]), source=instance)
+
+
+@receiver(post_save, sender='insurance.InsuranceClaim')
+def insurance_claim_timeline(sender, instance, created, **kwargs):
+    if created:
+        add_timeline(instance.patient, PatientTimeline.EventType.OTHER, f'Insurance claim {instance.claim_number}', f'NPR {instance.amount_claimed} - {instance.get_status_display()}', actor=instance.submitted_by, related_url=reverse('insurance:claim_slip', args=[instance.pk]), source=instance)
+
+
+@receiver(post_save, sender='blood_bank.BloodIssue')
+def blood_issue_timeline(sender, instance, created, **kwargs):
+    if created:
+        add_timeline(instance.patient, PatientTimeline.EventType.BLOOD_BANK, f'Blood issued: {instance.blood_unit.bag_number}', instance.purpose, actor=instance.issued_by, source=instance)
+
+
+@receiver(post_save, sender='consultations.LabTestRequest')
+def lab_request_created_timeline(sender, instance, created, **kwargs):
+    if created and instance.patient_obj:
+        add_timeline(instance.patient_obj, PatientTimeline.EventType.LAB, f'Lab requested: {instance.test_name}', instance.clinical_note, related_url=reverse('laboratory:update_result', args=[instance.pk]), source=instance)
+
+
+@receiver(post_save, sender='consultations.RadiologyRequest')
+def radiology_request_created_timeline(sender, instance, created, **kwargs):
+    if created and instance.patient_obj:
+        add_timeline(instance.patient_obj, PatientTimeline.EventType.RADIOLOGY, f'Radiology requested: {instance.display_service_name}', instance.clinical_note, related_url=reverse('radiology:update_report', args=[instance.pk]), source=instance)

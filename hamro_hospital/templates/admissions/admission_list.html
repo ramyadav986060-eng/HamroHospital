@@ -6,6 +6,8 @@
     <a class="nav-link active" href="{% url 'admissions:admission_list' %}"><i class="bi bi-hospital"></i> Admissions</a>
     <a class="nav-link" href="{% url 'admissions:ward_list' %}"><i class="bi bi-building"></i> Wards &amp; Beds</a>
     <a class="nav-link" href="{% url 'admissions:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
+    <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
 </nav>
 {% endblock %}
 {% block dashboard_content %}

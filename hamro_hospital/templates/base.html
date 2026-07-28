@@ -191,6 +191,24 @@ function hamroGoBack(fallbackUrl) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/theme.js' %}"></script>
 <script src="{% static 'js/main.js' %}"></script>
+
+{% if request.user.is_authenticated %}
+<script>
+(function(){
+    try {
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(protocol + window.location.host + '/ws/notifications/');
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data || '{}');
+            document.dispatchEvent(new CustomEvent('hamro:notification', {detail: data}));
+            const bellDots = document.querySelectorAll('.dot');
+            bellDots.forEach(function(dot){ dot.style.display = 'inline-block'; });
+        };
+    } catch (e) {}
+})();
+</script>
+{% endif %}
+
 {% block extra_js %}{% endblock %}
 
 {% if not request.user.is_authenticated %}

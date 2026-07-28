@@ -4,6 +4,8 @@
 {% block sidebar %}
 <nav class="nav flex-column">
     <a class="nav-link active" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
+    <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
     <a class="nav-link" href="{% url 'blood_bank:inventory_list' %}"><i class="bi bi-droplet"></i> Inventory</a>
     <a class="nav-link" href="{% url 'blood_bank:unit_add' %}"><i class="bi bi-plus-circle"></i> Add Blood Unit</a>
     <a class="nav-link" href="{% url 'blood_bank:patient_lookup' %}"><i class="bi bi-search"></i> Issue Blood</a>

@@ -236,3 +236,13 @@ def verify_report(request, pk):
         )
         messages.success(request, 'Radiology report verified.')
     return redirect('radiology:print_report', pk=pk)
+
+@radiology_required
+def template_json(request, pk):
+    from django.http import JsonResponse
+    from radiology.models import RadiologyReportTemplate
+    template = get_object_or_404(RadiologyReportTemplate, pk=pk, is_active=True)
+    return JsonResponse({
+        'findings_template': template.findings_template,
+        'impression_template': template.impression_template,
+    })

@@ -17,6 +17,8 @@
 {% block sidebar %}
 <nav class="nav flex-column">
     <a class="nav-link active" href="{% url 'pharmacy:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
+    <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
     <a class="nav-link" href="{% url 'pharmacy:patient_lookup' %}"><i class="bi bi-search"></i> Dispense Medicine</a>
     <a class="nav-link" href="{% url 'pharmacy:todays_sales' %}"><i class="bi bi-cash-stack"></i> Today's Sales</a>
 </nav>

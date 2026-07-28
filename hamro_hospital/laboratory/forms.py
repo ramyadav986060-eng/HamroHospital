@@ -1,6 +1,7 @@
 from django import forms
 
 from consultations.models import LabTestRequest, RequestStatus, Urgency
+from laboratory.models import LabPanel, LabParameter, LabResultValue
 
 
 class LabResultForm(forms.ModelForm):
@@ -35,4 +36,15 @@ class ManualLabRequestForm(forms.ModelForm):
             'department_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. General Medicine'}),
             'clinical_note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'referral_letter': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class LabResultValueForm(forms.ModelForm):
+    class Meta:
+        model = LabResultValue
+        fields = ['value', 'flag', 'remarks']
+        widgets = {
+            'value': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'flag': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Normal/High/Low'}),
+            'remarks': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
         }

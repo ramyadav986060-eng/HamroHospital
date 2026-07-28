@@ -30,6 +30,7 @@ ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('DJANGO_ALLOWED_HOSTS', '').s
 # ---------------------------------------------------------------------------
 INSTALLED_APPS = [
     'jazzmin',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

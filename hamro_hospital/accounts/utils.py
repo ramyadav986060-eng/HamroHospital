@@ -40,10 +40,28 @@ def create_notification(title, message, role=None, user=None, related_url=''):
     related_url is optional and lets department staff open the relevant record directly.
     """
     from accounts.models import Notification
-    Notification.objects.create(
+    notification = Notification.objects.create(
         user=user,
         role=role,
         title=title,
         message=message,
         related_url=related_url or '',
     )
+    try:
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        payload = {
+            'id': notification.id,
+            'title': title,
+            'message': message,
+            'related_url': related_url or '',
+        }
+        if user_id := getattr(user, 'id', None):
+            async_to_sync(channel_layer.group_send)(f'user_{user_id}', {'type': 'notify', 'payload': payload})
+        if role:
+            async_to_sync(channel_layer.group_send)(f'role_{role}', {'type': 'notify', 'payload': payload})
+    except Exception:
+        # WebSocket delivery is best-effort; database notification is authoritative.
+        pass
+    return notification

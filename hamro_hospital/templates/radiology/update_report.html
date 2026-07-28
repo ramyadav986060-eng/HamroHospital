@@ -23,4 +23,21 @@
     <a href="{% url 'radiology:print_report' radiology_request.pk %}" class="btn btn-outline-secondary" target="_blank">Print Report</a>
     {% endif %}
 </form>
+<script>
+(function () {
+    const templateSelect = document.getElementById('id_report_template');
+    const findings = document.getElementById('id_findings');
+    const impression = document.getElementById('id_impression');
+    if (!templateSelect) return;
+    templateSelect.addEventListener('change', function () {
+        if (!this.value) return;
+        fetch("{% url 'radiology:template_json' 0 %}".replace('0', this.value))
+            .then(r => r.json())
+            .then(data => {
+                if (findings && !findings.value) findings.value = data.findings_template || '';
+                if (impression && !impression.value) impression.value = data.impression_template || '';
+            });
+    });
+})();
+</script>
 {% endblock %}

@@ -11,8 +11,9 @@ from accounts.models import AuditLog, Role
 from accounts.utils import write_audit_log
 from consultations.models import LabTestRequest, RequestStatus, Urgency
 from documents.models import PatientDocument, DocumentCategory
-from laboratory.forms import LabResultForm, ManualLabRequestForm
+from laboratory.forms import LabResultForm, ManualLabRequestForm, LabResultValueForm
 from patients.models import Patient
+from laboratory.models import LabPanel, LabParameter, LabResultValue
 from referrals.models import Referral
 from workflow.models import PatientTimeline
 from workflow.utils import add_timeline
@@ -181,6 +182,23 @@ def update_result(request, pk):
             updated.processed_by = request.user
             updated.save()
 
+            # Structured parameter values (LabPanel/LabParameter/LabResultValue).
+            for key, value in request.POST.items():
+                if key.startswith('param_value_'):
+                    param_id = key.replace('param_value_', '')
+                    if not value.strip():
+                        continue
+                    parameter = LabParameter.objects.filter(pk=param_id).first()
+                    if parameter:
+                        LabResultValue.objects.update_or_create(
+                            lab_request=updated, parameter=parameter,
+                            defaults={
+                                'value': value.strip(),
+                                'flag': request.POST.get(f'param_flag_{param_id}', '').strip(),
+                                'remarks': request.POST.get(f'param_remarks_{param_id}', '').strip(),
+                            }
+                        )
+
             # Multiple files (PDF / scanned report) -> each becomes its own
             # PatientDocument, so it appears in Medical History, Doctor
             # Dashboard, Patient Portal, Super Admin, Nursing (view-only),
@@ -224,7 +242,13 @@ def update_result(request, pk):
             return redirect('laboratory:queue')
     else:
         form = LabResultForm(instance=lab_request)
-    return render(request, 'laboratory/update_result.html', {'form': form, 'lab_request': lab_request})
+    panel = LabPanel.objects.filter(name__iexact=lab_request.test_name, is_active=True).first() or LabPanel.objects.filter(name__icontains=lab_request.test_name, is_active=True).first()
+    parameters = panel.parameters.all() if panel else []
+    existing_values = {v.parameter_id: v for v in lab_request.parameter_values.all()}
+    return render(request, 'laboratory/update_result.html', {
+        'form': form, 'lab_request': lab_request, 'panel': panel,
+        'parameters': parameters, 'existing_values': existing_values,
+    })
 
 
 @role_required(Role.SUPER_ADMIN, Role.LABORATORY, Role.DOCTOR, Role.WARD_ADMISSION, Role.NURSING, Role.OPERATION_THEATRE)

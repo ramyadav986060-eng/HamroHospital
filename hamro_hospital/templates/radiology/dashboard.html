@@ -18,6 +18,8 @@
     <a class="nav-link active" href="{% url 'radiology:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
     <a class="nav-link" href="{% url 'radiology:queue' %}"><i class="bi bi-list-check"></i> Request Queue</a>
     <a class="nav-link" href="{% url 'referrals:department_queue' %}"><i class="bi bi-arrow-down-right-square"></i> Incoming Referrals</a>
+    <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
+    <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
     <a class="nav-link" href="{% url 'radiology:search_patient' %}"><i class="bi bi-search"></i> Search Patient</a>
 </nav>
 
