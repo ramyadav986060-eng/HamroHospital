@@ -101,7 +101,7 @@ def document_view(request, pk):
     )
 
 
-@role_required(Role.SUPER_ADMIN)
+@role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER)
 def document_download(request, pk):
     """Secure, authenticated file download - Super Admin only on the staff
     side (spec 8: 'Only Patients and Super Admin may download files.

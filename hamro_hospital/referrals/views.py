@@ -52,10 +52,14 @@ def _role_referral_type(user):
 
 @login_required
 @role_required(Role.DOCTOR, Role.SUPER_ADMIN)
-def referral_create(request, patient_id=None):
+def referral_create(request, patient_id=None, referral_type=None):
     initial_data = {}
     if patient_id:
         initial_data['patient'] = get_object_or_404(Patient, pk=patient_id)
+    if referral_type:
+        initial_data['referral_type'] = referral_type
+    elif request.method == 'GET' and patient_id:
+        return render(request, 'referrals/category_select.html', {'patient': initial_data['patient'], 'types': Referral.ReferralType.choices})
 
     if request.method == 'POST':
         form = ReferralForm(request.POST, request.FILES)
@@ -74,6 +78,14 @@ def referral_create(request, patient_id=None):
                     role=target_role,
                     related_url=url,
                 )
+            elif referral.to_department_id:
+                for doc in referral.to_department.doctors.select_related('user_account').filter(is_active=True, user_account__isnull=False):
+                    create_notification(
+                        title='New Department Referral',
+                        message=f'{referral.patient.full_name} referred to {referral.to_department.name}. Reason: {referral.reason[:80]}',
+                        user=doc.user_account,
+                        related_url=url,
+                    )
             messages.success(request, 'Referral submitted and destination department notified.')
             return redirect('referrals:referral_detail', pk=referral.pk)
     else:

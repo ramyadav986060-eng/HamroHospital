@@ -25,6 +25,7 @@ def dashboard(request):
     year_start = today.replace(month=1, day=1)
 
     todays_bills = Bill.objects.filter(created_at__date=today, status=Bill.Status.PAID)
+    pending_bills = Bill.objects.filter(status=Bill.Status.PENDING).select_related('patient').prefetch_related('items')
     totals_by_method = {
         method: todays_bills.filter(payment_method=method).aggregate(total=Sum('total_amount'))['total'] or 0
         for method, _ in PaymentMethod.choices
@@ -34,6 +35,7 @@ def dashboard(request):
 
     return render(request, 'billing/dashboard.html', {
         'todays_bills': todays_bills.select_related('patient'),
+        'pending_bills': pending_bills,
         'todays_count': todays_bills.count(),
         'todays_total': sum(totals_by_method.values()),
         'totals_by_method': totals_by_method,

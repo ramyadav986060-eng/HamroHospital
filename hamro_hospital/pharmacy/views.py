@@ -12,6 +12,7 @@ from pharmacy.forms import MedicineForm, StockAdjustmentForm, PharmacySaleForm
 from pharmacy.models import Medicine, StockAdjustment, PharmacySale, PharmacySaleItem
 from patients.models import Patient
 from consultations.models import Consultation
+from referrals.models import Referral
 
 
 # --- Super Admin: Medicine catalogue -----------------------------------------
@@ -89,6 +90,7 @@ def dashboard(request):
     monthly_sales = PharmacySale.objects.filter(created_at__date__gte=month_start)
     yearly_sales = PharmacySale.objects.filter(created_at__date__gte=year_start)
     active_medicines = Medicine.objects.filter(is_active=True)
+    incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.PHARMACY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
     return render(request, 'pharmacy/dashboard.html', {
         'todays_count': todays_sales.count(),
         'todays_total': sum(totals_by_method.values()),
@@ -99,6 +101,7 @@ def dashboard(request):
         'yearly_total': yearly_sales.aggregate(t=Sum('total_amount'))['t'] or 0,
         'low_stock_count': sum(1 for m in active_medicines if m.is_low_stock),
         'out_of_stock_count': active_medicines.filter(current_stock=0).count(),
+        'incoming_referrals': incoming_referrals,
     })
 
 

@@ -12,6 +12,7 @@ from consultations.models import RadiologyRequest, RequestStatus, Urgency
 from documents.models import PatientDocument, DocumentCategory
 from radiology.forms import RadiologyReportForm, ManualRadiologyRequestForm
 from patients.models import Patient
+from referrals.models import Referral
 
 
 @radiology_required
@@ -29,6 +30,8 @@ def dashboard(request):
         category=DocumentCategory.RADIOLOGY_REPORT,
     ).select_related('patient', 'uploaded_by').order_by('-uploaded_at')[:10]
 
+    incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.RADIOLOGY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
+
     return render(request, 'radiology/dashboard.html', {
         'pending_count': pending.count(),
         'accepted_count': accepted.count(),
@@ -36,6 +39,7 @@ def dashboard(request):
         'completed_today_count': completed_today.count(),
         'urgent_count': urgent.count(),
         'recent_uploads': recent_uploads,
+        'incoming_referrals': incoming_referrals,
     })
 
 

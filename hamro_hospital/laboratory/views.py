@@ -12,6 +12,7 @@ from consultations.models import LabTestRequest, RequestStatus, Urgency
 from documents.models import PatientDocument, DocumentCategory
 from laboratory.forms import LabResultForm, ManualLabRequestForm
 from patients.models import Patient
+from referrals.models import Referral
 
 
 @laboratory_required
@@ -42,6 +43,8 @@ def dashboard(request):
         category=DocumentCategory.LAB_REPORT,
     ).select_related('patient', 'uploaded_by').order_by('-uploaded_at')[:10]
 
+    incoming_referrals = Referral.objects.filter(referral_type=Referral.ReferralType.LABORATORY, status__in=['new','acknowledged','in_progress']).select_related('patient','referred_by','related_bill')[:10]
+
     return render(request, 'laboratory/dashboard.html', {
         'pending_count': pending.count(),
         'accepted_count': accepted.count(),
@@ -53,6 +56,7 @@ def dashboard(request):
         'urgent_count': urgent.count(),
         'selected_date': selected_date, 'is_today': selected_date == today, 'history': history,
         'recent_uploads': recent_uploads,
+        'incoming_referrals': incoming_referrals,
     })
 
 
