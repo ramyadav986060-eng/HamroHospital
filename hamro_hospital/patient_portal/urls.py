@@ -27,6 +27,9 @@ urlpatterns = [
 
     path('bills/', views.my_bills, name='my_bills'),
     path('bills/<int:pk>/receipt/', views.my_bill_receipt, name='my_bill_receipt'),
+    path('bills/<int:pk>/pay/', views.pay_bill, name='pay_bill'),
+    path('bills/esewa/success/', views.bill_esewa_success, name='bill_esewa_success'),
+    path('bills/esewa/failure/', views.bill_esewa_failure, name='bill_esewa_failure'),
 
     path('pharmacy-sales/', views.my_pharmacy_sales, name='my_pharmacy_sales'),
     path('pharmacy-sales/<int:pk>/receipt/', views.my_pharmacy_receipt, name='my_pharmacy_receipt'),

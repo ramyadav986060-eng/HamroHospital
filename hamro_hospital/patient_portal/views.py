@@ -597,3 +597,43 @@ def my_timeline(request):
     patient = request.portal_patient.patient
     events = patient.timeline_events.select_related('actor').all()[:500]
     return render(request, 'patient_portal/my_timeline.html', {'patient': patient, 'events': events})
+
+
+@patient_login_required
+def pay_bill(request, pk):
+    patient = request.portal_patient.patient
+    bill = get_object_or_404(Bill, pk=pk, patient=patient, status=Bill.Status.PENDING)
+    success_url = request.build_absolute_uri(reverse('patient_portal:bill_esewa_success'))
+    failure_url = request.build_absolute_uri(reverse('patient_portal:bill_esewa_failure')) + '?' + urlencode({'bill_id': bill.id})
+    fields = build_payment_fields(
+        amount=bill.final_amount_paid,
+        transaction_uuid=bill.bill_number,
+        success_url=success_url,
+        failure_url=failure_url,
+    )
+    return render(request, 'appointments/pay_redirect.html', {'appointment': bill, 'form_url': get_form_url(), 'fields': fields})
+
+
+def bill_esewa_success(request):
+    from workflow.utils import record_payment_event
+    from billing.models import PaymentMethod
+    data_param = request.GET.get('data', '')
+    payload = decode_and_verify_response(data_param) if data_param else None
+    if not payload or payload.get('status') != 'COMPLETE':
+        messages.error(request, 'We could not verify your eSewa bill payment.')
+        return redirect('patient_portal:dashboard')
+    bill = get_object_or_404(Bill, bill_number=payload.get('transaction_uuid'))
+    bill.payment_method = PaymentMethod.ESEWA
+    bill.status = Bill.Status.PAID
+    bill.save(update_fields=['payment_method', 'status'])
+    record_payment_event(bill, method=PaymentMethod.ESEWA, transaction_reference=payload.get('transaction_code', ''), gateway_response=str(payload), remarks='Patient Portal eSewa bill payment')
+    messages.success(request, f'eSewa payment completed for bill {bill.bill_number}.')
+    return redirect('patient_portal:my_bill_receipt', pk=bill.pk)
+
+
+def bill_esewa_failure(request):
+    messages.error(request, 'eSewa payment was not completed. Bill remains pending.')
+    bill_id = request.GET.get('bill_id')
+    if bill_id:
+        return redirect('patient_portal:my_bill_receipt', pk=bill_id)
+    return redirect('patient_portal:my_bills')

@@ -11,3 +11,6 @@ openpyxl>=3.1
 # Optional PostgreSQL driver; SQLite remains the default development database.
 psycopg[binary]>=3.1
 channels>=4.0
+channels-redis>=4.2
+celery>=5.3
+redis>=5.0

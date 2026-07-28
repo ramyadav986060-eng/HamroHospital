@@ -292,7 +292,6 @@ def pay_pending_bill_esewa(request, pk):
     return render(request, 'appointments/pay_redirect.html', {'appointment': bill, 'form_url': get_form_url(), 'fields': fields})
 
 
-@cash_counter_required
 def bill_esewa_success(request):
     data_param = request.GET.get('data', '')
     payload = decode_and_verify_response(data_param) if data_param else None
@@ -302,10 +301,15 @@ def bill_esewa_success(request):
     bill = get_object_or_404(Bill, bill_number=payload.get('transaction_uuid'))
     bill.payment_method = PaymentMethod.ESEWA
     bill.status = Bill.Status.PAID
-    bill.cashier = request.user
-    bill.save(update_fields=['payment_method', 'status', 'cashier'])
+    if request.user.is_authenticated:
+        bill.cashier = request.user
+        bill.save(update_fields=['payment_method', 'status', 'cashier'])
+        received_by = request.user
+    else:
+        bill.save(update_fields=['payment_method', 'status'])
+        received_by = None
     record_payment_event(
-        bill, received_by=request.user, method=PaymentMethod.ESEWA,
+        bill, received_by=received_by, method=PaymentMethod.ESEWA,
         transaction_reference=payload.get('transaction_code', ''),
         gateway_response=str(payload), remarks='eSewa pending bill payment',
     )
@@ -319,7 +323,6 @@ def bill_esewa_success(request):
     return redirect('billing:receipt', pk=bill.pk)
 
 
-@cash_counter_required
 def bill_esewa_failure(request):
     bill_id = request.GET.get('bill_id')
     messages.error(request, 'eSewa payment was not completed. Bill remains pending.')

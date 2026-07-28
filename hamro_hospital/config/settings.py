@@ -352,3 +352,24 @@ JAZZMIN_UI_TWEAKS = {
         'success': 'btn-success',
     },
 }
+
+# Production-ready async/background settings. Redis is used when REDIS_URL is set;
+# local/dev can still run safely with the in-memory layer.
+REDIS_URL = os.environ.get('REDIS_URL', '')
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        }
+    }
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL or 'memory://')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL or 'cache+memory://')
+CELERY_TIMEZONE = TIME_ZONE

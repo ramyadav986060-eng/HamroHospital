@@ -18,7 +18,10 @@ import hashlib
 import hmac
 import json
 
+from decimal import Decimal, InvalidOperation
+
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 ESEWA_SANDBOX_FORM_URL = 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'
 ESEWA_LIVE_FORM_URL = 'https://epay.esewa.com.np/api/epay/main/v2/form'
@@ -31,7 +34,17 @@ def get_form_url():
     return ESEWA_SANDBOX_FORM_URL if settings.ESEWA_SANDBOX else ESEWA_LIVE_FORM_URL
 
 
+def validate_esewa_settings():
+    if not settings.ESEWA_MERCHANT_CODE:
+        raise ImproperlyConfigured('ESEWA_MERCHANT_CODE is required.')
+    if not settings.ESEWA_SECRET_KEY:
+        raise ImproperlyConfigured('ESEWA_SECRET_KEY is required.')
+    if not settings.ESEWA_SANDBOX and settings.ESEWA_MERCHANT_CODE == 'EPAYTEST':
+        raise ImproperlyConfigured('Live eSewa cannot use EPAYTEST merchant code.')
+
+
 def _sign(message: str) -> str:
+    validate_esewa_settings()
     secret = settings.ESEWA_SECRET_KEY.encode('utf-8')
     digest = hmac.new(secret, message.encode('utf-8'), hashlib.sha256).digest()
     return base64.b64encode(digest).decode('utf-8')
@@ -43,7 +56,13 @@ def build_payment_fields(*, amount, transaction_uuid, success_url, failure_url):
     `amount` and `total_amount` are equal here since we don't charge any
     separate tax/service fee on top of the registration fee.
     """
-    amount_str = f"{amount:.2f}"
+    try:
+        amount_decimal = Decimal(str(amount)).quantize(Decimal('0.01'))
+    except (InvalidOperation, ValueError):
+        raise ValueError('Invalid eSewa amount.')
+    if amount_decimal <= 0:
+        raise ValueError('eSewa amount must be greater than zero.')
+    amount_str = f"{amount_decimal:.2f}"
     message = f"total_amount={amount_str},transaction_uuid={transaction_uuid},product_code={settings.ESEWA_MERCHANT_CODE}"
     signature = _sign(message)
 
