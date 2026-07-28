@@ -11,6 +11,7 @@ urlpatterns = [
     path('visit/<int:visit_id>/confirm-payment/', views.confirm_visit_payment, name='confirm_visit_payment'),
     path('bill/<int:pk>/receipt/', views.receipt, name='receipt'),
     path('bill/<int:pk>/pay/', views.pay_pending_bill, name='pay_pending_bill'),
+    path('bills/pay-selected/', views.pay_selected_bills, name='pay_selected_bills'),
     path('bill/<int:pk>/reprint/', views.reprint_receipt, name='reprint_receipt'),
     path('collections/today/', views.todays_collections, name='todays_collections'),
     path('bill/<int:pk>/refund/', views.refund_request, name='refund_request'),

@@ -328,6 +328,8 @@ def patient_section(request, pk, section):
         'medical_reports': ('Medical Reports', 'consultations/_patient_consultations.html'),
         'appointments': ('Appointments', 'appointments/_patient_appointments.html'),
         'visits': ('OPD Visit History', 'patients/_patient_visits.html'),
+        'referrals': ('Previous Referrals', 'referrals/_patient_referrals.html'),
+        'documents': ('Medical Records', 'documents/_patient_documents.html'),
     }
     if section not in section_map:
         messages.error(request, 'Unknown patient section.')
@@ -375,6 +377,8 @@ def patient_section(request, pk, section):
         'visits': [
             Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR
         ],
+        'referrals': [Role.SUPER_ADMIN, Role.DOCTOR, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.NURSING, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK],
+        'documents': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.MEDICAL_RECORDS, Role.NURSING, Role.WARD_ADMISSION],
     }
 
     if section in allowed_roles_for_section:
@@ -420,6 +424,11 @@ def patient_section(request, pk, section):
         context['records'] = Appointment.objects.filter(linked_patient=patient)
     elif section == 'visits':
         context['records'] = patient.visits.select_related('department', 'doctor').all()
+    elif section == 'referrals':
+        from referrals.models import Referral
+        context['records'] = Referral.objects.filter(patient=patient).select_related('referred_by', 'to_department', 'related_bill')
+    elif section == 'documents':
+        context['records'] = patient.documents.filter(is_active=True).select_related('uploaded_by')
 
     return render(request, section_template, context)
 
@@ -542,10 +551,11 @@ def opd_ticket_reprint(request, visit_id):
     return render(request, 'patients/opd_ticket.html', {'visit': visit, 'patient': visit.patient, 'is_reprint': True})
 
 
-@registration_counter_required
+@patient_record_viewer_required
 def patient_card(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
-    return render(request, 'patients/patient_card.html', {'patient': patient})
+    can_print_patient_card = request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER]
+    return render(request, 'patients/patient_card.html', {'patient': patient, 'can_print_patient_card': can_print_patient_card})
 
 
 def get_doctors_for_department(request, department_id):

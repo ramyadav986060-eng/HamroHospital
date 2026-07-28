@@ -57,6 +57,10 @@
             <div class="row-val">{% if admission.admitting_doctor %}Dr. {{ admission.admitting_doctor.full_name }}{% else %}-{% endif %}</div>
         </div>
         <div class="row-item">
+            <div class="row-label"><i class="bi bi-cash-coin"></i> Estimated Charge</div>
+            <div class="row-val">NPR {{ admission.admission_charge_estimate }} ({{ admission.length_of_stay_days }} day × NPR {{ admission.ward.daily_rate }})</div>
+        </div>
+        <div class="row-item">
             <div class="row-label"><i class="bi bi-calendar3"></i> Admitted</div>
             <div class="row-val">{{ admission.admission_date|date:"F d, Y  h:i a" }}</div>
         </div>

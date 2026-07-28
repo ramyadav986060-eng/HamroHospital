@@ -273,6 +273,30 @@ def create_bill(request, patient_id):
 
 
 @cash_counter_required
+def pay_selected_bills(request):
+    if request.method == 'POST':
+        ids = request.POST.getlist('bill_ids')
+        method = request.POST.get('payment_method') or PaymentMethod.CASH
+        bills = Bill.objects.filter(pk__in=ids, status=Bill.Status.PENDING).select_related('patient')
+        count = 0
+        for bill in bills:
+            bill.payment_method = method
+            bill.status = Bill.Status.PAID
+            bill.cashier = request.user
+            bill.save(update_fields=['payment_method', 'status', 'cashier'])
+            count += 1
+            write_audit_log(request, AuditLog.Action.PAYMENT, f"Pending bill paid: {bill.bill_number}", patient_id_text=bill.patient.patient_code, receipt_number=bill.bill_number, amount=bill.total_amount, payment_method=bill.get_payment_method_display())
+            from accounts.utils import create_notification
+            for referral in bill.referrals.all():
+                role_map = {'laboratory': Role.LABORATORY, 'radiology': Role.RADIOLOGY, 'pharmacy': Role.PHARMACY, 'nursing': Role.NURSING, 'admission': Role.WARD_ADMISSION, 'operation_theatre': Role.OPERATION_THEATRE, 'blood_bank': Role.BLOOD_BANK}
+                target_role = role_map.get(referral.referral_type)
+                if target_role:
+                    create_notification(title='Payment Completed', message=f'Payment completed for {bill.patient.full_name}, bill {bill.bill_number}.', role=target_role, related_url=reverse('referrals:referral_detail', args=[referral.pk]))
+        messages.success(request, f'{count} pending bill(s) marked as paid.')
+    return redirect('billing:dashboard')
+
+
+@cash_counter_required
 def pay_pending_bill(request, pk):
     bill = get_object_or_404(Bill.objects.select_related('patient').prefetch_related('items'), pk=pk)
     if request.method == 'POST':

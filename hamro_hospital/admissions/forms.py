@@ -47,11 +47,12 @@ class DischargeForm(forms.Form):
 class WardForm(forms.ModelForm):
     class Meta:
         model = Ward
-        fields = ['name', 'ward_type', 'floor', 'is_active']
+        fields = ['name', 'ward_type', 'floor', 'daily_rate', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'ward_type': forms.Select(attrs={'class': 'form-select'}),
             'floor': forms.TextInput(attrs={'class': 'form-control'}),
+            'daily_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

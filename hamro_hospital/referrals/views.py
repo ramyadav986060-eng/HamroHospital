@@ -91,7 +91,7 @@ def referral_create(request, patient_id=None, referral_type=None):
     else:
         form = ReferralForm(initial=initial_data)
 
-    return render(request, 'referrals/referral_form.html', {'form': form})
+    return render(request, 'referrals/referral_form.html', {'form': form, 'selected_type': referral_type or initial_data.get('referral_type')})
 
 
 @login_required
@@ -169,3 +169,23 @@ def referral_generate_bill(request, pk):
         messages.success(request, f'Pending bill {bill.bill_number} generated. Print and send patient to Cash Counter or eSewa.')
         return redirect('billing:receipt', pk=bill.pk)
     return redirect('referrals:referral_detail', pk=referral.pk)
+
+@login_required
+@role_required(Role.DOCTOR, Role.SUPER_ADMIN)
+def my_referrals(request):
+    doctor = getattr(request.user, 'doctor_profile', None)
+    outgoing = Referral.objects.none()
+    incoming = Referral.objects.none()
+    if doctor:
+        outgoing = Referral.objects.filter(referred_by=doctor).select_related('patient', 'to_department', 'related_bill')
+        if doctor.department_id:
+            incoming = Referral.objects.filter(to_department=doctor.department).exclude(referred_by=doctor).select_related('patient', 'referred_by', 'related_bill')
+    if request.user.is_superuser:
+        outgoing = Referral.objects.select_related('patient', 'to_department', 'related_bill').all()
+        incoming = Referral.objects.select_related('patient', 'referred_by', 'related_bill').all()
+    return render(request, 'referrals/my_referrals.html', {
+        'outgoing': outgoing[:200],
+        'incoming': incoming[:200],
+        'pending': outgoing.exclude(status='completed')[:100],
+        'completed': outgoing.filter(status='completed')[:100],
+    })

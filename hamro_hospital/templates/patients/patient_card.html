@@ -297,7 +297,7 @@
     </div>
 
     <!-- UI Action row (Hidden during printing) -->
-    {% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=patient.patient_code|add:'-ID-Card' hide_jpg=True %}
+    {% if can_print_patient_card %}{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=patient.patient_code|add:'-ID-Card' hide_jpg=True %}{% endif %}
     <div class="text-center no-print mb-5">
         <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-link"><i class="bi bi-person"></i> View Patient Profile</a>
     </div>

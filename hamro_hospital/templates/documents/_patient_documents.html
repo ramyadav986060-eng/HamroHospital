@@ -1,0 +1,4 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Title</th><th>Category</th><th>Uploaded By</th><th>Date</th><th></th></tr></thead><tbody>{% for doc in records %}<tr><td>{{ doc.title }}</td><td>{{ doc.get_category_display }}</td><td>{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}</td><td>{{ doc.uploaded_at|date:'Y-m-d H:i' }}</td><td><a href="{% url 'documents:document_view' doc.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>{% if request.user.is_superuser or request.user.role == 'super_admin' or request.user.role == 'registration_counter' %} <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-success">Download</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No documents found.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -36,6 +36,8 @@ class Doctor(models.Model):
         help_text='One or two lines shown on the public doctor profile (kept short by design).',
     )
     contact_number = models.CharField(max_length=20, blank=True, help_text='Optional — shown on public profile if set.')
+    esewa_id = models.CharField(max_length=100, blank=True, help_text='Optional eSewa ID / merchant reference for doctor payments if used.')
+    esewa_phone = models.CharField(max_length=20, blank=True, help_text='Optional eSewa phone number.')
     unit = models.ForeignKey(
         'departments.DepartmentUnit', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='doctors', help_text='Optional sub-unit within the department (e.g. Unit 1).',

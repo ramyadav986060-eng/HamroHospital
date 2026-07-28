@@ -15,7 +15,8 @@ admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_CO
 def admission_list(request):
     import datetime
     from consultations.models import Consultation
-    from django.db.models import Exists, OuterRef
+    from billing.models import Bill
+    from django.db.models import Exists, OuterRef, Sum
     
     today = datetime.date.today()
     month_start = today.replace(day=1)
@@ -51,6 +52,10 @@ def admission_list(request):
     ).select_related('visit__patient', 'visit__department', 'doctor')
 
     currently_admitted = Admission.objects.filter(status=Admission.Status.ADMITTED).select_related('patient', 'ward', 'bed')
+    todays_revenue = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID, created_at__date=today).aggregate(t=Sum('total_amount'))['t'] or 0
+    monthly_revenue = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID, created_at__date__gte=month_start).aggregate(t=Sum('total_amount'))['t'] or 0
+    yearly_revenue = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID, created_at__date__gte=year_start).aggregate(t=Sum('total_amount'))['t'] or 0
+    pending_admissions_count = admission_referrals.count()
 
     return render(request, 'admissions/admission_list.html', {
         'admissions': admissions, 'statuses': Admission.Status.choices, 'selected_status': status,
@@ -59,6 +64,10 @@ def admission_list(request):
         'monthly_count': Admission.objects.filter(admission_date__date__gte=month_start).count(),
         'yearly_count': Admission.objects.filter(admission_date__date__gte=year_start).count(),
         'currently_admitted_count': currently_admitted.count(),
+        'pending_admissions_count': pending_admissions_count,
+        'todays_revenue': todays_revenue,
+        'monthly_revenue': monthly_revenue,
+        'yearly_revenue': yearly_revenue,
         'recommended_admissions': recommended_admissions,
         'admission_referrals': admission_referrals,
         'discharge_queue': currently_admitted.order_by('admission_date')[:15],
@@ -138,6 +147,11 @@ def admission_slip(request, pk):
 def discharge_patient(request, pk):
     admission = get_object_or_404(Admission, pk=pk)
     if request.method == 'POST':
+        from billing.models import Bill
+        pending_bills = Bill.objects.filter(patient=admission.patient, status=Bill.Status.PENDING)
+        if pending_bills.exists():
+            messages.error(request, 'Cannot discharge: patient has pending payments. Please clear all bills first.')
+            return redirect('admissions:admission_detail', pk=admission.pk)
         form = DischargeForm(request.POST)
         if form.is_valid():
             admission.discharge(

@@ -15,6 +15,12 @@
     <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Admissions This Month</small></div></div>
     <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Admissions This Year</small></div></div>
 </div>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6"><div class="stat-card orange"><i class="bi bi-hourglass fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_admissions_count }}</h2><small>Pending Admissions</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green"><i class="bi bi-cash fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_revenue }}</h2><small>Admission Revenue Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_revenue }}</h2><small>Monthly Revenue</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card gray"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_revenue }}</h2><small>Yearly Revenue</small></div></div>
+</div>
 <form method="get" class="mb-3 d-flex gap-2 align-items-center">
     <select name="status" class="form-select w-auto" onchange="this.form.submit()">
         <option value="">All Statuses</option>

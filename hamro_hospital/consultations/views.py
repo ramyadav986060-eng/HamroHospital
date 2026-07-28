@@ -17,7 +17,7 @@ def _get_doctor_or_none(request):
 def consultation_queue(request):
     doctor = _get_doctor_or_none(request)
     if not doctor:
-        messages.warning(request, 'Your account is not linked to a Doctor profile yet. Ask Super Admin to link it.')
+        messages.warning(request, 'Doctor profile setup is incomplete. Please contact Super Admin.')
         return render(request, 'consultations/queue.html', {'visits': []})
 
     today = datetime.date.today()

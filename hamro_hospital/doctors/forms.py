@@ -35,7 +35,7 @@ class DoctorForm(forms.ModelForm):
         model = Doctor
         fields = [
             'department', 'unit', 'full_name', 'qualification', 'specialization', 'experience_years',
-            'consultation_fee', 'biography', 'short_introduction', 'contact_number', 'photo', 'available_days',
+            'consultation_fee', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days',
             'available_time_start', 'available_time_end', 'is_active', 'is_featured',
         ]
         widgets = {
@@ -49,6 +49,8 @@ class DoctorForm(forms.ModelForm):
             'biography': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'short_introduction': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'esewa_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'esewa_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'available_time_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'available_time_end': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
@@ -65,7 +67,7 @@ class DoctorForm(forms.ModelForm):
             self.fields['create_login_account'].initial = True
             self.fields['username'].initial = self.instance.user_account.username
             self.fields['password'].help_text = 'Leave blank to keep the current password.'
-        for optional in ['biography', 'short_introduction', 'contact_number', 'photo', 'unit', 'available_time_start', 'available_time_end']:
+        for optional in ['biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'unit', 'available_time_start', 'available_time_end']:
             self.fields[optional].required = False
 
     def clean_username(self):
@@ -122,7 +124,7 @@ class DoctorForm(forms.ModelForm):
 class DoctorProfileForm(forms.ModelForm):
     class Meta:
         model = Doctor
-        fields = ['full_name', 'qualification', 'specialization', 'experience_years', 'biography', 'short_introduction', 'contact_number', 'photo', 'available_days', 'available_time_start', 'available_time_end']
+        fields = ['full_name', 'qualification', 'specialization', 'experience_years', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days', 'available_time_start', 'available_time_end']
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
             'qualification': forms.TextInput(attrs={'class': 'form-control'}),
@@ -131,6 +133,8 @@ class DoctorProfileForm(forms.ModelForm):
             'biography': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'short_introduction': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'esewa_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'esewa_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'available_days': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'mon,tue,wed'}),
             'available_time_start': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),

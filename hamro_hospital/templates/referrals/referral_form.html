@@ -21,12 +21,15 @@
             <div class="col-md-6"><label class="form-label">Specific Department</label>{{ form.to_department }}</div>
             <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
             <div class="col-12"><label class="form-label">Reason for Referral *</label>{{ form.reason }}{% for e in form.reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
-            <div class="col-12"><label class="form-label">Structured Laboratory Tests</label><div class="tuh-card p-3 shadow-none">{{ form.lab_tests }}</div></div>
-            <div class="col-12"><label class="form-label">Structured Radiology Services</label><div class="tuh-card p-3 shadow-none">{{ form.radiology_tests }}</div></div>
-            <div class="col-12"><label class="form-label">Structured OT / Procedures</label><div class="tuh-card p-3 shadow-none">{{ form.operation_types }}</div></div>
+            {% if selected_type == 'laboratory' %}<div class="col-12"><label class="form-label">Laboratory Tests</label><div class="tuh-card p-3 shadow-none">{{ form.lab_tests }}</div></div>{% endif %}
+            {% if selected_type == 'radiology' %}<div class="col-12"><label class="form-label">Radiology Services</label><div class="tuh-card p-3 shadow-none">{{ form.radiology_tests }}</div></div>{% endif %}
+            {% if selected_type == 'operation_theatre' %}<div class="col-12"><label class="form-label">OT / Procedures</label><div class="tuh-card p-3 shadow-none">{{ form.operation_types }}</div></div>{% endif %}
+            {% if selected_type == 'blood_bank' %}<div class="col-12"><label class="form-label">Blood Bank Request Details</label>{{ form.requested_items }}<div class="form-text">Enter blood group, units, urgency, crossmatch, and blood product details.</div></div>{% endif %}
+            {% if selected_type == 'admission' %}<div class="col-12"><label class="form-label">Admission Notes / Expected Ward</label>{{ form.requested_items }}</div>{% endif %}
+            {% if selected_type == 'nursing' %}<div class="col-12"><label class="form-label">Nursing Instructions</label>{{ form.requested_items }}<div class="form-text">Example: IV fluid, dressing, monitoring, medication, discharge preparation.</div></div>{% endif %}
+            {% if not selected_type or selected_type == 'general' or selected_type == 'pharmacy' %}<div class="col-12"><label class="form-label">Requested Items / Medicines / Services</label>{{ form.requested_items }}</div>{% endif %}
             <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
             <div class="col-12"><label class="form-label">Instructions</label>{{ form.instructions }}</div>
-            <div class="col-12"><label class="form-label">Other Requested Items</label>{{ form.requested_items }}</div>
             <div class="col-12"><label class="form-label">Supporting Attachment</label>{{ form.attachment }}<div class="form-text">PDF, scanned report, image, or other relevant file.</div></div>
         </div>
         <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-send"></i> Send Referral</button></div>
