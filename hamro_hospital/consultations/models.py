@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -133,14 +134,22 @@ class LabTestRequest(models.Model):
         ordering = ['-requested_at']
 
     def __str__(self):
-        return f"{self.test_name} for {self.patient_obj.full_name} ({self.get_status_display()})"
+        patient = self.patient_obj
+        patient_name = patient.full_name if patient else 'Unassigned patient'
+        return f"{self.test_name} for {patient_name} ({self.get_status_display()})"
+
+    def clean(self):
+        if not self.consultation_id and not self.patient_id:
+            raise ValidationError('Select a Consultation or a Patient for this lab request.')
 
     @property
     def patient_obj(self):
         """Works for both a doctor-raised request and a walk-in record."""
         if self.patient_id:
             return self.patient
-        return self.consultation.patient
+        if self.consultation_id:
+            return self.consultation.patient
+        return None
 
     @property
     def doctor_display(self):
@@ -246,12 +255,18 @@ class RadiologyRequest(models.Model):
     def display_service_name(self):
         return self.custom_service_name if self.service_type == self.ServiceType.CUSTOM else self.get_service_type_display()
 
+    def clean(self):
+        if not self.consultation_id and not self.patient_id:
+            raise ValidationError('Select a Consultation or a Patient for this radiology request.')
+
     @property
     def patient_obj(self):
         """Works for both a doctor-raised request and a walk-in record."""
         if self.patient_id:
             return self.patient
-        return self.consultation.patient
+        if self.consultation_id:
+            return self.consultation.patient
+        return None
 
     @property
     def doctor_display(self):

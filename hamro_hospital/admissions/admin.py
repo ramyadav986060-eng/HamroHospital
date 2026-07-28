@@ -25,4 +25,9 @@ class AdmissionAdmin(admin.ModelAdmin):
     list_display = ('admission_number', 'patient', 'ward', 'bed', 'status', 'admission_date', 'discharge_date')
     list_filter = ('status', 'ward', 'discharge_condition')
     search_fields = ('admission_number', 'patient__patient_code', 'patient__first_name', 'patient__last_name')
-    readonly_fields = ('admission_number',)
+    readonly_fields = ('admission_number', 'created_by', 'barcode')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)

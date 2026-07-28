@@ -19,4 +19,9 @@ class SurgeryAdmin(admin.ModelAdmin):
     list_display = ('surgery_number', 'patient', 'surgery_name', 'operation_type', 'surgeon', 'status', 'scheduled_datetime')
     list_filter = ('status', 'ot_room')
     search_fields = ('surgery_number', 'patient__patient_code', 'patient__first_name', 'patient__last_name')
-    readonly_fields = ('surgery_number',)
+    readonly_fields = ('surgery_number', 'created_by', 'barcode')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
