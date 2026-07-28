@@ -10,7 +10,28 @@ from accounts.utils import create_notification
 from patients.models import Patient
 from referrals.forms import ReferralForm
 from referrals.models import Referral
+from billing.models import Bill, BillItem
+from website.models import HospitalService
 
+
+
+
+def _bill_type_for_referral(referral):
+    return {
+        Referral.ReferralType.LABORATORY: 'lab',
+        Referral.ReferralType.RADIOLOGY: 'radiology',
+        Referral.ReferralType.PHARMACY: 'pharmacy',
+        Referral.ReferralType.OPERATION_THEATRE: 'surgery',
+        Referral.ReferralType.BLOOD_BANK: 'blood_bank',
+        Referral.ReferralType.ADMISSION: 'ipd',
+    }.get(referral.referral_type, 'other')
+
+
+def _service_price_for_item(name):
+    svc = HospitalService.objects.filter(name__iexact=name, is_active=True).first() or HospitalService.objects.filter(name__icontains=name, is_active=True).first()
+    if svc:
+        return svc, svc.price
+    return None, 0
 
 REFERRAL_ROLE_MAP = {
     Referral.ReferralType.LABORATORY: Role.LABORATORY,
@@ -99,4 +120,40 @@ def referral_update_status(request, pk):
                 referral.status = new_status
                 referral.save(update_fields=['status', 'updated_at'])
             messages.success(request, f'Referral status updated to {referral.get_status_display()}.')
+    return redirect('referrals:referral_detail', pk=referral.pk)
+
+
+@login_required
+def referral_generate_bill(request, pk):
+    referral = get_object_or_404(Referral.objects.select_related('patient'), pk=pk)
+    if referral.related_bill_id:
+        return redirect('billing:receipt', pk=referral.related_bill_id)
+    if request.method == 'POST':
+        bill = Bill.objects.create(
+            patient=referral.patient,
+            cashier=request.user if request.user.is_authenticated else None,
+            bill_type=_bill_type_for_referral(referral),
+            counter_name=f'{referral.get_referral_type_display()} Counter',
+            payment_method=request.POST.get('payment_method') or 'cash',
+            status=Bill.Status.PENDING,
+        )
+        items = [line.strip() for line in (referral.requested_items or referral.reason).splitlines() if line.strip()]
+        if not items:
+            items = [referral.get_referral_type_display()]
+        for item in items:
+            svc, price = _service_price_for_item(item)
+            BillItem.objects.create(bill=bill, service=svc, service_name=item, unit_price=price, quantity=1)
+        bill.recalculate_total()
+        referral.related_bill = bill
+        if referral.status == 'new':
+            referral.acknowledge(request.user)
+        referral.save(update_fields=['related_bill'])
+        create_notification(
+            title='Pending Bill Generated',
+            message=f'Pending bill {bill.bill_number} generated for {referral.patient.full_name}.',
+            role=Role.CASH_COUNTER,
+            related_url=reverse('billing:receipt', args=[bill.pk]),
+        )
+        messages.success(request, f'Pending bill {bill.bill_number} generated. Print and send patient to Cash Counter or eSewa.')
+        return redirect('billing:receipt', pk=bill.pk)
     return redirect('referrals:referral_detail', pk=referral.pk)

@@ -21,8 +21,12 @@
             <div class="col-md-6"><label class="form-label">Specific Department</label>{{ form.to_department }}</div>
             <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
             <div class="col-12"><label class="form-label">Reason for Referral *</label>{{ form.reason }}{% for e in form.reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-12"><label class="form-label">Structured Laboratory Tests</label><div class="tuh-card p-3 shadow-none">{{ form.lab_tests }}</div></div>
+            <div class="col-12"><label class="form-label">Structured Radiology Services</label><div class="tuh-card p-3 shadow-none">{{ form.radiology_tests }}</div></div>
+            <div class="col-12"><label class="form-label">Structured OT / Procedures</label><div class="tuh-card p-3 shadow-none">{{ form.operation_types }}</div></div>
             <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
             <div class="col-12"><label class="form-label">Instructions</label>{{ form.instructions }}</div>
+            <div class="col-12"><label class="form-label">Other Requested Items</label>{{ form.requested_items }}</div>
             <div class="col-12"><label class="form-label">Supporting Attachment</label>{{ form.attachment }}<div class="form-text">PDF, scanned report, image, or other relevant file.</div></div>
         </div>
         <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-send"></i> Send Referral</button></div>

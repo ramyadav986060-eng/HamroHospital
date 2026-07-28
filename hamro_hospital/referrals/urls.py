@@ -9,4 +9,5 @@ urlpatterns = [
     path('queue/', views.department_queue, name='department_queue'),
     path('<int:pk>/', views.referral_detail, name='referral_detail'),
     path('<int:pk>/update/', views.referral_update_status, name='referral_update_status'),
+    path('<int:pk>/generate-bill/', views.referral_generate_bill, name='referral_generate_bill'),
 ]

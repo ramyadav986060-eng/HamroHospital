@@ -50,6 +50,7 @@ class BillType(models.TextChoices):
 
 class Bill(models.Model):
     class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
         PAID = 'paid', 'Paid'
         REFUNDED = 'refunded', 'Refunded'
 

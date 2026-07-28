@@ -21,6 +21,13 @@ document.addEventListener('tuh:patient-scanned', function (e) {
     }
 });
 </script>
+{% if pending_bills %}
+<div class="tuh-card p-4 mb-4 border border-warning">
+    <h5 class="fw-bold text-warning mb-3"><i class="bi bi-hourglass-split"></i> Pending Bills Found</h5>
+    <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Bill #</th><th>Patient</th><th>Services</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>{% for bill in pending_bills %}<tr><td>{{ bill.bill_number }}</td><td>{{ bill.patient.full_name }}<br><small>{{ bill.patient.patient_code }} · {{ bill.patient.phone_number }}</small></td><td>{% for item in bill.items.all %}<div>{{ item.service_name }} - NPR {{ item.line_total }}</div>{% endfor %}</td><td>NPR {{ bill.total_amount }}</td><td><span class="badge bg-warning text-dark">Pending</span></td><td><a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-sm btn-outline-primary">Open Receipt</a></td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+
 <div class="tuh-card p-4">
     <div class="table-responsive">
         <table class="table table-hover align-middle">

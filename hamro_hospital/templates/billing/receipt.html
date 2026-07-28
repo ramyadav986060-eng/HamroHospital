@@ -431,7 +431,7 @@
             <div class="meta-item">
                 <i class="bi bi-shield-check m-icon"></i>
                 <span class="m-label">Payment Status</span>
-                <span class="m-val green-highlight">Paid</span>
+                <span class="m-val {% if bill.status == 'pending' %}text-warning fw-bold{% else %}green-highlight{% endif %}">{{ bill.get_status_display }}</span>
             </div>
             <div class="meta-item">
                 <i class="bi bi-building m-icon"></i>
@@ -445,6 +445,12 @@
             </div>
         </div>
     </div>
+
+    {% if bill.status == 'pending' %}
+    <div class="alert alert-warning my-3">
+        <strong>Payment Status: Pending.</strong> Please pay at the Cash Counter or use eSewa where available. Service will proceed after payment confirmation.
+    </div>
+    {% endif %}
 
     <!-- Billed Items Table -->
     <table class="tuh-items-table">
@@ -482,7 +488,7 @@
             {% if bill.insurance_coverage_amount %}
             <div style="display:flex; justify-content: space-between; gap: 40px;"><span>Insurance Coverage</span><h4 style="margin:0;">- NPR {{ bill.insurance_coverage_amount }}</h4></div>
             {% endif %}
-            <div style="display:flex; justify-content: space-between; gap: 40px; border-top: 1px solid #bfdbfe; padding-top: 6px;"><span>Final Amount Paid</span><h4 style="margin:0;">NPR {{ bill.final_amount_paid }}</h4></div>
+            <div style="display:flex; justify-content: space-between; gap: 40px; border-top: 1px solid #bfdbfe; padding-top: 6px;"><span>{% if bill.status == 'pending' %}Amount Due{% else %}Final Amount Paid{% endif %}</span><h4 style="margin:0;">NPR {{ bill.final_amount_paid }}</h4></div>
         </div>
     </div>
 
@@ -535,6 +541,21 @@
         This is a computer-generated invoice from Hamro Hospital. Thank you.
     </div>
 </div>
+
+{% if bill.status == 'pending' and request.user.is_authenticated %}
+<div class="container no-print text-center my-3">
+    <form method="post" action="{% url 'billing:pay_pending_bill' bill.pk %}" class="d-inline-flex gap-2 align-items-center justify-content-center flex-wrap">
+        {% csrf_token %}
+        <select name="payment_method" class="form-select" style="max-width:180px;">
+            <option value="cash">Cash</option>
+            <option value="esewa">eSewa</option>
+            <option value="card">Card</option>
+            <option value="fonepay">FonePay</option>
+        </select>
+        <button class="btn btn-success"><i class="bi bi-check-circle"></i> Mark Payment Completed</button>
+    </form>
+</div>
+{% endif %}
 
 <!-- Actions row -->
 {% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=bill.bill_number %}

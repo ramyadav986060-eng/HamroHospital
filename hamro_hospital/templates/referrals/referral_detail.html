@@ -20,6 +20,7 @@
                 <dt class="col-sm-3">Reason</dt><dd class="col-sm-9">{{ referral.reason|linebreaksbr }}</dd>
                 <dt class="col-sm-3">Clinical Notes</dt><dd class="col-sm-9">{{ referral.clinical_notes|default:'-'|linebreaksbr }}</dd>
                 <dt class="col-sm-3">Instructions</dt><dd class="col-sm-9">{{ referral.instructions|default:'-'|linebreaksbr }}</dd>
+                <dt class="col-sm-3">Requested Services</dt><dd class="col-sm-9">{{ referral.requested_items|default:'-'|linebreaksbr }}</dd>
                 {% if referral.attachment %}<dt class="col-sm-3">Attachment</dt><dd class="col-sm-9"><a href="{{ referral.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip"></i> Open Attachment</a></dd>{% endif %}
             </dl>
         </div>
@@ -40,6 +41,11 @@
             </form>
             <div class="d-grid gap-2">
                 <a class="btn btn-outline-primary" href="{% url 'patients:patient_detail' referral.patient.pk %}">Open Patient Record</a>
+                {% if referral.related_bill %}
+                    <a class="btn btn-warning" href="{% url 'billing:receipt' referral.related_bill.pk %}">Open / Print Pending Bill</a>
+                {% else %}
+                    <form method="post" action="{% url 'referrals:referral_generate_bill' referral.pk %}">{% csrf_token %}<button class="btn btn-warning w-100">Generate Pending Service Bill</button></form>
+                {% endif %}
                 {% if referral.referral_type == 'admission' %}<a class="btn btn-success" href="{% url 'admissions:admit_patient' referral.patient.pk %}?referral={{ referral.pk }}">Admit Patient</a>{% endif %}
                 {% if referral.referral_type == 'laboratory' %}<a class="btn btn-outline-secondary" href="{% url 'laboratory:manual_create' referral.patient.pk %}">Create Lab Request</a>{% endif %}
                 {% if referral.referral_type == 'radiology' %}<a class="btn btn-outline-secondary" href="{% url 'radiology:manual_create' referral.patient.pk %}">Create Radiology Request</a>{% endif %}

@@ -3,6 +3,7 @@ import datetime
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.decorators import cash_counter_required, billing_counter_required, accounts_dept_required, role_required
@@ -47,13 +48,19 @@ def dashboard(request):
 def patient_lookup(request):
     form = PatientLookupForm(request.GET or None)
     patients = Patient.objects.none()
+    pending_bills = Bill.objects.none()
     if form.is_valid() and form.cleaned_data['q']:
-        q = form.cleaned_data['q']
+        q = form.cleaned_data['q'].strip()
         patients = Patient.objects.filter(
             Q(patient_code__icontains=q) | Q(first_name__icontains=q) |
-            Q(last_name__icontains=q) | Q(phone_number__icontains=q)
-        ).select_related('district', 'insurance_company')
-    return render(request, 'billing/patient_lookup.html', {'form': form, 'patients': patients})
+            Q(last_name__icontains=q) | Q(phone_number__icontains=q) |
+            Q(bills__bill_number__iexact=q)
+        ).select_related('district', 'insurance_company').distinct()
+        pending_bills = Bill.objects.filter(
+            Q(bill_number__iexact=q) | Q(patient__patient_code__icontains=q) | Q(patient__phone_number__icontains=q),
+            status=Bill.Status.PENDING,
+        ).select_related('patient').prefetch_related('items')
+    return render(request, 'billing/patient_lookup.html', {'form': form, 'patients': patients, 'pending_bills': pending_bills})
 
 
 @billing_counter_required
@@ -261,6 +268,39 @@ def create_bill(request, patient_id):
         'pending_radiologies': pending_radiologies, 'pending_surgeries': pending_surgeries,
         'counter_department': counter_department,
     })
+
+
+@cash_counter_required
+def pay_pending_bill(request, pk):
+    bill = get_object_or_404(Bill.objects.select_related('patient').prefetch_related('items'), pk=pk)
+    if request.method == 'POST':
+        bill.payment_method = request.POST.get('payment_method') or bill.payment_method
+        bill.status = Bill.Status.PAID
+        bill.cashier = request.user
+        bill.save(update_fields=['payment_method', 'status', 'cashier'])
+        write_audit_log(
+            request, AuditLog.Action.PAYMENT,
+            f"Pending bill paid: {bill.bill_number} for {bill.patient.full_name}",
+            patient_id_text=bill.patient.patient_code, receipt_number=bill.bill_number,
+            amount=bill.total_amount, payment_method=bill.get_payment_method_display(),
+        )
+        from accounts.utils import create_notification
+        for referral in bill.referrals.all():
+            role_map = {
+                'laboratory': Role.LABORATORY, 'radiology': Role.RADIOLOGY, 'pharmacy': Role.PHARMACY,
+                'nursing': Role.NURSING, 'admission': Role.WARD_ADMISSION,
+                'operation_theatre': Role.OPERATION_THEATRE, 'blood_bank': Role.BLOOD_BANK,
+            }
+            target_role = role_map.get(referral.referral_type)
+            if target_role:
+                create_notification(
+                    title='Payment Completed',
+                    message=f"Payment completed for {bill.patient.full_name}, bill {bill.bill_number}.",
+                    role=target_role,
+                    related_url=reverse('referrals:referral_detail', args=[referral.pk]),
+                )
+        messages.success(request, f'Payment completed for bill {bill.bill_number}.')
+    return redirect('billing:receipt', pk=bill.pk)
 
 
 @cash_counter_required
