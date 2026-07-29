@@ -44,7 +44,7 @@ python manage.py create_demo_accounts
 Default demo password:
 
 ```text
-sashi
+password
 ```
 
 ## Important production configuration

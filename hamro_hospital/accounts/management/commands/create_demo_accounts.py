@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 from accounts.models import Role, User
 
-DEMO_PASSWORD = 'sashi'
+DEMO_PASSWORD = 'password'
 
 # username -> role
 DEMO_USERS = {

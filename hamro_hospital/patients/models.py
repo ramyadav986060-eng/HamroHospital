@@ -340,7 +340,7 @@ class Visit(models.Model):
             with transaction.atomic():
                 last_token = (
                     Visit.objects.select_for_update()
-                    .filter(department=self.department, visit_date=self.visit_date)
+                    .filter(visit_date=self.visit_date)
                     .order_by('-token_number')
                     .first()
                 )

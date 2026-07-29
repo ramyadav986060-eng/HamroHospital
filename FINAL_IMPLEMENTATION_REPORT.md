@@ -299,3 +299,11 @@ The code is prepared for production, but actual live deployment still requires r
 - PostgreSQL database credentials if deploying on PostgreSQL.
 
 The project includes fallback/manual options so the workflows can be tested locally before live deployment.
+
+## Final Critical Revision Notes
+
+- Demo/testing account password standardized to `password` for all generated demo users.
+- Login and dashboard access was re-tested for all demo staff roles and returned HTTP 200 after redirect.
+- Unified patient identity was reinforced: appointment confirmation and portal registration now reuse an existing patient by phone number instead of creating duplicate Hospital IDs.
+- Regular OPD, Extension Service and online booking now continue to share the same Patient table and same Hospital ID/barcode. Only visit/registration type changes.
+- Visit token generation was adjusted to a single daily chronological queue instead of independent department token queues.

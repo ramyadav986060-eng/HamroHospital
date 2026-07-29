@@ -49,7 +49,7 @@ echo Ensuring demo staff accounts...
 python manage.py create_demo_accounts
 
 echo Starting server at http://127.0.0.1:8000/
-echo Login: /accounts/login/  Demo password: sashi
+echo Login: /accounts/login/  Demo password: password
 echo Press CTRL+C to stop.
 python manage.py runserver
 

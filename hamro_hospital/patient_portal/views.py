@@ -107,17 +107,19 @@ def register_password(request):
             last_name = reg_data['last_name']
             district = get_object_or_404(District, pk=reg_data['district_id'])
 
-            patient = Patient.objects.create(
-                first_name=first_name,
-                last_name=last_name,
-                gender=reg_data['gender'],
-                date_of_birth=parse_age_to_dob(reg_data['age_input']) or timezone_today(),
-                age_at_registration=reg_data['age_input'],
-                phone_number=reg_data['phone_number'],
-                email=reg_data.get('email', ''),
-                district=district,
-            )
-            account = PatientAccount(patient=patient)
+            patient = Patient.objects.filter(phone_number=reg_data['phone_number']).first()
+            if not patient:
+                patient = Patient.objects.create(
+                    first_name=first_name,
+                    last_name=last_name,
+                    gender=reg_data['gender'],
+                    date_of_birth=parse_age_to_dob(reg_data['age_input']) or timezone_today(),
+                    age_at_registration=reg_data['age_input'],
+                    phone_number=reg_data['phone_number'],
+                    email=reg_data.get('email', ''),
+                    district=district,
+                )
+            account = PatientAccount.objects.filter(patient=patient).first() or PatientAccount(patient=patient)
             account.set_password(form.cleaned_data['password'])
             account.save()
 

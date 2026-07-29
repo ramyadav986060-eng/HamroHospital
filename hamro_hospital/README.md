@@ -139,7 +139,7 @@ tu_hospital_management_system/
 Created automatically by `seed_all` (or run `python manage.py
 create_demo_accounts` on its own to (re)create/reset them):
 
-Same password for **every** account: **`sashi`**
+Same password for **every** account: **`password`**
 
 | Username | Role |
 |---|---|

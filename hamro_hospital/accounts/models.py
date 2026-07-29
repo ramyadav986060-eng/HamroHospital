@@ -81,6 +81,27 @@ class User(AbstractUser):
         }
         return mapping.get(self.effective_role, 'accounts:dashboard_super_admin')
 
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        if not self.staff_id:
+            prefix = 'STF'
+            last = User.objects.filter(staff_id__startswith=prefix).exclude(staff_id__isnull=True).order_by('-staff_id').first()
+            next_seq = 1
+            if last and last.staff_id:
+                try:
+                    next_seq = int(last.staff_id.replace(prefix, '')) + 1
+                except ValueError:
+                    next_seq = User.objects.filter(staff_id__startswith=prefix).count() + 1
+            self.staff_id = f'{prefix}{next_seq:06d}'
+        super().save(*args, **kwargs)
+        if (is_new or not self.staff_barcode) and self.staff_id:
+            self._generate_staff_barcode()
+
+    def _generate_staff_barcode(self):
+        from accounts.qr_utils import generate_barcode_file
+        self.staff_barcode.save(f'{self.staff_id}.png', generate_barcode_file(self.staff_id), save=False)
+        User.objects.filter(pk=self.pk).update(staff_barcode=self.staff_barcode.name)
+
 
 class AuditLog(models.Model):
     """
@@ -154,28 +175,6 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"[{self.created_at:%Y-%m-%d %H:%M}] {self.get_action_display()} - {self.description}"
-
-
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        if not self.staff_id:
-            prefix = 'STF'
-            last = User.objects.filter(staff_id__startswith=prefix).exclude(staff_id__isnull=True).order_by('-staff_id').first()
-            next_seq = 1
-            if last and last.staff_id:
-                try:
-                    next_seq = int(last.staff_id.replace(prefix, '')) + 1
-                except ValueError:
-                    next_seq = User.objects.filter(staff_id__startswith=prefix).count() + 1
-            self.staff_id = f'{prefix}{next_seq:06d}'
-        super().save(*args, **kwargs)
-        if (is_new or not self.staff_barcode) and self.staff_id:
-            self._generate_staff_barcode()
-
-    def _generate_staff_barcode(self):
-        from accounts.qr_utils import generate_barcode_file
-        self.staff_barcode.save(f'{self.staff_id}.png', generate_barcode_file(self.staff_id), save=False)
-        User.objects.filter(pk=self.pk).update(staff_barcode=self.staff_barcode.name)
 
 
 class Notification(models.Model):

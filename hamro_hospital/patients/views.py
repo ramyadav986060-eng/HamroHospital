@@ -73,6 +73,10 @@ def patient_register(request, extension_mode=False):
     existing_patient_id = request.POST.get('existing_patient_id') if request.method == 'POST' else None
     if existing_patient_id:
         existing_patient = Patient.objects.filter(pk=existing_patient_id).first()
+    elif request.method == 'POST':
+        phone = (request.POST.get('phone_number') or '').strip()
+        if phone:
+            existing_patient = Patient.objects.filter(phone_number=phone).first()
 
     if request.method == 'POST':
         patient_form = PatientForm(request.POST, request.FILES, instance=existing_patient) if existing_patient else PatientForm(request.POST, request.FILES)
@@ -628,20 +632,22 @@ def confirm_arrival(request, appointment_id):
         return redirect('patients:dashboard')
 
     with transaction.atomic():
-        # 1. Create Patient record dynamically
-        patient = Patient.objects.create(
-            first_name=appointment.first_name,
-            last_name=appointment.last_name,
-            gender=appointment.gender,
-            date_of_birth=appointment.date_of_birth,
-            phone_number=appointment.phone_number,
-            district=appointment.district,
-            municipality=appointment.municipality,
-            ward_number=appointment.ward_number,
-            local_address=appointment.local_address,
-            email=appointment.email,
-            created_by=request.user,
-        )
+        # 1. Reuse an existing Patient by phone number to preserve one Hospital ID.
+        patient = Patient.objects.filter(phone_number=appointment.phone_number).first()
+        if not patient:
+            patient = Patient.objects.create(
+                first_name=appointment.first_name,
+                last_name=appointment.last_name,
+                gender=appointment.gender,
+                date_of_birth=appointment.date_of_birth,
+                phone_number=appointment.phone_number,
+                district=appointment.district,
+                municipality=appointment.municipality,
+                ward_number=appointment.ward_number,
+                local_address=appointment.local_address,
+                email=appointment.email,
+                created_by=request.user,
+            )
 
         # 2. Create OPD Visit
         visit = Visit.objects.create(

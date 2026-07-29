@@ -2,7 +2,7 @@
 
 Running `python manage.py seed_all` (or directly `python manage.py
 create_demo_accounts`) creates one login per staff role. **All demo
-accounts share the same password: `sashi`**
+accounts share the same password: `password`**
 
 Log in at: `/accounts/login/`
 
