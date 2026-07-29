@@ -473,3 +473,20 @@ python manage.py create_demo_accounts
 - Salary filters support staff search, department, employment type and individual staff.
 - Long staff lists include Scroll to Top and Scroll to Bottom controls.
 - Departments and Department Heads remain blocked from salary/payroll access.
+
+## Part 9 Department Head and Leave Management Improvements Added
+
+- Department Head is now treated as a Hospital Staff member with `is_department_head=True`, not a separate demo user type.
+- Department Head uses the same staff profile, staff dashboard, staff card, barcode, QR code, attendance, leave, medical portal and staff actions as normal staff.
+- Role display shows Department Head when a staff member is designated as department head.
+- Only Main Super Admin can assign/remove Department Head status through staff role management.
+- Department Heads can view/manage staff in their own department but cannot change role/department-head privileges through the limited edit form.
+- A Leave link is available in the main sidebar directly below Main Dashboard for staff and department heads.
+- Leave request form now shows auto-filled Staff ID, Staff Name and Department, calculates number of leave days and supports optional document upload.
+- Leave workflow routing:
+  - Regular Staff → Department Head + Super Admin
+  - Department Head → Super Admin only
+- Department Heads cannot review their own leave requests.
+- Leave notifications are sent for leave request submission, approval and rejection.
+- Leave status remains Pending, Approved, Rejected or Cancelled and staff can track status from the Leave module.
+- Department Heads receive no extra salary/payroll/billing permissions.

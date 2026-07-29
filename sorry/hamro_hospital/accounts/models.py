@@ -71,6 +71,10 @@ class User(AbstractUser):
         return f"{full or self.username} ({self.get_role_display()})"
 
     @property
+    def staff_role_label(self):
+        return 'Department Head' if self.is_department_head else self.get_role_display()
+
+    @property
     def effective_role(self):
         """Superusers always resolve to Super Admin regardless of stored role."""
         return Role.SUPER_ADMIN if self.is_superuser else self.role
@@ -334,6 +338,7 @@ class StaffLeaveRequest(models.Model):
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='leave_requests_reviewed')
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_notes = models.CharField(max_length=255, blank=True)
+    supporting_document = models.FileField(upload_to='staff/leave_documents/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

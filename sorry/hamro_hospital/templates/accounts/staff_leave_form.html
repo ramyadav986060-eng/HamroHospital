@@ -1,6 +1,13 @@
 {% extends 'dashboard_base.html' %}
 {% block title %}Request Leave{% endblock %}
-{% block page_title %}Request Leave{% endblock %}
+{% block page_title %}Leave Request{% endblock %}
 {% block dashboard_content %}
-<div class="tuh-card p-4" style="max-width:700px;"><form method="post">{% csrf_token %}{% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>{% endfor %}<button class="btn btn-primary">Submit</button></form></div>
+<div class="tuh-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-person-badge"></i> Staff Details</h5>
+    <div class="row g-2 small"><div class="col-md-3"><strong>Staff ID</strong><div>{{ request.user.staff_id }}</div></div><div class="col-md-3"><strong>Staff Name</strong><div>{{ request.user.get_full_name|default:request.user.username }}</div></div><div class="col-md-3"><strong>Department</strong><div>{{ request.user.department.name|default:'-' }}</div></div><div class="col-md-3"><strong>Role</strong><div>{% if request.user.is_department_head %}Department Head{% else %}{{ request.user.get_role_display }}{% endif %}</div></div></div>
+</div>
+<div class="tuh-card p-4" style="max-width:800px;"><form method="post" enctype="multipart/form-data">{% csrf_token %}<div class="row g-3">{% for field in form %}<div class="col-md-6 {% if field.name == 'reason' %}col-md-12{% endif %}"><label class="form-label">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>{% endfor %}<div class="col-md-6"><label class="form-label">Number of Days</label><input id="leaveDays" class="form-control" readonly></div></div><button class="btn btn-primary mt-3">Submit Request</button> <a href="{% url 'accounts:staff_leave_list' %}" class="btn btn-outline-secondary mt-3">Back</a></form></div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){const s=document.getElementById('id_start_date'), e=document.getElementById('id_end_date'), out=document.getElementById('leaveDays'); function calc(){ if(!s.value||!e.value){out.value='';return;} const a=new Date(s.value), b=new Date(e.value); const days=Math.max(1, Math.floor((b-a)/86400000)+1); out.value=days + ' day(s)'; } s?.addEventListener('change',calc); e?.addEventListener('change',calc); calc();});
+</script>
 {% endblock %}

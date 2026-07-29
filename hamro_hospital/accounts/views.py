@@ -56,11 +56,14 @@ def dashboard_super_admin(request):
     return render(request, 'accounts/dashboard_super_admin.html', context)
 
 
-@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD)
+@login_required
 def staff_list(request):
+    if not (request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT] or request.user.is_department_head):
+        messages.error(request, "You don't have permission to view staff records.")
+        return redirect(request.user.dashboard_url_name())
     from django.db.models import Q
     staff = User.objects.all().select_related('department').order_by('role', 'first_name')
-    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+    if request.user.is_department_head and not request.user.is_superuser and request.user.effective_role not in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT]:
         staff = staff.filter(department=request.user.department)
     q = request.GET.get('q', '').strip()
     department_id = request.GET.get('department', '').strip()
@@ -78,7 +81,7 @@ def staff_list(request):
 @super_admin_required
 def staff_create(request):
     if request.method == 'POST':
-        form = StaffCreateForm(request.POST)
+        form = StaffCreateForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             if user.role == Role.DOCTOR and not hasattr(user, 'doctor_profile'):
@@ -101,15 +104,31 @@ def staff_create(request):
     return render(request, 'accounts/staff_form.html', {'form': form, 'title': 'Add Staff Member'})
 
 
-@role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD)
+@login_required
 def staff_edit(request, pk):
+    if not (request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT] or request.user.is_department_head):
+        messages.error(request, "You don't have permission to edit staff records.")
+        return redirect(request.user.dashboard_url_name())
     staff_member = get_object_or_404(User, pk=pk)
-    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+    if request.user.is_department_head and not request.user.is_superuser and request.user.effective_role not in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT]:
         if not request.user.department_id or staff_member.department_id != request.user.department_id:
             messages.error(request, 'Department Heads can only manage staff in their own department.')
             return redirect('accounts:staff_list')
+    from django import forms
+    form_class = StaffEditForm
+    is_super_admin = request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN
+    if not is_super_admin:
+        class DepartmentStaffEditForm(forms.ModelForm):
+            class Meta:
+                model = User
+                fields = ['first_name', 'last_name', 'email', 'phone_number', 'department', 'designation', 'employment_type', 'staff_photo', 'address', 'emergency_contact', 'blood_group']
+                widgets = {field: forms.TextInput(attrs={'class': 'form-control'}) for field in fields}
+                widgets['department'] = forms.Select(attrs={'class': 'form-select'})
+                widgets['employment_type'] = forms.Select(attrs={'class': 'form-select'})
+                widgets['staff_photo'] = forms.ClearableFileInput(attrs={'class': 'form-control'})
+        form_class = DepartmentStaffEditForm
     if request.method == 'POST':
-        form = StaffEditForm(request.POST, instance=staff_member)
+        form = form_class(request.POST, request.FILES, instance=staff_member)
         if form.is_valid():
             was_active = staff_member.is_active_staff
             form.save()
@@ -119,7 +138,7 @@ def staff_edit(request, pk):
             messages.success(request, f'Staff account "{staff_member.username}" updated.')
             return redirect('accounts:staff_list')
     else:
-        form = StaffEditForm(instance=staff_member)
+        form = form_class(instance=staff_member)
     return render(request, 'accounts/staff_form.html', {
         'form': form, 'title': f'Edit {staff_member.username}', 'staff_member': staff_member,
     })
@@ -448,15 +467,16 @@ def staff_leave_request(request):
     from accounts.forms import StaffLeaveRequestForm
     from accounts.utils import create_notification
     if request.method == 'POST':
-        form = StaffLeaveRequestForm(request.POST)
+        form = StaffLeaveRequestForm(request.POST, request.FILES)
         if form.is_valid():
             leave = form.save(commit=False)
             leave.staff = request.user
             if leave.exceeds_paid_leave_limit():
                 leave.requires_super_admin_override = True
             leave.save()
-            if request.user.department_id:
-                heads = User.objects.filter(department=request.user.department, is_department_head=True, is_active_staff=True)
+            is_head_request = request.user.is_department_head or request.user.effective_role == Role.DEPARTMENT_HEAD
+            if request.user.department_id and not is_head_request:
+                heads = User.objects.filter(department=request.user.department, is_department_head=True, is_active_staff=True).exclude(pk=request.user.pk)
                 for head in heads:
                     create_notification('Leave Request', f'{request.user.get_full_name() or request.user.username} requested leave.', user=head, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
             create_notification('Leave Request', f'{request.user.get_full_name() or request.user.username} requested leave.', role=Role.SUPER_ADMIN, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
@@ -488,7 +508,9 @@ def staff_leave_review(request, pk):
     from accounts.forms import StaffLeaveReviewForm
     from accounts.models import StaffLeaveRequest
     leave = get_object_or_404(StaffLeaveRequest.objects.select_related('staff'), pk=pk)
-    allowed = request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN or (request.user.is_department_head and request.user.department_id == leave.staff.department_id)
+    is_super_admin = request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN
+    is_department_reviewer = request.user.is_department_head and request.user.department_id == leave.staff.department_id and request.user.pk != leave.staff_id and not leave.staff.is_department_head
+    allowed = is_super_admin or is_department_reviewer
     if not allowed:
         messages.error(request, "You don't have permission to review this leave request.")
         return redirect('accounts:staff_leave_list')
@@ -498,16 +520,18 @@ def staff_leave_review(request, pk):
             status = form.cleaned_data['status']
             notes = form.cleaned_data.get('review_notes', '')
             if status == StaffLeaveRequest.Status.APPROVED:
-                if leave.requires_super_admin_override and not (request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN):
+                if leave.requires_super_admin_override and not is_super_admin:
                     messages.error(request, 'This leave exceeds the monthly paid leave limit and requires Main Super Admin approval.')
                     return redirect('accounts:staff_leave_review', pk=leave.pk)
                 leave.approve(request.user, notes)
                 from accounts.utils import create_notification
                 create_notification('Leave Approved', f'Your leave from {leave.start_date} to {leave.end_date} was approved.', user=leave.staff, related_url=reverse('accounts:staff_leave_list'))
+                create_notification('Leave Decision', f'Leave for {leave.staff.get_full_name() or leave.staff.username} was approved by {request.user.get_full_name() or request.user.username}.', role=Role.SUPER_ADMIN, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
             elif status == StaffLeaveRequest.Status.REJECTED:
                 leave.reject(request.user, notes)
                 from accounts.utils import create_notification
                 create_notification('Leave Rejected', f'Your leave from {leave.start_date} to {leave.end_date} was rejected.', user=leave.staff, related_url=reverse('accounts:staff_leave_list'))
+                create_notification('Leave Decision', f'Leave for {leave.staff.get_full_name() or leave.staff.username} was rejected by {request.user.get_full_name() or request.user.username}.', role=Role.SUPER_ADMIN, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
             else:
                 form.save()
             messages.success(request, 'Leave request updated.')

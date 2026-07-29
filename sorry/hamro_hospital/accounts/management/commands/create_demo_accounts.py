@@ -26,7 +26,7 @@ DEMO_USERS = {
     'bloodbank': Role.BLOOD_BANK,
     'accounts': Role.ACCOUNTS_DEPT,
     'staff': Role.HOSPITAL_STAFF,
-    'departmenthead': Role.DEPARTMENT_HEAD,
+    'departmenthead': Role.HOSPITAL_STAFF,
 }
 
 DEMO_STAFF = [
@@ -60,12 +60,13 @@ class Command(BaseCommand):
             user.is_staff = True
             if role == Role.SUPER_ADMIN:
                 user.is_superuser = True
-            if role == Role.DEPARTMENT_HEAD:
+            if username == 'departmenthead' or role == Role.DEPARTMENT_HEAD:
                 user.department = departments.get('General Medicine')
                 user.is_department_head = True
                 user.designation = 'Department In-charge'
             elif role == Role.HOSPITAL_STAFF:
                 user.department = departments.get('General Medicine')
+                user.is_department_head = False
                 user.designation = 'Hospital Staff'
             user.save()
             self.stdout.write(self.style.SUCCESS(f"{'created' if created else 'updated'}: {username} ({role})"))

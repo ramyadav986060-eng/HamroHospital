@@ -3,7 +3,7 @@
 {% block page_title %}{{ title }}{% endblock %}
 {% block dashboard_content %}
 <div class="tuh-card p-4" style="max-width:600px;">
-    <form method="post" novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         {% for field in form %}
             <div class="mb-3">

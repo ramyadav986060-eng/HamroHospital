@@ -166,12 +166,13 @@ class StaffAttendanceForm(forms.ModelForm):
 class StaffLeaveRequestForm(forms.ModelForm):
     class Meta:
         model = StaffLeaveRequest
-        fields = ['leave_type', 'start_date', 'end_date', 'reason']
+        fields = ['leave_type', 'start_date', 'end_date', 'reason', 'supporting_document']
         widgets = {
             'leave_type': forms.TextInput(attrs={'class': 'form-control'}),
             'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'supporting_document': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
 

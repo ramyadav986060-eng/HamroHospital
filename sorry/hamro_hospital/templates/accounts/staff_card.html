@@ -11,7 +11,7 @@
     <div class="text-center my-3">
         {% if staff.staff_photo %}<img src="{{ staff.staff_photo.url }}" style="width:116px;height:116px;object-fit:cover;border-radius:12px;border:1px solid #ddd;" alt="Staff Photo">{% elif staff.doctor_profile.photo %}<img src="{{ staff.doctor_profile.photo.url }}" style="width:116px;height:116px;object-fit:cover;border-radius:12px;border:1px solid #ddd;" alt="Staff Photo">{% else %}<div class="d-inline-flex align-items-center justify-content-center bg-light border" style="width:116px;height:116px;border-radius:12px;"><i class="bi bi-person fs-1 text-muted"></i></div>{% endif %}
         <h4 class="fw-bold mt-2 mb-0">{{ staff.get_full_name|default:staff.username }}</h4>
-        <div class="text-muted">{{ staff.get_role_display }}</div>
+        <div class="text-muted">{{ staff.staff_role_label }}</div>
     </div>
     <div class="tuh-meta-card">
         <div class="row-item"><div class="row-label">Staff ID</div><div class="row-val"><strong>{{ staff.staff_id }}</strong></div></div>
