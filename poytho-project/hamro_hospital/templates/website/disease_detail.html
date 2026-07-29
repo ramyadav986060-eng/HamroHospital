@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{ disease.name }} - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <div class="tuh-card p-4 p-md-5">
+        <h1 class="fw-bold mb-2"><i class="{{ disease.icon_class|default:'bi bi-clipboard-pulse' }} text-primary"></i> {{ disease.name }}</h1>
+        {% if disease.department %}
+        <a href="{% url 'website:department_detail' disease.department.slug %}" class="badge badge-success-soft text-decoration-none mb-3 d-inline-block">Treated in {{ disease.department.name }}</a>
+        {% endif %}
+        <p class="lead">{{ disease.summary }}</p>
+        <p>{{ disease.description }}</p>
+        {% if disease.symptom_list %}
+        <h5 class="fw-bold mt-4">Common Symptoms</h5>
+        <ul>
+            {% for symptom in disease.symptom_list %}<li>{{ symptom }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">Contact Us</h1>
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="tuh-card p-4">
+                <h6 class="fw-bold"><i class="bi bi-geo-alt-fill text-primary"></i> Address</h6>
+                <p class="text-muted">{{ HOSPITAL_ADDRESS }}</p>
+                <h6 class="fw-bold"><i class="bi bi-telephone-fill text-primary"></i> Emergency Line</h6>
+                <p class="text-muted">{{ HOSPITAL_EMERGENCY_PHONE }}</p>
+                <h6 class="fw-bold"><i class="bi bi-envelope-fill text-primary"></i> Email</h6>
+                <p class="text-muted mb-0">{{ HOSPITAL_EMAIL }}</p>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="tuh-card p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name</label>
+                            {{ form.full_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Subject</label>
+                            {{ form.subject }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Message</label>
+                            {{ form.message }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send"></i> Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

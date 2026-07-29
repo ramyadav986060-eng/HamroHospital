@@ -1,0 +1,13 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Delete {{ department.name }}{% endblock %}
+{% block page_title %}Delete Department{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:500px;">
+    <p>Are you sure you want to delete <strong>{{ department.name }}</strong>? This cannot be undone.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Yes, Delete</button>
+        <a href="{% url 'departments:department_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

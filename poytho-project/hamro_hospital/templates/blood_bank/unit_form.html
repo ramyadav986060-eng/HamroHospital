@@ -1,0 +1,18 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Add Blood Unit{% endblock %}
+{% block page_title %}Add Blood Unit{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'blood_bank:inventory_list' %}"><i class="bi bi-droplet"></i> Inventory</a>
+    <a class="nav-link active" href="{% url 'blood_bank:unit_add' %}"><i class="bi bi-plus-circle"></i> Add Blood Unit</a>
+    <a class="nav-link" href="{% url 'blood_bank:patient_lookup' %}"><i class="bi bi-search"></i> Issue Blood</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="post" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button type="submit" class="btn btn-primary">Add to Inventory</button>
+</form>
+{% endblock %}

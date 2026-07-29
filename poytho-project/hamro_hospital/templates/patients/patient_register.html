@@ -1,0 +1,287 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Register Patient - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Register New Patient{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'patients:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'patients:patient_register' %}"><i class="bi bi-person-plus"></i> Register Patient</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link" href="{% url 'patients:patient_list' %}"><i class="bi bi-people"></i> View Patients</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<div class="tuh-card p-4 mb-4 bg-light border border-primary-subtle">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-upc-scan"></i> Scan Barcode / QR Code</h5>
+            <p class="text-muted small mb-2">Scan an existing patient's QR code/barcode or type the Patient ID/phone number. Returning patients are automatically charged NPR {{ old_fee }}.</p>
+        </div>
+        <span id="patient-status-badge" class="badge bg-success fs-6" style="display:none;">Returning Patient / Old Patient</span>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <input type="text" id="id_q" name="q" class="form-control" placeholder="Scan or type Patient ID / phone number" style="max-width: 360px;">
+        <button type="button" class="btn btn-primary" onclick="lookupPatient(document.getElementById('id_q').value)">Retrieve Patient</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="resetToNewPatient()">Clear / New Patient</button>
+    </div>
+    <div id="patient-scan-message" class="small mt-2 text-muted">Default: New Patient. If no code is scanned, the system treats this as a new patient registration.</div>
+</div>
+<script>
+function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el || value === undefined || value === null) return;
+    if (el.type === 'checkbox') {
+        el.checked = !!value;
+    } else {
+        el.value = value;
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function setReturningPatient(data) {
+    setValue('id_existing_patient_id', data.id);
+    setValue('id_first_name', data.first_name || '');
+    setValue('id_last_name', data.last_name || '');
+    setValue('id_phone_number', data.phone_number || '');
+    setValue('id_gender', data.gender || '');
+    setValue('id_age_input', data.age_display || '');
+    setValue('id_date_of_birth', data.date_of_birth || '');
+    setValue('id_district', data.district_id || '');
+    setValue('id_municipality', data.municipality || '');
+    setValue('id_ward_number', data.ward_number || '');
+    setValue('id_local_address', data.local_address || '');
+    setValue('id_email', data.email || '');
+    setValue('id_blood_group', data.blood_group || '');
+    setValue('id_has_insurance', data.has_insurance);
+    setValue('id_insurance_company', data.insurance_company_id || '');
+    setValue('id_insurance_policy_number', data.insurance_policy_number || '');
+    setValue('id_insurance_membership_number', data.insurance_membership_number || '');
+    setValue('id_insurance_card_number', data.insurance_card_number || '');
+    setValue('id_insurance_expiry_date', data.insurance_expiry_date || '');
+    setValue('id_insurance_remarks', data.insurance_remarks || '');
+    const ptSelect = document.getElementById('id_patient_type');
+    if (ptSelect) {
+        ptSelect.value = 'old';
+        ptSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const badge = document.getElementById('patient-status-badge');
+    if (badge) badge.style.display = 'inline-block';
+    const msg = document.getElementById('patient-scan-message');
+    if (msg) {
+        msg.className = 'small mt-2 text-success fw-semibold';
+        msg.textContent = 'Loaded returning patient: ' + data.full_name + ' (' + data.patient_code + '). Fee set to NPR {{ old_fee }}.';
+    }
+    document.querySelectorAll('#fee-display').forEach(function (el) { el.textContent = el.dataset.oldFee || '{{ old_fee }}'; });
+}
+function resetToNewPatient() {
+    setValue('id_existing_patient_id', '');
+    setValue('id_q', '');
+    const ptSelect = document.getElementById('id_patient_type');
+    if (ptSelect) {
+        ptSelect.value = 'new';
+        ptSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const badge = document.getElementById('patient-status-badge');
+    if (badge) badge.style.display = 'none';
+    const msg = document.getElementById('patient-scan-message');
+    if (msg) {
+        msg.className = 'small mt-2 text-muted';
+        msg.textContent = 'Default: New Patient. If no code is scanned, the system treats this as a new patient registration.';
+    }
+    document.querySelectorAll('#fee-display').forEach(function (el) { el.textContent = el.dataset.newFee || '{{ new_fee }}'; });
+}
+document.addEventListener('tuh:patient-scanned', function (event) {
+    if (event.detail && event.detail.found) setReturningPatient(event.detail);
+});
+function lookupPatient(query) {
+    if (!query) return;
+    fetch("{% url 'patients:qr_lookup' %}?code=" + encodeURIComponent(query))
+        .then(res => res.json())
+        .then(data => {
+            if (data.found) setReturningPatient(data);
+            else {
+                resetToNewPatient();
+                const msg = document.getElementById('patient-scan-message');
+                if (msg) { msg.className = 'small mt-2 text-danger'; msg.textContent = data.error || 'Patient not found. Continue as New Patient.'; }
+            }
+        })
+        .catch(() => alert('Patient lookup failed. Please try again.'));
+}
+</script>
+
+<form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="existing_patient_id" id="id_existing_patient_id" value="{% if existing_patient %}{{ existing_patient.id }}{% endif %}">
+    {% if extension_mode %}<input type="hidden" name="is_extension_service" value="1"><input type="hidden" name="extension_doctor_id" value="{{ extension_doctor_id }}"><div class="alert alert-info">EHS Service Registration: fee is applied from Main Super Admin-configured EHS fee.</div>{% endif %}
+    {% if patient_form.errors or visit_form.errors %}
+    <div class="alert alert-danger">
+        <strong>Please fix the following:</strong>
+        <ul class="mb-0">
+            {% for field in patient_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+            {% for field in visit_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="tuh-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-person"></i> Patient Details</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">First Name *</label>
+                {{ patient_form.first_name }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Last Name *</label>
+                {{ patient_form.last_name }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Gender *</label>
+                {{ patient_form.gender }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Age *</label>
+                {{ patient_form.age_input }}
+                <small class="text-muted">{{ patient_form.age_input.help_text }}</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Date of Birth <small class="text-muted">(auto-calculated - edit if needed)</small></label>
+                {{ patient_form.date_of_birth }}
+                <small id="approx-dob-hint" class="text-muted"></small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Phone Number *</label>
+                {{ patient_form.phone_number }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">District *</label>
+                {{ patient_form.district }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Municipality / Rural Municipality</label>
+                {{ patient_form.municipality }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ward Number</label>
+                {{ patient_form.ward_number }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tole / Street</label>
+                {{ patient_form.local_address }}
+            </div>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle"></i> Optional Details</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Citizenship Number</label>
+                {{ patient_form.citizenship_number }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Email</label>
+                {{ patient_form.email }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Blood Group</label>
+                {{ patient_form.blood_group }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Occupation</label>
+                {{ patient_form.occupation }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Guardian Name</label>
+                {{ patient_form.guardian_name }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Photo</label>
+                {{ patient_form.photo }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Emergency Contact Name</label>
+                {{ patient_form.emergency_contact_name }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Emergency Contact Phone</label>
+                {{ patient_form.emergency_contact_phone }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Known Allergies</label>
+                {{ patient_form.known_allergies }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Remarks</label>
+                {{ patient_form.remarks }}
+            </div>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4 mb-4">
+        <div class="form-check mb-3">
+            {{ patient_form.has_insurance }}
+            <label class="form-check-label fw-bold" for="id_has_insurance">Patient has Insurance</label>
+        </div>
+        <div id="insurance-fields" class="row g-3" style="display:none;">
+            <div class="col-md-6">
+                <label class="form-label">Insurance Company</label>
+                {{ patient_form.insurance_company }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Policy Number</label>
+                {{ patient_form.insurance_policy_number }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Membership Number</label>
+                {{ patient_form.insurance_membership_number }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Card Number</label>
+                {{ patient_form.insurance_card_number }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Expiry Date</label>
+                {{ patient_form.insurance_expiry_date }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Remarks</label>
+                {{ patient_form.insurance_remarks }}
+            </div>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-clipboard2-pulse"></i> OPD Visit</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Department *</label>
+                {{ visit_form.department }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Doctor (optional)</label>
+                {{ visit_form.doctor }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Patient Type *</label>
+                {{ visit_form.patient_type }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Payment Method *</label>
+                {{ visit_form.payment_method }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Chief Complaint</label>
+                {{ visit_form.chief_complaint }}
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0" id="fee-display-wrapper">
+            Registration Fee: <strong>NPR <span id="fee-display" data-new-fee="{{ new_fee }}" data-old-fee="{{ old_fee }}">{{ new_fee }}</span></strong>
+            <small class="d-block text-muted">Automatically calculated based on patient type - no manual entry.</small>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Register &amp; Print OPD Ticket</button>
+    <a href="{% url 'patients:dashboard' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+</form>
+{% endblock %}

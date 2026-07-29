@@ -1,0 +1,20 @@
+Poytho Project - Complete Hamro Hospital Management System
+
+This folder contains the latest completed HMS project package copied from the verified final source.
+
+Main Django source:
+  poytho-project/hamro_hospital/
+
+Run locally:
+  cd hamro_hospital
+  python -m venv .venv
+  .venv\Scripts\activate  (Windows)
+  pip install -r requirements.txt
+  python manage.py migrate
+  python manage.py create_demo_accounts
+  python manage.py runserver
+
+Demo password: password
+Current EHS user: ehs
+Removed old duplicate user: extension
+Removed standalone user/module: medicalrecords

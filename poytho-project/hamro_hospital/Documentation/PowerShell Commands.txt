@@ -1,0 +1,110 @@
+====================================================================
+TU TEACHING HOSPITAL MANAGEMENT SYSTEM - POWERSHELL COMMAND REFERENCE
+====================================================================
+Every command below is ready to copy-paste into PowerShell, in the
+order you'd normally run them for a fresh install. Run PowerShell from
+inside the "tu_hospital_management_system" folder (where manage.py is).
+
+--------------------------------------------------------------------
+1. CREATE VIRTUAL ENVIRONMENT
+--------------------------------------------------------------------
+python -m venv venv
+
+--------------------------------------------------------------------
+2. ACTIVATE ENVIRONMENT
+--------------------------------------------------------------------
+venv\Scripts\Activate.ps1
+
+(If PowerShell blocks the script with an "execution policy" error, run
+this once as Administrator, then try activating again:)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+--------------------------------------------------------------------
+3. INSTALL REQUIREMENTS
+--------------------------------------------------------------------
+pip install --upgrade pip
+pip install -r requirements.txt
+
+--------------------------------------------------------------------
+4. RUN MIGRATIONS
+--------------------------------------------------------------------
+python manage.py migrate
+
+(If you change a model later, generate a new migration first:)
+python manage.py makemigrations
+python manage.py migrate
+
+--------------------------------------------------------------------
+5. SEED THE COMPLETE DEMO DATABASE (the master command)
+--------------------------------------------------------------------
+python manage.py seed_all
+
+(This builds 500 patients, 150 doctors, 5000 appointments, 5000
+visits/consultations/prescriptions, ~4000 bills, 4000 pharmacy sales,
+500 admissions, 300 insurance claims, plus medicines/lab tests/
+radiology tests/testimonials/gallery - all fully cross-linked. It can
+take 5-10 minutes. It is safe to run again if interrupted.)
+
+(To seed in smaller stages instead, e.g. if your terminal has a
+timeout, run with smaller numbers repeatedly - each run tops up what's
+missing:)
+python manage.py seed_all --bills 1000 --pharmacy-sales 1000 --admissions 100 --insurance-claims 50
+python manage.py seed_all --bills 4000 --pharmacy-sales 4000 --admissions 500 --insurance-claims 300
+
+--------------------------------------------------------------------
+6. CREATE A SUPERUSER (optional - demo "admin" account already exists)
+--------------------------------------------------------------------
+python manage.py createsuperuser
+
+--------------------------------------------------------------------
+7. RUN THE DEVELOPMENT SERVER
+--------------------------------------------------------------------
+python manage.py runserver
+
+(To use a different port if 8000 is already taken:)
+python manage.py runserver 8001
+
+Then open: http://127.0.0.1:8000/
+
+--------------------------------------------------------------------
+8. COLLECT STATIC FILES (only needed for production-style deployment)
+--------------------------------------------------------------------
+python manage.py collectstatic --noinput
+
+--------------------------------------------------------------------
+9. BACKUP THE DATABASE
+--------------------------------------------------------------------
+python manage.py backup_data
+
+(Writes a timestamped JSON file into the "backups" folder. Note:
+uploaded files under "media/" - photos, reports, documents - are not
+included; copy that folder separately if you need those too.)
+
+--------------------------------------------------------------------
+10. RESTORE THE DATABASE FROM A BACKUP
+--------------------------------------------------------------------
+python manage.py restore_data backups\tuh_backup_20260101_120000.json --yes
+
+(Replace the filename with the actual backup file you want to restore.)
+
+--------------------------------------------------------------------
+11. START OVER FROM SCRATCH (wipe all data, keep schema)
+--------------------------------------------------------------------
+python manage.py flush --noinput
+python manage.py seed_all
+
+--------------------------------------------------------------------
+12. USEFUL EXTRAS
+--------------------------------------------------------------------
+# Open an interactive Django shell
+python manage.py shell
+
+# Check the whole project for configuration problems
+python manage.py check
+
+# See migration status for every app
+python manage.py showmigrations
+
+# Deactivate the virtual environment when you're done
+deactivate
+====================================================================

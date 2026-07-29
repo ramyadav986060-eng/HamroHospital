@@ -1,0 +1,111 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Staff Attendance{% endblock %}
+{% block page_title %}Staff Attendance{% endblock %}
+{% block dashboard_content %}
+{% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
+<div class="mb-3 text-end">
+    <a href="{% url 'accounts:staff_attendance_punch' %}" class="btn btn-primary"><i class="bi bi-fingerprint"></i> Manual Correction / Punch</a>
+</div>
+{% endif %}
+<form method="get" class="tuh-card p-3 mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label small">Staff Name / ID / Barcode</label><input name="q" value="{{ filters.q }}" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label small">Department</label><select name="department" class="form-select"><option value="">All</option>{% for d in departments %}<option value="{{ d.id }}" {% if filters.department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><label class="form-label small">Date</label><input type="date" name="date" value="{{ filters.date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">Month</label><input type="number" min="1" max="12" name="month" value="{{ calendar_month }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">Year</label><input type="number" name="year" value="{{ calendar_year }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">From</label><input type="date" name="start_date" value="{{ filters.start_date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">To</label><input type="date" name="end_date" value="{{ filters.end_date }}" class="form-control"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Filter</button></div>
+        <div class="col-md-2"><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ calendar_month }}&year={{ calendar_year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=excel" class="btn btn-outline-success w-100">Excel</a></div>
+        <div class="col-md-2"><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ calendar_month }}&year={{ calendar_year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=pdf" class="btn btn-outline-danger w-100">PDF</a></div>
+    </div>
+</form>
+
+<div class="tuh-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar3"></i> Nepali Calendar (Bikram Sambat) Attendance View</h5>
+        <div class="small text-muted">{{ calendar_year }} / {{ calendar_month }} &middot; BS-ready display, Saturdays/weekly holidays highlighted</div>
+    </div>
+    {% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
+    <div class="row g-2 mb-3 align-items-end">
+        <div class="col-md-5"><label class="form-label small fw-bold">Select Staff for Calendar Update</label><select id="calendarStaffId" class="form-select">{% for s in staff_users %}<option value="{{ s.id }}">{{ s.staff_id }} - {{ s.get_full_name|default:s.username }}{% if s.department %} ({{ s.department.name }}){% endif %}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Click Status</label><select id="calendarStatus" class="form-select"><option value="present">Present / Full Day</option><option value="leave">Approved Leave</option><option value="partial">Half Day</option><option value="absent">Absent</option></select></div>
+        <div class="col-md-4 small text-muted">Click any date below after choosing status. The date color updates immediately.</div>
+    </div>
+    {% endif %}
+    <div class="d-flex gap-2 flex-wrap small mb-3">
+        <span class="badge bg-success">Green = Present / Full Day</span>
+        <span class="badge bg-success-subtle text-success border">Green = Approved Leave</span>
+        <span class="badge bg-warning text-dark">Yellow = Half Day</span>
+        <span class="badge bg-danger">Red = Absent</span>
+        <span class="badge bg-danger-subtle text-danger border">Red = Rejected Leave / Weekend-Holiday</span>
+    </div>
+    <div class="row g-2">
+        {% for d in calendar_days %}
+        <div class="col-6 col-sm-4 col-md-2 col-lg-1">
+            <div class="border rounded p-2 h-100 attendance-day {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'rejected_leave' %}bg-danger text-white{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" data-date="{{ d.date|date:'Y-m-d' }}" style="min-height:76px; cursor:pointer;">
+                <div class="fw-bold">{{ d.day }}</div>
+                <div style="font-size:.7rem;">{{ d.date|date:'D' }}</div>
+                {% if d.records %}
+                    <div style="font-size:.68rem;">P:{{ d.counts.present }} L:{{ d.counts.leave }} A:{{ d.counts.absent }}</div>
+                {% elif d.display_status == 'rejected_leave' %}
+                    <div style="font-size:.68rem;">Leave Rejected</div>
+                {% elif d.is_weekend %}
+                    <div style="font-size:.68rem;">Holiday</div>
+                {% else %}
+                    <div style="font-size:.68rem;">No record</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover small">
+            <thead><tr><th>Date</th><th>Staff</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for a in page_obj %}
+                <tr><td>{{ a.date }}</td><td><span class="badge bg-success">STAFF</span> {{ a.staff.get_full_name|default:a.staff.username }}<br><small>{{ a.staff.staff_id }}</small></td><td>{{ a.check_in|date:'H:i'|default:'-' }}</td><td>{{ a.check_out|date:'H:i'|default:'-' }}</td><td>{{ a.total_working_hours }}</td><td><span class="badge {% if a.status == 'present' %}bg-success{% elif a.status == 'leave' %}bg-success{% elif a.status == 'holiday' %}bg-danger text-white{% elif a.status == 'absent' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ a.get_status_display }}</span></td></tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No attendance records found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusSelect = document.getElementById('calendarStatus');
+    const staffSelect = document.getElementById('calendarStaffId');
+    const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+    const classMap = {
+        present: 'bg-success text-white',
+        leave: 'bg-success-subtle text-success',
+        partial: 'bg-warning-subtle text-dark',
+        absent: 'bg-danger text-white'
+    };
+    document.querySelectorAll('.attendance-day').forEach(function (day) {
+        day.addEventListener('click', function () {
+            if (!statusSelect || !staffSelect) return;
+            const form = new FormData();
+            form.append('date', day.dataset.date);
+            form.append('status', statusSelect.value);
+            form.append('staff_id', staffSelect.value);
+            fetch('{% url "accounts:staff_attendance_update_status" %}', {method: 'POST', headers: {'X-CSRFToken': token}, body: form})
+                .then(r => r.json()).then(data => {
+                    if (!data.ok) { alert(data.error || 'Update failed'); return; }
+                    day.className = 'border rounded p-2 h-100 attendance-day ' + (classMap[statusSelect.value] || 'bg-light');
+                    let label = day.querySelector('.calendar-status-label');
+                    if (!label) { label = document.createElement('div'); label.className = 'calendar-status-label'; label.style.fontSize = '.68rem'; day.appendChild(label); }
+                    label.textContent = data.label;
+                }).catch(() => alert('Attendance update failed'));
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

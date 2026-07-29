@@ -1,0 +1,39 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Claims Report{% endblock %}
+{% block page_title %}Claims Report{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'insurance:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'insurance:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link active" href="{% url 'insurance:claims_report' %}"><i class="bi bi-file-earmark-text"></i> Claims Report</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="mb-3">
+    <select name="status" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover small">
+            <thead><tr><th>Claim #</th><th>Patient</th><th>Company</th><th>Claimed</th><th>Approved</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for claim in claims %}
+                <tr>
+                    <td>{{ claim.claim_number }}</td>
+                    <td>{{ claim.patient.full_name }}</td>
+                    <td>{{ claim.insurance_company }}</td>
+                    <td>NPR {{ claim.amount_claimed }}</td>
+                    <td>{% if claim.approved_amount %}NPR {{ claim.approved_amount }}{% else %}-{% endif %}</td>
+                    <td>{{ claim.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No claims found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
