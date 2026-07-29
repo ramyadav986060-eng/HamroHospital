@@ -1,0 +1,44 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Blood Requests{% endblock %}
+{% block page_title %}Blood Requests{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'blood_bank:inventory_list' %}"><i class="bi bi-droplet"></i> Inventory</a>
+    <a class="nav-link" href="{% url 'blood_bank:patient_lookup' %}"><i class="bi bi-search"></i> Issue Blood</a>
+    <a class="nav-link active" href="{% url 'blood_bank:request_queue' %}"><i class="bi bi-clipboard2-pulse"></i> Blood Requests</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Patient</th><th>Group / Component</th><th>Units</th><th>Urgency</th><th>Requested By</th><th>Status</th><th>Requested</th><th></th></tr></thead>
+            <tbody>
+            {% for r in requests %}
+                <tr>
+                    <td>{{ r.patient.full_name }} <small class="text-muted">({{ r.patient.patient_code }})</small></td>
+                    <td>{{ r.blood_group_needed }} - {{ r.get_component_display }}</td>
+                    <td>{{ r.units_needed }}</td>
+                    <td><span class="badge badge-{% if r.urgency == 'emergency' %}danger{% elif r.urgency == 'urgent' %}warning{% else %}success{% endif %}-soft">{{ r.get_urgency_display }}</span></td>
+                    <td class="small">{{ r.doctor_display }}</td>
+                    <td><span class="badge badge-{% if r.status == 'pending' %}orange{% elif r.status == 'issued' %}green{% else %}secondary{% endif %}-soft">{{ r.get_status_display }}</span></td>
+                    <td class="small text-muted">{{ r.requested_at|date:"M d, H:i" }}</td>
+                    <td>{% if r.status == 'pending' %}<a href="{% url 'blood_bank:issue_blood' r.patient.pk %}?request_id={{ r.pk }}" class="btn btn-sm btn-primary">Issue Blood</a>{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted">No blood requests.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

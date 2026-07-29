@@ -1,0 +1,6 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}EHS Service Fees{% endblock %}
+{% block page_title %}EHS Service Fees{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4"><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Doctor</th><th>Department</th><th>Enabled</th><th>New Fee</th><th>Old Fee</th><th></th></tr></thead><tbody>{% for d in doctors %}<tr><td>Dr. {{ d.full_name }}</td><td>{{ d.department.name }}</td><td>{% if d.is_extension_service %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td><td>NPR {{ d.extension_new_fee }}</td><td>NPR {{ d.extension_old_fee }}</td><td><a href="{% url 'finance:extension_fee_edit' d.pk %}" class="btn btn-sm btn-outline-primary">Edit Fees</a></td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

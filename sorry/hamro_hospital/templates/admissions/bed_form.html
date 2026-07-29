@@ -1,0 +1,11 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block dashboard_content %}
+<form method="post" class="tuh-card p-4" style="max-width:500px;">
+    {% csrf_token %}
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'admissions:ward_list' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}Radiology Reports - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Radiology Reports{% endblock %}
+{% block portal_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Number</th><th>Service</th><th>Requested</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for rr in radiology_requests %}
+                <tr>
+                    <td>{{ rr.radiology_number }}</td>
+                    <td>{{ rr.display_service_name }}</td>
+                    <td>{{ rr.requested_at|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-success-soft">{{ rr.get_status_display }}</span></td>
+                    <td>
+                        {% if rr.status == 'completed' %}
+                            <a href="{% url 'patient_portal:my_radiology_report_detail' rr.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">View Report</a>
+                        {% else %}
+                            <span class="text-muted small">Not ready yet</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No imaging on file yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

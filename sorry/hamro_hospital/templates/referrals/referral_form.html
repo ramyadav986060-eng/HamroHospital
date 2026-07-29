@@ -1,0 +1,90 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Create Referral - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Create Patient Referral{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Doctor Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link active" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> <span>Create Referral</span></a>
+    <a class="nav-link" href="{% url 'referrals:department_queue' %}"><i class="bi bi-inboxes"></i> <span>Referral Queue</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4">
+    <p class="text-muted">Scan/search a patient, confirm details, choose a searchable referral destination, then send. Patient details are auto-filled and stored in referral history.</p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.errors %}<div class="alert alert-danger">Please correct the highlighted fields: {{ form.errors }}</div>{% endif %}
+        <div class="tuh-card p-3 mb-4 bg-light shadow-none">
+            <label class="form-label fw-bold">Scan Patient Barcode / QR or Search Patient</label>
+            <div class="input-group"><input id="patientLookupInput" class="form-control" placeholder="Patient ID, barcode/QR, phone, or name"><button class="btn btn-primary" type="button" id="patientLookupBtn"><i class="bi bi-search"></i> Find</button></div>
+            <div id="patientLookupResults" class="list-group mt-2"></div>
+            {{ form.patient }}
+            <div id="patientInfoPanel" class="row g-2 mt-3" style="display:none;">
+                <div class="col-md-3"><strong>Patient ID</strong><div id="pCode"></div></div>
+                <div class="col-md-3"><strong>Full Name</strong><div id="pName"></div></div>
+                <div class="col-md-2"><strong>Age / Gender</strong><div id="pAgeGender"></div></div>
+                <div class="col-md-2"><strong>Blood Group</strong><div id="pBlood"></div></div>
+                <div class="col-md-4"><strong>Address</strong><div id="pAddress"></div></div>
+                <div class="col-md-3"><strong>Phone</strong><div id="pPhone"></div></div>
+                <div class="col-md-3"><strong>Registration No.</strong><div id="pReg"></div></div>
+                <div class="col-md-2"><strong>Medical Record</strong><div id="pRecord">Available in profile/history</div></div>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Referral Type *</label>{{ form.referral_type }}</div>
+            <div class="col-md-4"><label class="form-label">Search Department</label><input type="text" id="departmentSearch" class="form-control" placeholder="E = ENT/Emergency, C = Cardiology, O = Orthopedics"></div>
+            <div class="col-md-4"><label class="form-label">Specific Department</label>{{ form.to_department }}</div>
+            <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+            <div class="col-md-6"><label class="form-label">Working Diagnosis / Clinical Impression</label>{{ form.instructions }}</div>
+            <div class="col-12"><label class="form-label">Referral Reason *</label>{{ form.reason }}</div>
+            <div class="col-12"><label class="form-label">Requested Service(s)</label>{{ form.requested_items }}</div>
+            <div class="col-md-4"><label class="form-label">Optional Fee (if applicable)</label>{{ form.optional_fee }}</div>
+            <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
+            <div class="col-12"><label class="form-label">Supporting Attachments</label>{{ form.attachment }}</div>
+        </div>
+        <div class="tuh-card p-3 mt-4 shadow-none" id="pharmacyBox">
+            <h6 class="fw-bold"><i class="bi bi-capsule"></i> Pharmacy Referral / Prescription Details</h6>
+            <div class="row g-2"><div class="col-md-4"><label class="form-label">Prescribed Medicines</label>{{ form.prescribed_medicines }}</div><div class="col-md-2"><label class="form-label">Dosage</label>{{ form.dosage }}</div><div class="col-md-2"><label class="form-label">Frequency</label>{{ form.frequency }}</div><div class="col-md-2"><label class="form-label">Duration</label>{{ form.duration }}</div><div class="col-md-2"><label class="form-label">Notes</label>{{ form.pharmacy_notes }}</div></div>
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-md-4"><label class="form-label">Laboratory Tests</label><div class="tuh-card p-3 shadow-none small">{{ form.lab_tests }}</div></div>
+            <div class="col-md-4"><label class="form-label">Radiology Services</label><div class="tuh-card p-3 shadow-none small">{{ form.radiology_tests }}</div></div>
+            <div class="col-md-4"><label class="form-label">OT / Procedures</label><div class="tuh-card p-3 shadow-none small">{{ form.operation_types }}</div></div>
+            <div class="col-12"><label class="form-label">Nursing Tasks</label><div class="tuh-card p-3 shadow-none small">{{ form.nursing_tasks }}</div></div>
+            <div class="col-md-3"><label class="form-label">Blood Group</label>{{ form.blood_group }}</div><div class="col-md-3"><label class="form-label">Component</label>{{ form.blood_component }}</div><div class="col-md-3"><label class="form-label">Units</label>{{ form.blood_units }}</div><div class="col-md-3"><label class="form-label">Urgency</label>{{ form.blood_urgency }}</div><div class="col-12"><label class="form-check-label">{{ form.crossmatch_required }} Crossmatch Required</label></div>
+        </div>
+        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-send"></i> Send Referral</button></div>
+    </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const lookup = document.getElementById('patientLookupInput');
+    const btn = document.getElementById('patientLookupBtn');
+    const results = document.getElementById('patientLookupResults');
+    const patientSelect = document.getElementById('id_patient');
+    function setPanel(data){
+        patientSelect.value = data.id;
+        document.getElementById('patientInfoPanel').style.display='flex';
+        document.getElementById('pCode').innerText=data.patient_code||'';
+        document.getElementById('pName').innerText=data.full_name||'';
+        document.getElementById('pAgeGender').innerText=(data.age_display||data.age||'')+' / '+(data.gender_display||data.gender||'');
+        document.getElementById('pBlood').innerText=data.blood_group||'-';
+        document.getElementById('pAddress').innerText=[data.local_address,data.municipality,data.district].filter(Boolean).join(', ') || '-';
+        document.getElementById('pPhone').innerText=data.phone_number||'-';
+        document.getElementById('pReg').innerText=data.patient_code||'-';
+        results.innerHTML='';
+    }
+    function searchPatient(){
+        const q=(lookup.value||'').trim(); if(!q) return;
+        fetch('{% url "patients:qr_lookup" %}?code='+encodeURIComponent(q)).then(r=>r.json()).then(data=>{
+            if(data.found){ setPanel(data); return; }
+            results.innerHTML='<div class="list-group-item text-danger">No patient found.</div>';
+        }).catch(()=>{results.innerHTML='<div class="list-group-item text-danger">Search failed.</div>';});
+    }
+    btn.addEventListener('click', searchPatient); lookup.addEventListener('keydown', e=>{if(e.key==='Enter'){e.preventDefault();searchPatient();}});
+    const deptSearch=document.getElementById('departmentSearch'); const dept=document.getElementById('id_to_department');
+    deptSearch.addEventListener('input', function(){const q=this.value.toLowerCase(); Array.from(dept.options).forEach(o=>{o.hidden=!!q && !o.text.toLowerCase().includes(q);});});
+});
+</script>
+{% endblock %}

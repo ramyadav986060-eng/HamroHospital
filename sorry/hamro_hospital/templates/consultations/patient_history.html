@@ -1,0 +1,25 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}History - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Consultation History - {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+{% for c in consultations %}
+<div class="tuh-card p-4 mb-3">
+    <div class="d-flex justify-content-between">
+        <h6 class="fw-bold">{{ c.visit.department.name }} - {{ c.created_at|date:"M d, Y" }}</h6>
+        <small class="text-muted">Dr. {{ c.doctor.full_name }}</small>
+    </div>
+    <p><strong>Diagnosis:</strong> {{ c.diagnosis|default:"-" }}</p>
+    {% if c.clinical_notes %}<p class="text-muted small">{{ c.clinical_notes }}</p>{% endif %}
+    {% if c.prescription_items.all %}
+        <strong class="small">Prescription:</strong>
+        <ul class="small">
+        {% for item in c.prescription_items.all %}
+            <li>{{ item.medicine_name }} - {{ item.dosage }}, {{ item.frequency }}, {{ item.duration }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">No consultation history for this patient yet.</p>
+{% endfor %}
+{% endblock %}

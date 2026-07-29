@@ -1,0 +1,64 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Dashboard{% endblock %}
+{% block portal_content %}
+{% if upcoming_admission %}
+<div class="alert alert-info">
+    <i class="bi bi-hospital"></i> You are currently admitted - {{ upcoming_admission.ward.name }}
+    {% if upcoming_admission.bed %} / Bed {{ upcoming_admission.bed.bed_number }}{% endif %}
+    (since {{ upcoming_admission.admission_date|date:"M d, Y" }})
+</div>
+{% endif %}
+
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_patient_card' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-person d-block fs-3 mb-2"></i>Profile</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_visits' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-clipboard2-pulse d-block fs-3 mb-2"></i>OPD Visits</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_prescriptions' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-capsule d-block fs-3 mb-2"></i>Prescriptions</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_lab_reports' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-flask d-block fs-3 mb-2"></i>Lab Reports</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_radiology_reports' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-file-earmark-medical d-block fs-3 mb-2"></i>Radiology</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_bills' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-receipt d-block fs-3 mb-2"></i>Bills</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_admissions' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-hospital d-block fs-3 mb-2"></i>Admissions</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_documents' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-folder2-open d-block fs-3 mb-2"></i>Medical History</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:book_visit' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-calendar-check d-block fs-3 mb-2"></i>Appointments</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:online_registration' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-calendar-plus d-block fs-3 mb-2 text-white"></i>Online Registration</a></div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card blue"><i class="bi bi-clipboard2-pulse fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ visit_count }}</h2><small>Total Visits</small></div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card green"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ bill_count }}</h2><small>Bills on File</small></div>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'patient_portal:online_registration' %}" class="text-decoration-none">
+            <div class="stat-card orange h-100 d-flex flex-column justify-content-center">
+                <i class="bi bi-calendar-plus fs-3"></i><h5 class="fw-bold mt-2 mb-0">Online Registration</h5>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="tuh-card p-4">
+    <h6 class="fw-bold mb-3">Recent Visits</h6>
+    <div class="table-responsive">
+        <table class="table table-sm small">
+            <thead><tr><th>Date</th><th>Department</th><th>Doctor</th><th>Receipt #</th><th></th></tr></thead>
+            <tbody>
+            {% for visit in recent_visits %}
+                <tr>
+                    <td>{{ visit.visit_date }}</td>
+                    <td>{{ visit.department.name }}</td>
+                    <td>{% if visit.doctor %}Dr. {{ visit.doctor.full_name }}{% else %}-{% endif %}</td>
+                    <td>{{ visit.receipt_number }}</td>
+                    <td><a href="{% url 'patient_portal:my_ticket' visit.id %}" class="btn btn-sm btn-outline-primary">View Ticket</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No visits yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

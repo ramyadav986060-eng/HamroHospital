@@ -1,0 +1,38 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Admit {{ patient.full_name }}{% endblock %}
+{% block page_title %}Admit Patient: {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-search"></i> Patient Search / Information</h5>
+    <div class="input-group mb-3"><input id="admissionPatientLookup" class="form-control" value="{{ patient.patient_code }}" placeholder="Search by Patient ID, barcode/QR, phone"><button type="button" id="admissionLookupBtn" class="btn btn-primary">Search</button></div>
+    <div class="row g-2 small" id="patientInfoPanel">
+        <div class="col-md-3"><strong>Patient ID</strong><div id="pCode">{{ patient.patient_code }}</div></div>
+        <div class="col-md-3"><strong>Name</strong><div id="pName">{{ patient.full_name }}</div></div>
+        <div class="col-md-2"><strong>Age/Gender</strong><div id="pAgeGender">{{ patient.age }} / {{ patient.get_gender_display }}</div></div>
+        <div class="col-md-2"><strong>Phone</strong><div id="pPhone">{{ patient.phone_number }}</div></div>
+        <div class="col-md-2"><strong>Address</strong><div id="pAddress">{{ patient.district.name }}</div></div>
+    </div>
+</div>
+<form method="post" class="tuh-card p-4" style="max-width:900px;">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Department</label>{{ form.department }}</div>
+        <div class="col-md-6"><label class="form-label">Referring / Admitting Doctor</label>{{ form.admitting_doctor }}</div>
+        <div class="col-md-6"><label class="form-label">Ward</label>{{ form.ward }}</div>
+        <div class="col-md-6"><label class="form-label">Available Bed</label>{{ form.bed }}<div class="form-text">Only unoccupied beds are listed. Change ward and save/search again if needed.</div></div>
+        <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+        <div class="col-md-6"><label class="form-label">Admission Date & Time</label>{{ form.admission_datetime }}</div>
+        <div class="col-12"><label class="form-label">Admission Reason</label>{{ form.reason_for_admission }}</div>
+        <div class="col-12"><label class="form-label">Notes (optional)</label>{{ form.notes }}</div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4"><i class="bi bi-check-lg"></i> Admit Patient</button>
+    <button type="button" onclick="history.back()" class="btn btn-outline-secondary mt-4">Back</button>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const btn=document.getElementById('admissionLookupBtn'), input=document.getElementById('admissionPatientLookup');
+  function lookup(){ const q=(input.value||'').trim(); if(!q)return; fetch('{% url "patients:qr_lookup" %}?code='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{ if(!d.found){alert('Patient not found');return;} document.getElementById('pCode').innerText=d.patient_code; document.getElementById('pName').innerText=d.full_name; document.getElementById('pAgeGender').innerText=(d.age_display||d.age)+' / '+d.gender_display; document.getElementById('pPhone').innerText=d.phone_number; document.getElementById('pAddress').innerText=[d.local_address,d.municipality,d.district].filter(Boolean).join(', ') || '-'; }); }
+  btn.addEventListener('click', lookup); input.addEventListener('keydown', e=>{if(e.key==='Enter'){e.preventDefault();lookup();}});
+});
+</script>
+{% endblock %}

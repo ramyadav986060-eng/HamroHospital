@@ -1,0 +1,212 @@
+/*
+ * TUH Unified Print Stylesheet
+ * ----------------------------
+ * Shared header / banner / metadata-card / footer styling used across every
+ * printable document in the system (registration, OPD, billing, pharmacy,
+ * laboratory, radiology, admission, OT, insurance, payment receipts) so the
+ * whole hospital has one consistent printed identity.
+ *
+ * Every page using this stylesheet must:
+ *   - wrap its content in <div class="tuh-print-wrapper" id="...">
+ *   - keep body background light (#f1f5f9) on screen, white on print
+ *   - never exceed one A4 page: content grows the box, it never paginates
+ */
+
+body {
+    background-color: #f1f5f9;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.tuh-print-wrapper {
+    max-width: 750px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    padding: 30px 35px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ---------- Header: logo + hospital name + address ---------- */
+.tuh-print-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.tuh-print-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.tuh-print-header .brand img {
+    height: 72px;
+    width: 72px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.tuh-print-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1a365d;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+.tuh-print-header h2 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 2px 0 6px 0;
+    letter-spacing: 0.5px;
+}
+.tuh-print-header .location {
+    font-size: 12.5px;
+    color: #475569;
+    font-weight: 500;
+}
+.tuh-print-header .location i { color: #dc2626; }
+
+/* Barcode / doc-number block, always upper-right, grouped with header */
+.tuh-print-header .doc-meta {
+    text-align: right;
+    flex-shrink: 0;
+}
+.tuh-print-header .doc-meta .doc-no-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.tuh-print-header .doc-meta .doc-no {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1a365d;
+    margin: 2px 0 6px 0;
+}
+.tuh-print-header .doc-meta img.barcode {
+    height: 42px;
+    max-width: 190px;
+    object-fit: contain;
+}
+.tuh-print-header .doc-meta img.qr {
+    height: 78px;
+    width: 78px;
+    object-fit: contain;
+}
+
+/* ---------- Title banner ---------- */
+.tuh-print-banner {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+.tuh-print-banner::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; height: 100%; width: 40px;
+    background-color: #0d9488;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.tuh-print-banner .status-pill {
+    margin-left: auto;
+    background: rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.tuh-print-banner .status-pill.pending { background: #f59e0b; }
+.tuh-print-banner .status-pill.paid { background: #10b981; }
+
+/* ---------- Metadata card (label / value rows) ---------- */
+.tuh-meta-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 15px;
+    margin-bottom: 20px;
+}
+.tuh-meta-card .row-item {
+    display: flex;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.tuh-meta-card .row-item:last-child { border-bottom: none; }
+.tuh-meta-card .row-label {
+    width: 35%;
+    font-weight: 600;
+    color: #334155;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.tuh-meta-card .row-label i { color: #1e3a8a; font-size: 15px; }
+.tuh-meta-card .row-val {
+    width: 65%;
+    color: #0f172a;
+    font-size: 13.5px;
+    font-weight: 500;
+    border-left: 1px solid #e2e8f0;
+    padding-left: 15px;
+}
+.tuh-meta-card .row-val.highlight { color: #2563eb; font-weight: 700; }
+
+/* ---------- Content / results table ---------- */
+.tuh-print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+.tuh-print-table thead th {
+    background: #1e3a8a; color: #fff; text-align: left;
+    padding: 9px 12px; font-weight: 700; font-size: 12px; letter-spacing: 0.3px;
+}
+.tuh-print-table thead th:first-child { border-top-left-radius: 6px; }
+.tuh-print-table thead th:last-child { border-top-right-radius: 6px; }
+.tuh-print-table tbody td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a; }
+.tuh-print-table tfoot td { padding: 10px 12px; font-weight: 800; font-size: 14px; color: #1a365d; border-top: 2px solid #1e3a8a; }
+
+.tuh-section-title {
+    font-size: 13px; font-weight: 800; color: #1e3a8a;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 18px 0 8px 0; padding-bottom: 4px; border-bottom: 2px solid #e2e8f0;
+}
+.tuh-body-text { font-size: 13.5px; color: #334155; line-height: 1.6; white-space: pre-line; }
+
+/* ---------- Footer ---------- */
+.tuh-print-footer { border-top: 2px solid #1e3a8a; padding-top: 15px; margin-top: 10px; }
+.tuh-footer-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 12px; }
+.tuh-footer-cols .footer-col { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569; }
+.tuh-footer-cols .footer-col i { font-size: 16px; color: #1e3a8a; }
+.tuh-footer-cols .footer-col .f-title { font-weight: bold; color: #1e3a8a; }
+.tuh-print-slogan { text-align: center; font-size: 12.5px; font-weight: 700; color: #10b981; letter-spacing: 2px; margin-top: 5px; }
+
+.corner-decoration {
+    position: absolute; bottom: 0; right: 0; width: 120px; height: 12px;
+    background-color: #0d9488;
+    clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* ---------- Print rules: ALWAYS a single page ---------- */
+@media print {
+    body { background: #ffffff; margin: 0; padding: 0; }
+    .tuh-print-wrapper {
+        margin: 0; padding: 18px 22px; box-shadow: none; border: none;
+        max-width: 100%; page-break-inside: avoid;
+    }
+    .no-print { display: none !important; }
+    @page { size: A4 portrait; margin: 0.7cm; }
+}

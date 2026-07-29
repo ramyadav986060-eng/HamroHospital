@@ -1,0 +1,60 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead>
+            <tr>
+                <th>Radiology Code</th>
+                <th>Service Type</th>
+                <th>Urgency</th>
+                <th>Requested At</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in records %}
+            <tr>
+                <td>{{ r.radiology_number }}</td>
+                <td>{{ r.display_service_name }}</td>
+                <td>
+                    {% if r.urgency == 'routine' %}
+                        <span class="badge bg-secondary">Routine</span>
+                    {% elif r.urgency == 'urgent' %}
+                        <span class="badge bg-warning">Urgent</span>
+                    {% else %}
+                        <span class="badge bg-danger">STAT</span>
+                    {% endif %}
+                </td>
+                <td>{{ r.requested_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {% if r.status == 'requested' %}
+                        <span class="badge bg-info">Requested</span>
+                    {% elif r.status == 'in_progress' %}
+                        <span class="badge bg-warning">In Progress</span>
+                    {% else %}
+                        <span class="badge bg-success">Completed</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if r.status == 'completed' %}
+                        <a href="{% url 'radiology:print_report' r.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                            <i class="bi bi-printer"></i> Report
+                        </a>
+                        {% if r.report_file %}
+                            <a href="{{ r.report_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted small">Pending</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No radiology records for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

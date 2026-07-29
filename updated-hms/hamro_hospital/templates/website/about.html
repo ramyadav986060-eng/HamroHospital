@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}About Us - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold mb-4">About {{ HOSPITAL_NAME }}</h1>
+    <div class="row g-4">
+        <div class="col-md-8">
+            <p class="lead">{{ HOSPITAL_NAME }} is committed to providing accessible, high-quality healthcare to
+                communities across Nepal, combining modern medical practice with compassionate patient care.</p>
+            <p>Our hospital brings together specialists across more than two dozen departments, from General OPD
+                and Emergency Medicine to Cardiology, Oncology, and Surgery - supported by a modern laboratory,
+                radiology unit, and in-house pharmacy.</p>
+            <p>We serve patients from all seven provinces of Nepal, and our registration system is built around
+                the country's official administrative structure to make every patient record accurate and complete.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="tuh-card p-4">
+                <h6 class="fw-bold"><i class="bi bi-geo-alt-fill text-primary"></i> Address</h6>
+                <p class="text-muted small">{{ HOSPITAL_ADDRESS }}</p>
+                <h6 class="fw-bold"><i class="bi bi-telephone-fill text-primary"></i> Emergency</h6>
+                <p class="text-muted small">{{ HOSPITAL_EMERGENCY_PHONE }}</p>
+                <h6 class="fw-bold"><i class="bi bi-envelope-fill text-primary"></i> Email</h6>
+                <p class="text-muted small mb-0">{{ HOSPITAL_EMAIL }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

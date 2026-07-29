@@ -1,0 +1,115 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Consultation - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Consultation - {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'consultations:queue' %}"><i class="bi bi-clock-history"></i> Consultation Queue</a>
+    <a class="nav-link" href="{% url 'consultations:patient_history' patient.id %}"><i class="bi bi-journal-medical"></i> Patient History</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-clipboard2-pulse"></i> Diagnosis &amp; Notes</h6>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+            <div class="col-md-6"><label class="form-label">Follow-up Date</label>{{ form.follow_up_date }}</div>
+            <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
+            <div class="col-12"><label class="form-label">Prescription File (PDF/Image)</label>{{ form.prescription_file }}</div>
+        </div>
+        
+        <hr class="my-4">
+        
+        <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-send-check"></i> Inpatient &amp; OT Recommendations</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="form-check mt-2">
+                    {{ form.recommend_admission }}
+                    <label class="form-check-label fw-semibold">Recommend Ward Admission (IPD)</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check mt-2">
+                    {{ form.recommend_surgery }}
+                    <label class="form-check-label fw-semibold" for="id_recommend_surgery">Recommend Surgery (Operation Theatre)</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Recommended Surgery Name</label>
+                {{ form.recommended_surgery_name }}
+            </div>
+        </div>
+    </div>
+
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-capsule"></i> Prescription</h6>
+        {{ formset.management_form }}
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th><th>Delete</th></tr></thead>
+                <tbody>
+                {% for pform in formset %}
+                    <tr>
+                        <td>{{ pform.id }}{{ pform.medicine_name }}</td>
+                        <td>{{ pform.dosage }}</td>
+                        <td>{{ pform.frequency }}</td>
+                        <td>{{ pform.duration }}</td>
+                        <td>{{ pform.instructions }}</td>
+                        <td>{% if pform.instance.pk %}{{ pform.DELETE }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Consultation</button>
+</form>
+
+<div class="row g-4 mt-1">
+    <div class="col-md-6">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-flask"></i> Laboratory Requests</h6>
+            <ul class="list-group mb-3">
+                {% for lr in lab_requests %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ lr.test_name }}
+                        <span class="badge badge-success-soft">{{ lr.get_status_display }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No lab tests requested yet.</li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{% url 'consultations:add_lab_request' consultation.id %}" class="d-flex gap-2">
+                {% csrf_token %}
+                {{ lab_form.test_name }}
+                {{ lab_form.urgency }}
+                <button class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-camera"></i> Radiology Requests</h6>
+            <ul class="list-group mb-3">
+                {% for rr in radiology_requests %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ rr.radiology_number }} - {{ rr.display_service_name }}
+                        <span class="badge badge-success-soft">{{ rr.get_status_display }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No imaging requested yet.</li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{% url 'consultations:add_radiology_request' consultation.id %}" class="d-flex gap-2">
+                {% csrf_token %}
+                {{ radiology_form.service_type }}
+                {{ radiology_form.urgency }}
+                <button class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Service Order{% endblock %}
+{% block page_title %}Service Order Detail{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-lg-8"><div class="tuh-card p-4"><dl class="row small mb-0"><dt class="col-sm-4">Patient</dt><dd class="col-sm-8"><a href="{% url 'patients:patient_detail' order.patient.pk %}">{{ order.patient.full_name }}</a> ({{ order.patient.patient_code }})</dd><dt class="col-sm-4">Service</dt><dd class="col-sm-8">{{ order.service_name }}</dd><dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ order.get_service_type_display }}</dd><dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ order.get_status_display }}</dd><dt class="col-sm-4">Payment</dt><dd class="col-sm-8">{{ order.get_payment_status_display }}</dd><dt class="col-sm-4">Amount</dt><dd class="col-sm-8">NPR {{ order.total_amount }}</dd><dt class="col-sm-4">Bill</dt><dd class="col-sm-8">{% if order.bill %}<a href="{% url 'billing:receipt' order.bill.pk %}">{{ order.bill.bill_number }}</a>{% else %}-{% endif %}</dd><dt class="col-sm-4">Referral</dt><dd class="col-sm-8">{% if order.referral %}<a href="{% url 'referrals:referral_detail' order.referral.pk %}">Open Referral</a>{% else %}-{% endif %}</dd><dt class="col-sm-4">Notes</dt><dd class="col-sm-8">{{ order.notes|default:'-'|linebreaksbr }}</dd></dl></div></div>
+    <div class="col-lg-4"><div class="tuh-card p-4"><h6 class="fw-bold">Update Status</h6><form method="post" action="{% url 'workflow:service_order_update' order.pk %}">{% csrf_token %}<select name="status" class="form-select mb-2">{% for v,l in order.Status.choices %}<option value="{{ v }}" {% if order.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select><button class="btn btn-primary w-100">Update</button></form></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Date</th><th>Type</th><th>Event</th><th>By</th><th></th></tr></thead><tbody>{% for e in records %}<tr><td>{{ e.event_at|date:'Y-m-d H:i' }}</td><td>{{ e.get_event_type_display }}</td><td><strong>{{ e.title }}</strong>{% if e.description %}<br><small class="text-muted">{{ e.description }}</small>{% endif %}</td><td>{{ e.actor.get_full_name|default:e.actor.username|default:'System' }}</td><td>{% if e.related_url %}<a href="{{ e.related_url }}" class="btn btn-sm btn-outline-primary">Open</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No timeline events yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

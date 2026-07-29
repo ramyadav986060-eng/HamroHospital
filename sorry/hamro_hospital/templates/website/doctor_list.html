@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Our Doctors - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">Our Doctors</h1>
+    <div class="row justify-content-center g-2 mb-4">
+        <div class="col-md-4">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute" style="left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                <input type="text" id="doctorSearchInput" class="form-control ps-5" placeholder="Search doctors, e.g. &quot;Dr Sharma&quot;" value="{{ search_query }}" autocomplete="off">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <form method="get" id="deptFilterForm">
+                <select name="department" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:'s' %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+    <div class="row g-4" id="doctorGrid">
+        {% for doctor in doctors %}
+        <div class="col-md-3 col-sm-6 doctor-card-col" data-name="dr {{ doctor.full_name|lower }} {{ doctor.department.name|lower }} {{ doctor.specialization|lower }}">
+            <div class="tuh-card p-4 text-center h-100">
+                {% if doctor.photo %}
+                    <img src="{{ doctor.photo.url }}" class="rounded-circle mb-3" width="80" height="80" style="object-fit:cover;" alt="">
+                {% else %}
+                    <div class="tuh-icon-circle mx-auto mb-3"><i class="bi bi-person"></i></div>
+                {% endif %}
+                <h6 class="mb-0">Dr. {{ doctor.full_name }}</h6>
+                <small class="text-muted d-block">{{ doctor.department.name }}</small>
+                <small class="text-muted d-block mb-2">{{ doctor.specialization }}{% if doctor.unit %} &middot; {{ doctor.unit.name }}{% endif %}</small>
+                <a href="{% url 'website:doctor_detail' doctor.pk %}" class="btn btn-sm btn-outline-primary">View Profile</a>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No doctors found.</p>
+        {% endfor %}
+    </div>
+    <p class="text-center text-muted small mt-3 d-none" id="noResultsMsg">No doctors match your search.</p>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('doctorSearchInput');
+    var cards = document.querySelectorAll('.doctor-card-col');
+    var noResults = document.getElementById('noResultsMsg');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        var term = input.value.trim().toLowerCase();
+        var visibleCount = 0;
+        cards.forEach(function (card) {
+            var match = card.getAttribute('data-name').indexOf(term) !== -1;
+            card.classList.toggle('d-none', !match);
+            if (match) visibleCount++;
+        });
+        noResults.classList.toggle('d-none', visibleCount !== 0 || cards.length === 0);
+    });
+});
+</script>
+{% endblock %}

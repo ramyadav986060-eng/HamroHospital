@@ -1,0 +1,106 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Pharmacy - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Pharmacy Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'pharmacy:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
+    <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
+    <a class="nav-link" href="{% url 'pharmacy:patient_lookup' %}"><i class="bi bi-search"></i> Dispense Medicine</a>
+    <a class="nav-link" href="{% url 'pharmacy:todays_sales' %}"><i class="bi bi-cash-stack"></i> Today's Sales</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+
+<!-- 1. Dashboard Summary -->
+<div class="row g-4">
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Sales Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Total Today', 'NPR {{ todays_total|floatformat:2 }}')"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card orange"><i class="bi bi-exclamation-triangle fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ low_stock_count }}</h2><small>Low Stock</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card gray"><i class="bi bi-x-circle fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ out_of_stock_count }}</h2><small>Out of Stock</small></div></div>
+</div>
+<div class="row g-4 mt-1 mb-4">
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Sales This Month</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Month', 'NPR {{ monthly_total|floatformat:2 }}')"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue"><i class="bi bi-calendar3 fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ yearly_count }}</h2><small>Sales This Year</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Revenue This Year', 'NPR {{ yearly_total|floatformat:2 }}')"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div></div>
+</div>
+
+<!-- 2. Find Patient to Dispense -->
+<div class="tuh-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-search"></i> Find Patient to Dispense</h5>
+            <p class="text-muted small mb-0">Search by Patient ID, barcode/QR, phone number, or name before dispensing medicine.</p>
+        </div>
+        <a href="{% url 'pharmacy:patient_lookup' %}" class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Find Patient to Dispense</a>
+    </div>
+</div>
+
+<!-- 3. Incoming Doctor Referrals: only one referral list, below Find Patient -->
+<div class="tuh-card p-4 mb-4 border border-primary">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-send"></i> Incoming Doctor Referrals</h5>
+        <a href="{% url 'referrals:department_queue' %}" class="btn btn-sm btn-outline-primary">Open Referral Queue</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Requested Medicines / Notes</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for ref in incoming_referrals %}
+                <tr>
+                    <td>{{ ref.patient.full_name }}<br><small>{{ ref.patient.patient_code }} · {{ ref.patient.phone_number }}</small></td>
+                    <td>{{ ref.requested_items|default:ref.reason|linebreaksbr }}</td>
+                    <td>{% if ref.related_bill %}<span class="badge {% if ref.related_bill.status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ ref.related_bill.get_status_display }}</span>{% else %}<span class="badge bg-secondary">No bill</span>{% endif %}</td>
+                    <td>{{ ref.get_status_display }}</td>
+                    <td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-primary">Open</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No incoming pharmacy referrals.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 4. Dispensing Area / Service Orders -->
+<div class="tuh-card p-4 mb-4 border border-info">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> Dispensing Area / Active Service Orders</h5>
+        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Patient</th><th>Service / Medicine</th><th>Status</th><th>Payment</th><th></th></tr></thead>
+            <tbody>
+            {% for order in service_orders %}
+                <tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No active pharmacy service orders.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 5. Dispensing History -->
+<div class="tuh-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history"></i> Dispensing History</h5>
+        <a href="{% url 'pharmacy:todays_sales' %}" class="btn btn-sm btn-outline-primary">View Today's Sales</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Sale #</th><th>Patient</th><th>Total</th><th>Payment</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            {% for sale in recent_sales %}
+                <tr><td>{{ sale.sale_number }}</td><td>{{ sale.patient.full_name|default:'Walk-in' }}</td><td>NPR {{ sale.total_amount }}</td><td>{{ sale.get_payment_method_display }}</td><td>{{ sale.created_at|date:'Y-m-d H:i' }}</td><td><a href="{% url 'pharmacy:receipt' sale.pk %}" class="btn btn-sm btn-outline-secondary">Receipt</a></td></tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No recent dispensing history.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

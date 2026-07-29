@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Staff Card - {{ staff.staff_id }}{% endblock %}
+{% block navbar %}{% endblock %}{% block footer %}{% endblock %}{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+<div class="container py-3 no-print"><button onclick="history.back()" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</button></div>
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header"><div class="brand"><img src="{{ HOSPITAL_LOGO_URL }}"><div><h1>{{ HOSPITAL_NAME }}</h1><h2>Hospital Staff ID Card</h2><div class="location">{{ HOSPITAL_ADDRESS }}</div></div></div><div class="doc-meta"><div class="doc-no-label">Staff ID</div><div class="doc-no">{{ staff.staff_id }}</div>{% if staff.staff_barcode %}<img class="barcode" src="{{ staff.staff_barcode.url }}">{% endif %}</div></div>
+    <div class="tuh-print-banner"><i class="bi bi-person-vcard"></i> HOSPITAL STAFF ID CARD <span class="status-pill paid">{% if staff.is_active_staff %}ACTIVE{% else %}INACTIVE{% endif %}</span></div>
+    <div class="text-center my-3">
+        {% if staff.staff_photo %}<img src="{{ staff.staff_photo.url }}" style="width:116px;height:116px;object-fit:cover;border-radius:12px;border:1px solid #ddd;" alt="Staff Photo">{% elif staff.doctor_profile.photo %}<img src="{{ staff.doctor_profile.photo.url }}" style="width:116px;height:116px;object-fit:cover;border-radius:12px;border:1px solid #ddd;" alt="Staff Photo">{% else %}<div class="d-inline-flex align-items-center justify-content-center bg-light border" style="width:116px;height:116px;border-radius:12px;"><i class="bi bi-person fs-1 text-muted"></i></div>{% endif %}
+        <h4 class="fw-bold mt-2 mb-0">{{ staff.get_full_name|default:staff.username }}</h4>
+        <div class="text-muted">{{ staff.staff_role_label }}</div>
+    </div>
+    <div class="tuh-meta-card">
+        <div class="row-item"><div class="row-label">Staff ID</div><div class="row-val"><strong>{{ staff.staff_id }}</strong></div></div>
+        <div class="row-item"><div class="row-label">Department</div><div class="row-val">{{ staff.department.name|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Designation</div><div class="row-val">{{ staff.designation|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Contact</div><div class="row-val">{{ staff.phone_number|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Employment Type</div><div class="row-val">{{ staff.get_employment_type_display|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Date of Joining</div><div class="row-val">{{ staff.date_joined|date:'Y-m-d' }}</div></div>
+    </div>
+    <div class="tuh-section-title">Unique Staff Barcode / QR Code</div>
+    <table class="tuh-print-table"><tbody><tr><td>Barcode</td><td>{% if staff.staff_barcode %}<img src="{{ staff.staff_barcode.url }}" style="max-width:220px;max-height:48px;object-fit:contain;">{% endif %}</td></tr><tr><td>QR Code</td><td>{% if staff.staff_qr_code %}<img src="{{ staff.staff_qr_code.url }}" style="width:90px;height:90px;object-fit:contain;">{% endif %}</td></tr></tbody></table>
+    <div class="tuh-section-title">Back Side / Emergency Information</div>
+    <table class="tuh-print-table"><tbody><tr><td>Emergency Contact</td><td>{{ staff.emergency_contact|default:'-' }}</td></tr><tr><td>Address</td><td>{{ staff.address|default:'-' }}</td></tr><tr><td>Blood Group</td><td>{{ staff.blood_group|default:'-' }}</td></tr><tr><td>Hospital Contact</td><td>{{ HOSPITAL_PHONE }} / {{ HOSPITAL_EMERGENCY_PHONE }}</td></tr><tr><td>Instructions</td><td>This card is hospital property. If found, please return to {{ HOSPITAL_NAME }}.</td></tr></tbody></table>
+    <div class="tuh-print-footer"><div class="tuh-footer-cols"><div class="footer-col"><i class="bi bi-person-circle"></i><div><div class="f-title">Printed By</div><div>{{ request.user.get_full_name|default:request.user.username }}</div></div></div><div class="footer-col"><i class="bi bi-printer"></i><div><div class="f-title">Printed On</div><div>{% now "Y-m-d H:i" %}</div></div></div></div><div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div></div>
+</div>
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=staff.staff_id|add:'-staff-card' hide_jpg=True %}
+{% endblock %}

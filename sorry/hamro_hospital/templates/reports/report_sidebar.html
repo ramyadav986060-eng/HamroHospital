@@ -1,0 +1,45 @@
+<nav class="nav flex-column">
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' %}
+    <a class="nav-link {% if active == 'revenue' %}active{% endif %}" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> <span>Revenue Dashboard</span></a>
+    <a class="nav-link {% if active == 'finance' %}active{% endif %}" href="{% url 'reports:finance_report' %}"><i class="bi bi-bank"></i> <span>Finance Billing</span></a>
+    <a class="nav-link {% if active == 'department_revenue' %}active{% endif %}" href="{% url 'reports:department_revenue_report' %}"><i class="bi bi-bar-chart-line"></i> <span>Department Revenue</span></a>
+    <a class="nav-link {% if active == 'counter' %}active{% endif %}" href="{% url 'reports:counter_report' %}"><i class="bi bi-cash-stack"></i> <span>Cash Counter</span></a>
+    {% endif %}
+
+    <a class="nav-link {% if active == 'registration' %}active{% endif %}" href="{% url 'reports:registration_report' %}"><i class="bi bi-clipboard-data"></i> <span>Registrations</span></a>
+    <a class="nav-link {% if active == 'department' %}active{% endif %}" href="{% url 'reports:department_report' %}"><i class="bi bi-diagram-3"></i> <span>Departments</span></a>
+    <a class="nav-link {% if active == 'doctor' %}active{% endif %}" href="{% url 'reports:doctor_report' %}"><i class="bi bi-person-badge"></i> <span>Doctors</span></a>
+
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'pharmacy' %}
+    <a class="nav-link {% if active == 'pharmacy' %}active{% endif %}" href="{% url 'reports:pharmacy_report' %}"><i class="bi bi-capsule-pill"></i> <span>Pharmacy Revenue</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'laboratory' %}
+    <a class="nav-link {% if active == 'laboratory' %}active{% endif %}" href="{% url 'reports:laboratory_report' %}"><i class="bi bi-flask"></i> <span>Laboratory</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'radiology' %}
+    <a class="nav-link {% if active == 'radiology' %}active{% endif %}" href="{% url 'reports:radiology_report' %}"><i class="bi bi-camera"></i> <span>Radiology</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'ward_admission' %}
+    <a class="nav-link {% if active == 'admission' %}active{% endif %}" href="{% url 'reports:admission_report' %}"><i class="bi bi-hospital"></i> <span>Admissions</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' %}
+    <a class="nav-link {% if active == 'insurance' %}active{% endif %}" href="{% url 'reports:insurance_report' %}"><i class="bi bi-shield-check"></i> <span>Insurance</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'nursing' %}
+    <a class="nav-link {% if active == 'nursing' %}active{% endif %}" href="{% url 'reports:nursing_report' %}"><i class="bi bi-heart-pulse"></i> <span>Nursing</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'operation_theatre' %}
+    <a class="nav-link {% if active == 'ot' %}active{% endif %}" href="{% url 'reports:ot_report' %}"><i class="bi bi-scissors"></i> <span>Operation Theatre</span></a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' or request.user.effective_role == 'blood_bank' %}
+    <a class="nav-link {% if active == 'blood' %}active{% endif %}" href="{% url 'reports:blood_bank_report' %}"><i class="bi bi-droplet"></i> <span>Blood Bank</span></a>
+    {% endif %}
+
+    {% if request.user.is_superuser or request.user.effective_role == 'accounts_dept' %}
+    <hr class="my-2">
+    <a class="nav-link {% if active == 'staff_attendance' %}active{% endif %}" href="{% url 'reports:staff_attendance_report' %}"><i class="bi bi-calendar-check"></i> <span>Attendance History</span></a>
+    <a class="nav-link {% if active == 'staff_leave' %}active{% endif %}" href="{% url 'reports:staff_leave_report' %}"><i class="bi bi-calendar2-week"></i> <span>Leave History</span></a>
+    <a class="nav-link {% if active == 'payroll' %}active{% endif %}" href="{% url 'reports:payroll_report' %}"><i class="bi bi-wallet2"></i> <span>Payroll History</span></a>
+    <a class="nav-link {% if active == 'staff_department' %}active{% endif %}" href="{% url 'reports:staff_department_report' %}"><i class="bi bi-people"></i> <span>Department Staff</span></a>
+    {% endif %}
+</nav>

@@ -1,0 +1,17 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Service Orders{% endblock %}
+{% block page_title %}Service Order Queue{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label small fw-bold">Search</label><input name="q" value="{{ q }}" class="form-control" placeholder="Patient ID, phone, service, bill"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Order Status</label><select name="status" class="form-select"><option value="">All</option>{% for v,l in statuses %}<option value="{{ v }}" {% if selected_status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Payment</label><select name="payment_status" class="form-select"><option value="">All</option>{% for v,l in payment_statuses %}<option value="{{ v }}" {% if selected_payment_status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Filter</button></div>
+    </div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive"><table class="table table-hover align-middle small"><thead><tr><th>Patient</th><th>Service</th><th>Type</th><th>Status</th><th>Payment</th><th>Bill</th><th></th></tr></thead><tbody>{% for order in page_obj %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }} · {{ order.patient.phone_number }}</small></td><td>{{ order.service_name }}<br><small>NPR {{ order.total_amount }}</small></td><td>{{ order.get_service_type_display }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td>{% if order.bill %}<a href="{% url 'billing:receipt' order.bill.pk %}">{{ order.bill.bill_number }}</a>{% else %}-{% endif %}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted">No service orders found.</td></tr>{% endfor %}</tbody></table></div>
+    {% if page_obj.has_other_pages %}<nav><ul class="pagination pagination-sm"><li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ selected_status }}&payment_status={{ selected_payment_status }}">Previous</a></li><li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li><li class="page-item {% if not page_obj.has_next %}disabled{% endif %}"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ selected_status }}&payment_status={{ selected_payment_status }}">Next</a></li></ul></nav>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Create Referral - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Create Patient Referral{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Doctor Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link active" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> <span>Create Referral</span></a>
+    <a class="nav-link" href="{% url 'referrals:department_queue' %}"><i class="bi bi-inboxes"></i> <span>Referral Queue</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:900px;">
+    <p class="text-muted">Send a patient to Laboratory, Radiology, Pharmacy, Nursing, Admission, OT, Blood Bank, or another department. Doctors do not admit patients directly; use Admission Referral for Admission/Nursing staff review.</p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.errors %}<div class="alert alert-danger">Please correct the highlighted fields.</div>{% endif %}
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Patient *</label>{{ form.patient }}{% for e in form.patient.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-6"><label class="form-label">Referral Destination *</label>{{ form.referral_type }}{% for e in form.referral_type.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-6"><label class="form-label">Specific Department</label>{{ form.to_department }}</div>
+            <div class="col-md-6"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+            <div class="col-12"><label class="form-label">Reason for Referral *</label>{{ form.reason }}{% for e in form.reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+            {% if selected_type == 'laboratory' %}<div class="col-12"><label class="form-label">Laboratory Tests</label><div class="tuh-card p-3 shadow-none">{{ form.lab_tests }}</div></div>{% endif %}
+            {% if selected_type == 'radiology' %}<div class="col-12"><label class="form-label">Radiology Services</label><div class="tuh-card p-3 shadow-none">{{ form.radiology_tests }}</div></div>{% endif %}
+            {% if selected_type == 'operation_theatre' %}<div class="col-12"><label class="form-label">OT / Procedures</label><div class="tuh-card p-3 shadow-none">{{ form.operation_types }}</div></div>{% endif %}
+            {% if selected_type == 'blood_bank' %}<div class="col-md-3"><label class="form-label">Blood Group</label>{{ form.blood_group }}</div><div class="col-md-3"><label class="form-label">Component</label>{{ form.blood_component }}</div><div class="col-md-3"><label class="form-label">Units</label>{{ form.blood_units }}</div><div class="col-md-3"><label class="form-label">Urgency</label>{{ form.blood_urgency }}</div><div class="col-12"><label class="form-check-label">{{ form.crossmatch_required }} Crossmatch Required</label></div><div class="col-12"><label class="form-label">Additional Blood Bank Details</label>{{ form.requested_items }}</div>{% endif %}
+            {% if selected_type == 'admission' %}<div class="col-12"><label class="form-label">Admission Notes / Expected Ward</label>{{ form.requested_items }}</div>{% endif %}
+            {% if selected_type == 'nursing' %}<div class="col-12"><label class="form-label">Nursing Tasks</label><div class="tuh-card p-3 shadow-none">{{ form.nursing_tasks }}</div></div><div class="col-12"><label class="form-label">Additional Nursing Instructions</label>{{ form.requested_items }}</div>{% endif %}
+            {% if not selected_type or selected_type == 'general' or selected_type == 'pharmacy' %}<div class="col-12"><label class="form-label">Requested Items / Medicines / Services</label>{{ form.requested_items }}</div>{% endif %}
+            <div class="col-12"><label class="form-label">Clinical Notes</label>{{ form.clinical_notes }}</div>
+            <div class="col-12"><label class="form-label">Instructions</label>{{ form.instructions }}</div>
+            <div class="col-12"><label class="form-label">Supporting Attachment</label>{{ form.attachment }}<div class="form-text">PDF, scanned report, image, or other relevant file.</div></div>
+        </div>
+        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-send"></i> Send Referral</button></div>
+    </form>
+</div>
+{% endblock %}

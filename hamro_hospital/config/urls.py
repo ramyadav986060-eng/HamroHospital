@@ -1,0 +1,48 @@
+"""
+Root URL configuration for the Hamro Hospital Management System.
+"""
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from doctors import views as doctor_views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+
+    # Backward-compatible doctor workspace URLs. The management URLs remain the
+    # canonical named routes, but these prevent older dashboard links/bookmarks
+    # from producing 404s while keeping the public /doctors/ page unchanged.
+    path('doctors/dashboard/', doctor_views.doctor_dashboard, name='legacy_doctor_dashboard'),
+    path('doctors/opd-visits/', doctor_views.doctor_opd_visits, name='legacy_doctor_opd_visits'),
+    path('doctors/patients/search/', doctor_views.doctor_patient_search, name='legacy_doctor_patient_search'),
+    path('doctors/profile/', doctor_views.doctor_profile, name='legacy_doctor_profile'),
+    path('doctors/profile/password/', doctor_views.doctor_change_password, name='legacy_doctor_change_password'),
+
+    path('', include('website.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('manage/departments/', include('departments.urls')),
+    path('manage/doctors/', include('doctors.urls')),
+    path('patients/', include('patients.urls')),
+    path('appointments/', include('appointments.urls')),
+    path('consultations/', include('consultations.urls')),
+    path('laboratory/', include('laboratory.urls')),
+    path('radiology/', include('radiology.urls')),
+    path('admissions/', include('admissions.urls')),
+    path('billing/', include('billing.urls')),
+    path('pharmacy/', include('pharmacy.urls')),
+    path('insurance/', include('insurance.urls')),
+    path('reports/', include('reports.urls')),
+    path('portal/', include('patient_portal.urls')),
+    path('documents/', include('documents.urls')),
+    path('nursing/', include('nursing.urls')),
+    path('operation-theatre/', include('operation_theatre.urls')),
+    path('blood-bank/', include('blood_bank.urls')),
+    path('finance/', include('finance.urls')),
+    path('referrals/', include('referrals.urls')),
+    path('workflow/', include('workflow.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

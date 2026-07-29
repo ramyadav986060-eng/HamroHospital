@@ -1,0 +1,42 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<h6 class="fw-bold mb-3">Blood Requests</h6>
+<div class="table-responsive mb-4">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Group / Component</th><th>Units</th><th>Urgency</th><th>Requested By</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for r in blood_requests %}
+            <tr>
+                <td>{{ r.blood_group_needed }} - {{ r.get_component_display }}</td>
+                <td>{{ r.units_needed }}</td>
+                <td>{{ r.get_urgency_display }}</td>
+                <td>{{ r.doctor_display }}</td>
+                <td>{{ r.get_status_display }}</td>
+                <td>{{ r.requested_at|date:"M d, Y H:i" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No blood requests for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<h6 class="fw-bold mb-3">Blood Issued</h6>
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Bag #</th><th>Group / Component</th><th>Purpose</th><th>Issued By</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for i in blood_issues %}
+            <tr>
+                <td>{{ i.blood_unit.bag_number }}</td>
+                <td>{{ i.blood_unit.blood_group }} - {{ i.blood_unit.get_component_display }}</td>
+                <td>{{ i.purpose|default:"-" }}</td>
+                <td>{{ i.issued_by.get_full_name|default:i.issued_by.username }}</td>
+                <td>{{ i.issued_at|date:"M d, Y H:i" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No blood units issued for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

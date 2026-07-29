@@ -1,0 +1,44 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Finance - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Finance Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'finance:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'billing:refund_review_list' %}"><i class="bi bi-arrow-counterclockwise"></i> Refund Requests {% if pending_refunds_count %}<span class="badge bg-danger">{{ pending_refunds_count }}</span>{% endif %}</a>
+    <a class="nav-link" href="{% url 'billing:discount_review_list' %}"><i class="bi bi-percent"></i> Discount Requests {% if pending_discounts_count %}<span class="badge bg-warning text-dark">{{ pending_discounts_count }}</span>{% endif %}</a>
+    <a class="nav-link" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Revenue Reports</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4 report-toolbar">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3"><label class="form-label small fw-bold">Date Filter</label><select name="date_filter" class="form-select"><option value="last_24h" {% if date_filter == 'last_24h' %}selected{% endif %}>Last 24 Hours</option><option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option><option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option><option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option><option value="year" {% if date_filter == 'year' %}selected{% endif %}>This Year</option><option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option><option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Date Range</option></select></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">From</label><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">To</label><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div>
+        <div class="col-md-3"><button class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Apply</button></div>
+    </div>
+</form>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6"><div class="stat-card green click-amount-card" onclick="showFullValue('Filtered Revenue', 'NPR {{ filtered_total|floatformat:2 }}')"><i class="bi bi-cash-coin fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ filtered_total|short_amount }}</h2><small>Selected Range / Last 24h by default</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card blue click-amount-card" onclick="showFullValue('Today Revenue', 'NPR {{ todays_total|floatformat:2 }}')"><i class="bi bi-calendar-day fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Today</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card orange"><i class="bi bi-arrow-counterclockwise fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_refunds_count }}</h2><small>Pending Refunds</small></div></div>
+    <div class="col-md-3 col-sm-6"><div class="stat-card gray"><i class="bi bi-percent fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ pending_discounts_count }}</h2><small>Pending Discounts</small></div></div>
+</div>
+<div class="tuh-card p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0">Revenue by Bill Type</h5>
+        <a href="{% url 'reports:revenue_dashboard' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-bar-chart"></i> Full Revenue Report</a>
+    </div>
+    <div class="row g-3">
+        {% for bt, total in revenue_by_type.items %}
+        <div class="col-md-2 col-sm-4">
+            <div class="border rounded p-3 text-center click-amount-card" onclick="showFullValue('{{ bt|title }} Revenue', 'NPR {{ total|floatformat:2 }}')">
+                <div class="text-uppercase small text-muted">{{ bt }}</div>
+                <strong>NPR {{ total|short_amount }}</strong>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

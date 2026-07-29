@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Redirecting to eSewa{% endblock %}
+{% block content %}
+<section class="container py-5 text-center">
+    <div class="tuh-card p-5 mx-auto" style="max-width:500px;">
+        <i class="bi bi-credit-card fs-1 text-primary"></i>
+        <h4 class="fw-bold mt-3">Redirecting you to eSewa...</h4>
+        <p class="text-muted">Registration Fee: NPR {{ appointment.registration_fee }}</p>
+        <div class="spinner-border text-primary mt-2" role="status"></div>
+    </div>
+    <form id="esewa-form" method="POST" action="{{ form_url }}">
+        {% for name, value in fields.items %}
+            <input type="hidden" name="{{ name }}" value="{{ value }}">
+        {% endfor %}
+    </form>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>document.getElementById('esewa-form').submit();</script>
+{% endblock %}

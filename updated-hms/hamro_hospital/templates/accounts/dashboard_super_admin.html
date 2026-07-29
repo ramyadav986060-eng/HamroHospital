@@ -1,0 +1,89 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Super Admin Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Super Admin Dashboard{% endblock %}
+
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'pharmacy:medicine_list' %}"><i class="bi bi-capsule-pill"></i> Medicines</a>
+    <a class="nav-link" href="{% url 'website:service_list' %}"><i class="bi bi-list-ul"></i> Hospital Services</a>
+    <a class="nav-link" href="{% url 'admissions:ward_list' %}"><i class="bi bi-building"></i> Wards &amp; Beds</a>
+    <a class="nav-link" href="{% url 'insurance:company_list' %}"><i class="bi bi-shield-check"></i> Insurance Companies</a>
+    <a class="nav-link" href="{% url 'reports:revenue_dashboard' %}"><i class="bi bi-graph-up"></i> Reports</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link" href="{% url 'accounts:hospital_settings' %}"><i class="bi bi-hospital"></i> Hospital Settings</a>
+    <a class="nav-link" href="{% url 'accounts:system_readiness' %}"><i class="bi bi-check2-circle"></i> System Readiness</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+    <a class="nav-link" href="{% url 'accounts:backup_list' %}"><i class="bi bi-cloud-arrow-down"></i> Backups</a>
+    <a class="nav-link" href="{% url 'nursing:dashboard' %}"><i class="bi bi-heart-pulse"></i> Nursing</a>
+    <a class="nav-link" href="{% url 'operation_theatre:dashboard' %}"><i class="bi bi-scissors"></i> Operation Theatre</a>
+    <a class="nav-link" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-droplet"></i> Blood Bank</a>
+    <a class="nav-link" href="{% url 'finance:dashboard' %}"><i class="bi bi-cash-coin"></i> Finance</a>
+    <a class="nav-link" href="{% url 'medical_records:dashboard' %}"><i class="bi bi-folder2-open"></i> Medical Records</a>
+    <a class="nav-link" href="/admin/"><i class="bi bi-gear"></i> Django Admin</a>
+</nav>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card blue">
+            <i class="bi bi-diagram-3 fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ total_departments }}</h2>
+            <small>Departments</small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card green">
+            <i class="bi bi-person-badge fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ total_doctors }}</h2>
+            <small>Active Doctors</small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card orange">
+            <i class="bi bi-people fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ total_patients }}</h2>
+            <small>Total Patients</small>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card gray">
+            <i class="bi bi-calendar-check fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ total_visits_today }}</h2>
+            <small>Visits Today</small>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <a href="{% url 'accounts:notification_create' %}" class="btn btn-primary"><i class="bi bi-bell"></i> Send System Notification</a>
+</div>
+
+<div class="tuh-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-journal-text"></i> Recent Activity</h5>
+        <a href="{% url 'accounts:audit_log_list' %}" class="btn btn-sm btn-outline-primary">View Full Audit Trail</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Description</th></tr></thead>
+            <tbody>
+            {% for log in recent_audit_logs %}
+                <tr>
+                    <td class="small text-muted">{{ log.created_at|date:"M d, H:i" }}</td>
+                    <td>{{ log.user|default:"System" }}</td>
+                    <td><span class="badge badge-success-soft">{{ log.get_action_display }}</span></td>
+                    <td class="small">{{ log.description }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No activity recorded yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

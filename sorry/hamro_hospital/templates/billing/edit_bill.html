@@ -1,0 +1,80 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Edit Bill - {{ bill.bill_number }}{% endblock %}
+{% block page_title %}Edit Bill: {{ bill.bill_number }} - {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4">
+    <div class="row g-3 align-items-center">
+        <div class="col-auto">
+            {% if patient.qr_code %}
+                <img src="{{ patient.qr_code.url }}" alt="QR Code" style="width:90px;height:90px;">
+            {% endif %}
+        </div>
+        <div class="col">
+            <h6 class="fw-bold mb-1">{{ patient.full_name }} <span class="text-muted">({{ patient.patient_code }})</span></h6>
+            <div class="text-muted small">{{ patient.get_gender_display }} &middot; Age {{ patient.age }} &middot; {{ patient.phone_number }} &middot; {{ patient.district.name }}</div>
+            <div class="mt-2">
+                <span class="badge bg-warning text-dark">Editing Bill: {{ bill.bill_number }}</span>
+                <span class="badge bg-secondary">Originally created: {{ bill.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Select Services</h6>
+        <input type="text" id="service-search" class="form-control mb-3"
+               placeholder="Type to search services, e.g. &quot;X&quot; for X-Ray, &quot;U&quot; for Ultrasound, &quot;B&quot; for Blood Test..."
+               autocomplete="off">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="services-table">
+                <thead><tr><th></th><th>Service</th><th>Price (NPR)</th><th>Quantity</th></tr></thead>
+                <tbody>
+                {% for service in services %}
+                    <tr class="service-row" data-service-name="{{ service.name|lower }}" data-service-code="{{ service.service_code|lower }}">
+                        <td>
+                            <input type="checkbox" name="service_id" value="{{ service.id }}" class="form-check-input"
+                                   {% if service.is_selected %}checked{% endif %}>
+                        </td>
+                        <td>{{ service.name }} <small class="text-muted">({{ service.service_code }})</small></td>
+                        <td>{{ service.price }}</td>
+                        <td>
+                            <input type="number" name="quantity_{{ service.id }}" 
+                                   value="{{ service.quantity }}" 
+                                   min="1" class="form-control form-control-sm" style="width:80px;">
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted">No services configured. Ask Super Admin to add services in Django Admin.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p id="no-service-match" class="text-muted text-center" style="display:none;">No matching services.</p>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-warning btn-lg"><i class="bi bi-pencil-square"></i> Save Changes &amp; Recalculate</button>
+    <a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchBox = document.getElementById('service-search');
+    const rows = document.querySelectorAll('#services-table .service-row');
+    const noMatch = document.getElementById('no-service-match');
+    if (!searchBox) return;
+    searchBox.addEventListener('input', function () {
+        const q = searchBox.value.trim().toLowerCase();
+        let visibleCount = 0;
+        rows.forEach(function (row) {
+            const matches = !q || row.dataset.serviceName.includes(q) || row.dataset.serviceCode.includes(q);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount += 1;
+        });
+        if (noMatch) noMatch.style.display = visibleCount === 0 ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

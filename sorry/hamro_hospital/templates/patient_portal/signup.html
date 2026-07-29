@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Patient Portal Signup - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="auth-card p-4 p-md-5 text-center">
+                <div class="auth-logo-badge"><img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}"></div>
+                <h3 class="fw-bold mb-1">{{ HOSPITAL_NAME }}</h3>
+                <p class="text-muted mb-1"><i class="bi bi-person-plus"></i> Create Patient Portal Account</p>
+                <p class="text-muted small mb-4">
+                    Already a patient at {{ HOSPITAL_NAME }}? Set up online access using the
+                    Hospital ID and phone number on your patient card.
+                </p>
+                <form method="post" novalidate class="text-start">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                    <div class="mb-3">
+                        <label class="form-label">Hospital / Patient ID</label>
+                        {{ form.hospital_id }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number or Email (as on your patient record)</label>
+                        {{ form.phone_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Choose a Password</label>
+                        {{ form.password }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        {{ form.password_confirm }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                </form>
+                <div class="text-center my-3"><span class="text-muted small">or</span></div>
+                <button type="button" class="btn btn-outline-danger w-100" disabled title="Configure Google OAuth client credentials to enable this.">
+                    <i class="bi bi-google"></i> Continue with Google
+                </button>
+                <p class="text-muted small mt-2 mb-0">Google sign-in UI is ready; connect OAuth credentials before production use.</p>
+                <p class="text-center small mt-3 mb-0">Already have an account? <a href="{% url 'patient_portal:login' %}">Log in</a></p>
+                <p class="text-center small mt-2 mb-0">Never visited {{ HOSPITAL_NAME }} before? <a href="{% url 'patient_portal:register_start' %}">Register as a new patient</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

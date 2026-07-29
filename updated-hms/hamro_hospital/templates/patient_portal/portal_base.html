@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block navbar %}{% endblock %}
+{% block back_button %}{% endblock %}
+{% block messages %}{% endblock %}
+{% block body_attrs %} class="app-body"{% endblock %}
+{% block content %}
+<div class="app-shell">
+    <aside class="app-sidebar" id="appSidebar">
+        <div class="app-sidebar-brand">
+            <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+            <div class="brand-text">
+                <strong>{{ HOSPITAL_NAME }}</strong>
+                <span>Patient Portal</span>
+            </div>
+            <button type="button" class="app-sidebar-toggle" aria-label="Collapse sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
+        <div class="app-sidebar-nav">
+            {% block portal_sidebar %}
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{% url 'patient_portal:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>My Dashboard</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_patient_card' %}"><i class="bi bi-person"></i> <span>Profile</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:profile_update' %}"><i class="bi bi-pencil-square"></i> <span>Update Profile</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:change_password' %}"><i class="bi bi-key"></i> <span>Change Password</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:book_visit' %}"><i class="bi bi-calendar-plus"></i> <span>Book Visit</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_timeline' %}"><i class="bi bi-list-check"></i> <span>My Timeline</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_visits' %}"><i class="bi bi-clipboard2-pulse"></i> <span>My Visits</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_prescriptions' %}"><i class="bi bi-capsule"></i> <span>Prescriptions</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_lab_reports' %}"><i class="bi bi-flask"></i> <span>Lab Reports</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_radiology_reports' %}"><i class="bi bi-camera"></i> <span>Radiology Reports</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_documents' %}"><i class="bi bi-folder2-open"></i> <span>My Documents</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_admissions' %}"><i class="bi bi-hospital"></i> <span>Admissions</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_bills' %}"><i class="bi bi-receipt"></i> <span>Bills</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_pharmacy_sales' %}"><i class="bi bi-capsule-pill"></i> <span>Pharmacy Purchases</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_insurance_claims' %}"><i class="bi bi-shield-check"></i> <span>Insurance Claims</span></a>
+                <a class="nav-link" href="{% url 'patient_portal:my_patient_card' %}"><i class="bi bi-person-vcard"></i> <span>My Patient Card</span></a>
+            </nav>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+                document.querySelectorAll('.app-sidebar-nav a.nav-link[href]').forEach(function (link) {
+                    try {
+                        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '') || '/';
+                        if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
+                            link.classList.add('active', 'fw-bold', 'text-primary');
+                        }
+                    } catch (e) {}
+                });
+            });
+            </script>
+            {% endblock %}
+        </div>
+        <div class="app-sidebar-foot">
+            <div class="tip-box"><i class="bi bi-heart-pulse"></i> Your health record, always with you.</div>
+        </div>
+    </aside>
+    <div class="app-sidebar-overlay"></div>
+
+    <div class="app-main">
+        <header class="app-topbar">
+            <button type="button" class="app-icon-btn app-mobile-toggle" aria-label="Open menu">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="app-topbar-title">
+                <h1>{% block portal_page_title %}My Account{% endblock %}</h1>
+                <small>{{ portal_patient.patient.full_name }} &middot; {{ portal_patient.patient.patient_code }}</small>
+            </div>
+            <div class="app-topbar-actions">
+                <a href="{% url 'website:home' %}" class="app-icon-btn d-none d-md-flex" title="View public site">
+                    <i class="bi bi-globe2"></i>
+                </a>
+                <button type="button" class="app-icon-btn theme-toggle-btn" aria-label="Toggle dark mode">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="app-user-chip dropdown-toggle border-0" type="button" id="patientUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="app-user-avatar">{{ portal_patient.patient.full_name|slice:":1"|upper }}</span>
+                        <span class="d-none d-md-block text-start">
+                            <span class="name d-block">{{ portal_patient.patient.full_name }}</span>
+                            <span class="role">Patient</span>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="patientUserDropdown">
+                        <li><a class="dropdown-item" href="{% url 'patient_portal:dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>My Dashboard</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'patient_portal:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% block portal_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}

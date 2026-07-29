@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Diseases We Treat - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">Diseases We Treat</h1>
+    <div class="row g-4">
+        {% for disease in diseases %}
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'website:disease_detail' disease.slug %}" class="text-decoration-none">
+                <div class="tuh-card p-4 h-100">
+                    <h5 class="text-dark"><i class="{{ disease.icon_class|default:'bi bi-clipboard-pulse' }} text-primary"></i> {{ disease.name }}</h5>
+                    <p class="text-muted small">{{ disease.summary }}</p>
+                    {% if disease.department %}<span class="badge badge-success-soft">{{ disease.department.name }}</span>{% endif %}
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No articles published yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

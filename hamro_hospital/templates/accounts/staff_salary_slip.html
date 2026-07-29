@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Salary Slip - {{ payment.staff.staff_id }}{% endblock %}
+{% block navbar %}{% endblock %}{% block footer %}{% endblock %}{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+<div class="tuh-print-wrapper" id="tuhDoc">
+    <div class="tuh-print-header"><div class="brand"><img src="{{ HOSPITAL_LOGO_URL }}"><div><h1>{{ HOSPITAL_NAME }}</h1><h2>Salary Slip</h2><div class="location">{{ HOSPITAL_ADDRESS }}</div></div></div><div class="doc-meta"><div class="doc-no-label">Staff ID</div><div class="doc-no">{{ payment.staff.staff_id }}</div>{% if payment.staff.staff_barcode %}<img class="barcode" src="{{ payment.staff.staff_barcode.url }}">{% endif %}</div></div>
+    <div class="tuh-print-banner"><i class="bi bi-cash-stack"></i> SALARY SLIP <span class="status-pill paid">{{ payment.get_status_display }}</span></div>
+    <div class="tuh-meta-card"><div class="row-item"><div class="row-label">Staff Name</div><div class="row-val"><strong>{{ payment.staff.get_full_name|default:payment.staff.username }}</strong></div></div><div class="row-item"><div class="row-label">Department</div><div class="row-val">{{ payment.staff.department.name|default:'-' }}</div></div><div class="row-item"><div class="row-label">Designation</div><div class="row-val">{{ payment.staff.designation|default:'-' }}</div></div><div class="row-item"><div class="row-label">Pay Period</div><div class="row-val">{{ payment.year }}-{{ payment.month }}</div></div><div class="row-item"><div class="row-label">Payment Date</div><div class="row-val">{{ payment.paid_at|date:'Y-m-d H:i'|default:'Pending' }}</div></div></div>
+    <div class="tuh-section-title">Attendance Summary</div><table class="tuh-print-table"><tbody><tr><td>Working Days</td><td>{{ payment.working_days }}</td></tr><tr><td>Present Days</td><td>{{ payment.present_days }}</td></tr><tr><td>Half Days</td><td>{{ payment.half_days }}</td></tr><tr><td>Approved Leave</td><td>{{ payment.leave_days }}</td></tr><tr><td>Absent Days</td><td>{{ payment.absent_days }}</td></tr></tbody></table>
+    <div class="tuh-section-title">Salary Summary</div><table class="tuh-print-table"><tbody><tr><td>Gross/Base Salary</td><td>NPR {{ payment.base_amount }}</td></tr><tr><td>Bonus</td><td>NPR {{ payment.bonus_amount }}</td></tr><tr><td>Overtime</td><td>NPR {{ payment.overtime_amount }}</td></tr><tr><td>Deductions</td><td>NPR {{ payment.deductions }}</td></tr></tbody><tfoot><tr><td>NET SALARY</td><td>NPR {{ payment.net_amount }}</td></tr></tfoot></table>
+    <div class="tuh-print-footer"><div class="tuh-footer-cols"><div class="footer-col"><i class="bi bi-person-circle"></i><div><div class="f-title">Printed By</div><div>{{ request.user.get_full_name|default:request.user.username }}</div></div></div><div class="footer-col"><i class="bi bi-printer"></i><div><div class="f-title">Printed On</div><div>{% now "Y-m-d H:i" %}</div></div></div></div><div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div></div>
+</div>
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=payment.staff.staff_id|add:'-salary-slip' hide_jpg=True %}
+{% endblock %}

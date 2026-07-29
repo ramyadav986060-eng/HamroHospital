@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}EHS Service - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-1">EHS Service</h1>
+    <p class="text-center text-muted mb-4">Paid consultations by doctors outside regular OPD duty hours.</p>
+    <div class="row g-4">
+        {% for dept in departments %}<div class="col-md-3 col-sm-6"><a href="{% url 'website:extension_department' dept.slug %}" class="text-decoration-none"><div class="tuh-card p-4 h-100 text-center"><div class="tuh-icon-circle mx-auto mb-3"><i class="{{ dept.icon_class|default:'bi bi-hospital' }}"></i></div><h6 class="text-dark">{{ dept.name }}</h6></div></a></div>{% empty %}<p class="text-center text-muted">EHS departments will appear after Finance/Admin enables extension doctors.</p>{% endfor %}
+    </div>
+</section>
+{% endblock %}

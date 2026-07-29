@@ -1,0 +1,11 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Submit Claim - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Submit Insurance Claim - {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+<form method="post" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button type="submit" class="btn btn-primary">Submit Claim</button>
+    <a href="{% url 'insurance:patient_claims' patient.pk %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

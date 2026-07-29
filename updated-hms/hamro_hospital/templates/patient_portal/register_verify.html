@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Verify Phone - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="auth-card p-4 p-md-5 text-center">
+                <div class="auth-logo-badge"><img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}"></div>
+                <h3 class="fw-bold mb-1">{{ HOSPITAL_NAME }}</h3>
+                <p class="text-muted mb-1"><i class="bi bi-shield-check"></i> Verify Your Phone Number</p>
+                <p class="text-muted small mb-4">Step 2 of 3 &middot; Enter the 6-digit code sent to {{ phone_number }}</p>
+                <form method="post" novalidate class="text-start">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                    <div class="mb-4">
+                        <label class="form-label">OTP Code</label>
+                        {{ form.otp_code }}
+                        {% if form.otp_code.errors %}<div class="form-error">{{ form.otp_code.errors|join:", " }}</div>{% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Verify <i class="bi bi-arrow-right"></i></button>
+                </form>
+                <p class="text-center small mt-3 mb-0">
+                    Didn't get a code? <a href="{% url 'patient_portal:register_start' %}"><i class="bi bi-arrow-left"></i> Back and try again</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

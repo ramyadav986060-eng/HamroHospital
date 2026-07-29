@@ -1,0 +1,6 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Generate Salary{% endblock %}
+{% block page_title %}Generate Monthly Salary{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:500px;"><form method="post">{% csrf_token %}<div class="mb-3"><label class="form-label">Year</label><input name="year" value="{{ year }}" class="form-control"></div><div class="mb-3"><label class="form-label">Month</label><input name="month" value="{{ month }}" min="1" max="12" class="form-control"></div><button class="btn btn-primary">Generate Salary</button></form></div>
+{% endblock %}

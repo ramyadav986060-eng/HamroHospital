@@ -1,0 +1,69 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Nursing Notes - {{ admission.patient.full_name }}{% endblock %}
+{% block page_title %}{{ admission.patient.full_name }} - {{ admission.ward.name }}{% if admission.bed %} (Bed {{ admission.bed.bed_number }}){% endif %}{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'nursing:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="tuh-card p-4">
+            <h5 class="mb-3">Add Note / Vitals</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+                <div class="mb-3">
+                    <label class="form-label">Upload PDF / Scanned Document</label>
+                    <input type="file" name="attachment_files" class="form-control" multiple>
+                    <small class="text-muted">Optional - attaches to this note and to the patient's permanent Medical Record.</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Note</button>
+            </form>
+        </div>
+        {% if uploaded_docs %}
+        <div class="tuh-card p-4 mt-4">
+            <h6 class="fw-bold mb-3">Uploaded Nursing Documents</h6>
+            <ul class="list-unstyled mb-0 small">
+            {% for doc in uploaded_docs %}
+                <li class="mb-1"><a href="{% url 'documents:document_view' doc.pk %}" target="_blank">{{ doc.title }}</a> <span class="text-muted">({{ doc.uploaded_at|date:"M d, Y H:i" }})</span></li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-lg-7">
+        <div class="tuh-card p-4">
+            <h5 class="mb-3">Nursing History</h5>
+            {% for note in notes %}
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ note.get_note_type_display }}</strong>
+                        <small class="text-muted">{{ note.recorded_at|date:"M d, Y H:i" }} - {{ note.recorded_by.get_full_name|default:note.recorded_by.username }}</small>
+                    </div>
+                    {% if note.content %}<div>{{ note.content }}</div>{% endif %}
+                    {% if note.blood_pressure or note.pulse_bpm or note.temperature_c or note.spo2_percent %}
+                        <small class="text-muted">
+                            {% if note.temperature_c %}Temp: {{ note.temperature_c }}&deg;C &nbsp;{% endif %}
+                            {% if note.pulse_bpm %}Pulse: {{ note.pulse_bpm }} bpm &nbsp;{% endif %}
+                            {% if note.blood_pressure %}BP: {{ note.blood_pressure }} &nbsp;{% endif %}
+                            {% if note.respiratory_rate %}RR: {{ note.respiratory_rate }} &nbsp;{% endif %}
+                            {% if note.spo2_percent %}SpO2: {{ note.spo2_percent }}% {% endif %}
+                        </small>
+                    {% endif %}
+                    {% if note.medication_given %}<div><small class="text-muted">Medication: {{ note.medication_given }}</small></div>{% endif %}
+                </div>
+            {% empty %}
+                <p class="text-muted">No nursing entries yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

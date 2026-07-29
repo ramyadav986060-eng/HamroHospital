@@ -1,0 +1,33 @@
+<form method="get" class="tuh-card p-3 mb-4 report-toolbar">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-bold">Search / Filter</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search patient, ID, number, staff, department...">
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-bold">Date Filter</label>
+            <select name="date_filter" class="form-select">
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                <option value="week" {% if date_filter == 'week' or date_filter == 'weekly' %}selected{% endif %}>This Week</option>
+                <option value="month" {% if date_filter == 'month' or date_filter == 'monthly' %}selected{% endif %}>This Month</option>
+                <option value="year" {% if date_filter == 'year' or date_filter == 'yearly' %}selected{% endif %}>This Year</option>
+                <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Date Range</option>
+                <option value="all" {% if date_filter == 'all' or date_filter == 'all_time' %}selected{% endif %}>All Time</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-bold">From</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-bold">To</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+        </div>
+        <div class="col-lg-3 col-md-12 d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary flex-fill"><i class="bi bi-funnel"></i> Apply</button>
+            <a class="btn btn-outline-secondary" href="javascript:window.print()"><i class="bi bi-printer"></i> Print</a>
+            <a class="btn btn-outline-success" href="?q={{ q|urlencode }}&date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=excel"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+            <a class="btn btn-outline-danger" href="?q={{ q|urlencode }}&date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        </div>
+    </div>
+</form>

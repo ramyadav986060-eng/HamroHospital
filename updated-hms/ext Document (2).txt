@@ -1,0 +1,109 @@
+[28Jul2026 091125] GET  HTTP1.1 200 31038
+[28Jul2026 091125] GET staticcssstyle.css HTTP1.1 200 23357
+[28Jul2026 091125] GET staticimageshospital_logo.png HTTP1.1 200 300886
+[28Jul2026 091125] GET staticjstheme.js HTTP1.1 200 3128
+[28Jul2026 091125] GET staticjsmain.js HTTP1.1 200 6711
+[28Jul2026 091127] GET staticimagesfavicon.ico HTTP1.1 200 108503
+[28Jul2026 091130] GET  HTTP1.1 200 31038
+[28Jul2026 091131] GET staticcssstyle.css HTTP1.1 200 23357
+[28Jul2026 091131] GET staticimageshospital_logo.png HTTP1.1 200 300886
+[28Jul2026 091131] GET staticjstheme.js HTTP1.1 200 3128
+[28Jul2026 091131] GET staticjsmain.js HTTP1.1 200 6711
+[28Jul2026 091132] GET staticimagesfavicon.ico HTTP1.1 200 108503
+[28Jul2026 091149] GET departments HTTP1.1 200 29580
+[28Jul2026 091152] GET departments HTTP1.1 200 29580
+[28Jul2026 091154] GET departmentscardiology HTTP1.1 200 20333
+[28Jul2026 091204] GET departmentsdermatology HTTP1.1 200 20319
+[28Jul2026 091229] GET medical-services HTTP1.1 200 63523
+[28Jul2026 091237] GET  HTTP1.1 200 31038
+[28Jul2026 091238] GET portallogin HTTP1.1 200 17738
+[28Jul2026 091243] GET  HTTP1.1 200 31038
+[28Jul2026 091248] GET appointmentsbook HTTP1.1 200 32731
+[28Jul2026 091301] GET portalsignup HTTP1.1 200 18194
+[28Jul2026 091304] GET portalsignup HTTP1.1 200 18194
+[28Jul2026 091320] GET doctors5 HTTP1.1 200 19099
+[28Jul2026 091333] GET accountslogin HTTP1.1 200 17309
+[28Jul2026 091343] POST accountslogin HTTP1.1 200 17343
+[28Jul2026 091348] POST accountslogin HTTP1.1 302 0
+[28Jul2026 091348] GET accountsredirect HTTP1.1 302 0
+Internal Server Error accountsdashboardsuper-admin
+Traceback (most recent call last)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangocorehandlersexception.py, line 55, in inner
+    response = get_response(request)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangocorehandlersbase.py, line 197, in _get_response
+    response = wrapped_callback(request, callback_args, callback_kwargs)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangocontribauthdecorators.py, line 23, in _wrapper_view
+    return view_func(request, args, kwargs)
+  File CUsersAcerMusichamro_hospitalaccountsdecorators.py, line 27, in _wrapped
+    return view_func(request, args, kwargs)
+  File CUsersAcerMusichamro_hospitalaccountsviews.py, line 55, in dashboard_super_admin
+    return render(request, 'accountsdashboard_super_admin.html', context)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangoshortcuts.py, line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplateloader.py, line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebackendsdjango.py, line 61, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 1000, in render
+    return SafeString(.join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 961, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplateloader_tags.py, line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 1000, in render
+    return SafeString(.join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 961, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplateloader_tags.py, line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 1000, in render
+    return SafeString(.join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 961, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplateloader_tags.py, line 65, in render
+    result = block.nodelist.render(context)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 1000, in render
+    return SafeString(.join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 961, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatedefaulttags.py, line 326, in render
+    return nodelist.render(context)
+           ~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 1000, in render
+    return SafeString(.join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatebase.py, line 961, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangotemplatedefaulttags.py, line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangourlsbase.py, line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File CUsersAcerMusichamro_hospitalvenvLibsite-packagesdjangourlsresolvers.py, line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch Reverse for 'backups_view' not found. 'backups_view' is not a valid view function or pattern name.

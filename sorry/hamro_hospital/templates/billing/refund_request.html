@@ -1,0 +1,18 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Request Refund - {{ bill.bill_number }}{% endblock %}
+{% block page_title %}Request Refund - {{ bill.bill_number }}{% endblock %}
+{% block dashboard_content %}
+<p>Patient: {{ bill.patient.full_name }} &middot; Bill Total: NPR {{ bill.total_amount }}</p>
+<form method="post" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-danger">Submit Refund Request</button>
+    <a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

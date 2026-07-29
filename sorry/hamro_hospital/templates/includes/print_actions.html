@@ -1,0 +1,42 @@
+{% load static %}
+{% comment %}
+  Reusable print/download action bar.
+  Usage:
+    include 'includes/print_actions.html' with target_id='tuhDoc' file_name='OPD-Ticket-REC-0001' back_url=None
+
+  Required context:
+    target_id  - the DOM id of the printable wrapper element to capture
+    file_name  - base filename (without extension) for PDF/JPG downloads
+  Optional:
+    back_url   - if provided, renders a normal link instead of window.history.back()
+    extra_link - {url, label, icon} dict rendered as an extra outline button (e.g. "View Patient Profile")
+{% endcomment %}
+<script src="{% static 'js/print_tools.js' %}"></script>
+<div class="tuh-print-actions no-print mb-5">
+    {% if back_url %}
+        <a href="{{ back_url }}" class="btn btn-outline-secondary btn-lg"><i class="bi bi-arrow-left"></i> Back</a>
+    {% else %}
+        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="if(document.referrer && document.referrer.indexOf(window.location.host) !== -1){window.history.back();}else{window.location.href='{{ user_dashboard_url|default:'/' }}';}"><i class="bi bi-arrow-left"></i> Back</button>
+    {% endif %}
+
+    <button type="button" class="btn btn-primary btn-lg" onclick="window.print();"><i class="bi bi-printer"></i> Print</button>
+
+    <button type="button" class="btn btn-outline-primary btn-lg"
+            onclick="tuhDownloadPDF('{{ target_id }}', '{{ file_name }}', this);">
+        <i class="bi bi-file-earmark-pdf"></i> Download PDF
+    </button>
+
+    {% if not hide_jpg %}
+    <button type="button" class="btn btn-outline-primary btn-lg"
+            onclick="tuhDownloadJPG('{{ target_id }}', '{{ file_name }}', this);">
+        <i class="bi bi-file-earmark-image"></i> Download JPG
+    </button>
+    {% endif %}
+
+    {% if extra_link %}
+        <a href="{{ extra_link.url }}" class="btn btn-outline-primary btn-lg"><i class="bi {{ extra_link.icon }}"></i> {{ extra_link.label }}</a>
+    {% endif %}
+</div>
+<style>
+    .tuh-print-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+</style>

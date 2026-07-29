@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admission Deposit Receipt{% endblock %}
+{% block navbar %}{% endblock %}{% block footer %}{% endblock %}{% block back_button %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
+{% block content %}
+<div class="tuh-print-wrapper" id="tuhDoc">
+    {% include 'includes/standard_receipt.html' with receipt=receipt %}
+    <div class="tuh-print-footer"><div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div></div>
+</div>
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=receipt.number %}
+{% endblock %}

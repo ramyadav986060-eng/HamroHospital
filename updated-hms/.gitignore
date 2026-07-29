@@ -1,0 +1,20 @@
+# Python/Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+
+# Local environment
+.venv/
+venv/
+.env
+.env.*
+
+# Runtime/user uploads
+hamro_hospital/media/
+media/
+
+# Tool/cache output
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,22 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctor Patient Search{% endblock %}
+{% block page_title %}Search Patients{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
+    <a class="nav-link active" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> <span>Send Referral</span></a>
+    <a class="nav-link" href="{% url 'doctors:profile' %}"><i class="bi bi-person-gear"></i> <span>Profile Settings</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<form method="get" class="tuh-card p-3 mb-4 d-flex gap-2" id="doctorPatientSearchForm">
+    <input type="text" id="id_q" name="q" value="{{ q }}" class="form-control form-control-lg" placeholder="Search by Patient ID, QR, barcode, phone, or name">
+    <button class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Search</button>
+</form>
+<script>document.addEventListener('tuh:patient-scanned', function(){ document.getElementById('doctorPatientSearchForm').submit(); });</script>
+<div class="tuh-card p-4">
+    <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Patient ID</th><th>Name</th><th>Phone</th><th>Gender</th><th>Age</th><th class="text-end">Actions</th></tr></thead><tbody>{% for patient in patients %}<tr><td>{{ patient.patient_code }}</td><td>{{ patient.full_name }}</td><td>{{ patient.phone_number }}</td><td>{{ patient.get_gender_display }}</td><td>{{ patient.age }}</td><td class="text-end"><a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-sm btn-outline-primary">Medical Record</a> <a href="{% url 'referrals:referral_create_for_patient' patient.pk %}" class="btn btn-sm btn-primary">Create Referral</a></td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">Search for a patient to view records or create referrals.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctor Profile{% endblock %}
+{% block page_title %}Doctor Staff Profile{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link active" href="{% url 'doctors:profile' %}"><i class="bi bi-person-gear"></i> <span>Profile Settings</span></a>
+    <a class="nav-link" href="{% url 'accounts:staff_attendance' %}"><i class="bi bi-calendar-check"></i> <span>Attendance</span></a>
+    <a class="nav-link" href="{% url 'accounts:staff_leave_list' %}"><i class="bi bi-calendar-x"></i> <span>Leave History</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="tuh-card p-4 text-center h-100">
+            <span class="badge bg-success mb-2">HOSPITAL STAFF - DOCTOR</span>
+            {% if doctor_profile.photo %}<img src="{{ doctor_profile.photo.url }}" class="rounded-circle mb-3" style="width:116px;height:116px;object-fit:cover;">{% elif staff_user.staff_photo %}<img src="{{ staff_user.staff_photo.url }}" class="rounded-circle mb-3" style="width:116px;height:116px;object-fit:cover;">{% else %}<div class="rounded-circle bg-light border mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:116px;height:116px;"><i class="bi bi-person fs-1 text-muted"></i></div>{% endif %}
+            <h4 class="fw-bold mb-1">Dr. {{ doctor_profile.full_name }}</h4>
+            <p class="text-muted mb-2">{{ doctor_profile.qualification }} · {{ doctor_profile.specialization }}</p>
+            <div class="small text-muted">Staff ID: <strong>{{ staff_user.staff_id }}</strong></div>
+            <div class="small text-muted">Doctor ID: <strong>DR-{{ doctor_profile.pk|stringformat:'06d' }}</strong></div>
+            <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                {% if staff_user.staff_qr_code %}<img src="{{ staff_user.staff_qr_code.url }}" alt="Staff QR" style="width:88px;height:88px;object-fit:contain;">{% endif %}
+                {% if staff_user.staff_barcode %}<img src="{{ staff_user.staff_barcode.url }}" alt="Staff Barcode" style="max-width:180px;max-height:70px;object-fit:contain;">{% endif %}
+            </div>
+            <div class="progress mt-3" style="height:10px;"><div class="progress-bar bg-success" style="width: {{ profile_completion }}%;"></div></div>
+            <div class="small text-muted mt-1">Profile Completion: {{ profile_completion }}%</div>
+            <div class="d-grid gap-2 mt-3">
+                <a href="{% url 'accounts:staff_card' staff_user.pk %}" class="btn btn-outline-primary" target="_blank"><i class="bi bi-person-vcard"></i> View Staff ID Card</a>
+                <a href="{% url 'doctors:change_password' %}" class="btn btn-outline-secondary"><i class="bi bi-key"></i> Change Password</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="tuh-card p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-person-lines-fill"></i> Staff / Doctor Information</h5>
+            <div class="row g-2 small mb-3">
+                <div class="col-md-4"><strong>Department</strong><br>{{ doctor_profile.department.name }}</div>
+                <div class="col-md-4"><strong>Designation</strong><br>{{ staff_user.designation|default:'Doctor' }}</div>
+                <div class="col-md-4"><strong>Contact</strong><br>{{ doctor_profile.contact_number|default:staff_user.phone_number|default:'-' }}</div>
+                <div class="col-md-4"><strong>Employment Status</strong><br>{% if staff_user.is_active_staff %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</div>
+                <div class="col-md-4"><strong>Staff Role</strong><br>{{ staff_user.staff_role_label }}</div>
+                <div class="col-md-4"><strong>Public Profile</strong><br>{% if doctor_profile.is_active %}<span class="badge bg-success">Visible</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</div>
+            </div>
+            <h6 class="fw-bold mb-2">Personal Notifications</h6>
+            <ul class="list-group list-group-flush small mb-3">{% for n in notifications %}<li class="list-group-item px-0"><strong>{{ n.title }}</strong><br><span class="text-muted">{{ n.message }}</span></li>{% empty %}<li class="list-group-item px-0 text-muted">No unread notifications.</li>{% endfor %}</ul>
+            <h6 class="fw-bold mb-2">Salary Information (Read-only)</h6>
+            {% if salary_profile %}<div class="small text-muted mb-2">Salary Type: {{ salary_profile.get_salary_type_display }} · Bank: {{ salary_profile.bank_name|default:'-' }} · Account: {{ salary_profile.bank_account_number|default:'-' }}</div>{% endif %}
+            <div class="table-responsive"><table class="table table-sm small"><thead><tr><th>Period</th><th>Status</th><th>Net</th></tr></thead><tbody>{% for p in salary_payments %}<tr><td>{{ p.year }}-{{ p.month }}</td><td>{{ p.get_status_display }}</td><td>NPR {{ p.net_amount }}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted text-center">No salary records visible yet.</td></tr>{% endfor %}</tbody></table></div>
+        </div>
+    </div>
+</div>
+<div class="tuh-card p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square"></i> Complete / Update Permitted Doctor Profile Information</h5>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+            {% for field in form %}
+            <div class="col-md-6 {% if field.name == 'biography' or field.name == 'short_introduction' %}col-md-12{% endif %}">
+                <label class="form-label">{% if field.name == 'biography' %}Professional Note / Profile Description{% elif field.name == 'short_introduction' %}Short Public Introduction{% else %}{{ field.label }}{% endif %}</label>
+                {{ field }}
+                {% if field.name == 'biography' %}<div class="form-text">This public note may include qualifications, expertise, clinic information and languages spoken. It appears on the website doctor profile according to hospital policy.</div>{% endif %}
+                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4"><button class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Profile</button> <a href="{% url 'accounts:staff_attendance' %}" class="btn btn-outline-primary">Attendance</a> <a href="{% url 'accounts:staff_leave_request' %}" class="btn btn-outline-secondary">Request Leave</a> <a href="{% url 'patient_portal:online_registration' %}" class="btn btn-outline-success">Book OPD/EHS as Patient</a></div>
+    </form>
+</div>
+{% endblock %}

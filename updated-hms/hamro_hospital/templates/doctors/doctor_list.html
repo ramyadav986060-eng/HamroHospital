@@ -1,0 +1,42 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctors - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Doctors{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link active" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'doctors:doctor_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Doctor</a>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Name</th><th>Department</th><th>Specialization</th><th>Fee</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for doctor in doctors %}
+                <tr>
+                    <td>Dr. {{ doctor.full_name }}</td>
+                    <td>{{ doctor.department.name }}</td>
+                    <td>{{ doctor.specialization }}</td>
+                    <td>NPR {{ doctor.consultation_fee }}</td>
+                    <td>{% if doctor.is_active %}<span class="badge badge-success-soft">Active</span>{% else %}<span class="badge badge-danger-soft">Inactive</span>{% endif %}</td>
+                    <td>
+                        <a href="{% url 'doctors:doctor_edit' doctor.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a href="{% url 'doctors:doctor_delete' doctor.pk %}" class="btn btn-sm btn-outline-danger">Deactivate</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No doctors yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

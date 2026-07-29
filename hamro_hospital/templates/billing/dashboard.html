@@ -1,0 +1,61 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Cash Counter - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Cash Counter{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'billing:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'billing:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient / Bill</a>
+    <a class="nav-link" href="{% url 'billing:todays_collections' %}"><i class="bi bi-cash-stack"></i> Today's Collections</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="alert alert-info small">Dashboard collections show the latest 24 hours by default. Records are never deleted; open any card or use filters to retrieve historical transactions.</div>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=today"><div class="stat-card blue click-amount-card"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2><small>Bills Today / Last 24h</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=today"><div class="stat-card green click-amount-card"><i class="bi bi-cash-stack fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ todays_total|short_amount }}</h2><small>Total Collected Bill</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=cash"><div class="stat-card blue click-amount-card"><i class="bi bi-cash fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.cash|short_amount }}</h2><small>Cash Payment</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=esewa"><div class="stat-card orange click-amount-card"><i class="bi bi-credit-card fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.esewa|short_amount }}</h2><small>eSewa Payment</small></div></a></div>
+</div>
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=insurance"><div class="stat-card gray click-amount-card"><i class="bi bi-shield-check fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ totals_by_method.insurance|short_amount }}</h2><small>Insurance Payment</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=month"><div class="stat-card blue click-amount-card"><i class="bi bi-calendar-month fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ monthly_count }}</h2><small>Bills This Month</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=month"><div class="stat-card green click-amount-card"><i class="bi bi-graph-up fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ monthly_total|short_amount }}</h2><small>Revenue This Month</small></div></a></div>
+    <div class="col-md-3 col-sm-6"><a class="text-decoration-none" href="{% url 'billing:dashboard_details' %}?metric=year"><div class="stat-card green click-amount-card"><i class="bi bi-bar-chart fs-3"></i><h2 class="fw-bold mt-2 mb-0">NPR {{ yearly_total|short_amount }}</h2><small>Revenue This Year</small></div></a></div>
+</div>
+
+<div class="tuh-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-credit-card-2-front"></i> Payment Section</h5>
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-3"><label class="form-label small fw-bold">Search Patient</label><input name="payment_q" value="{{ payment_q }}" class="form-control" placeholder="Patient name"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Patient ID</label><input class="form-control" value="{{ payment_id }}" placeholder="Scan / type ID" name="payment_id"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Phone Number</label><input class="form-control" name="payment_phone" value="{{ payment_phone }}" placeholder="Optional phone"></div>
+        <div class="col-md-3"><button class="btn btn-primary w-100"><i class="bi bi-search"></i> Search Button</button></div>
+    </form>
+    {% if payment_q %}
+        <div class="table-responsive mb-3"><table class="table table-hover small align-middle"><thead><tr><th>Patient</th><th>ID</th><th>Phone</th><th>Actions</th></tr></thead><tbody>{% for p in payment_patients %}<tr><td>{{ p.full_name }}</td><td>{{ p.patient_code }}</td><td>{{ p.phone_number }}</td><td><a href="{% url 'billing:create_bill' p.pk %}" class="btn btn-sm btn-outline-primary">General Payment</a></td></tr>{% empty %}<tr><td colspan="4" class="text-muted text-center">No patient found.</td></tr>{% endfor %}</tbody></table></div>
+        {% if payment_patients %}<h6 class="fw-bold mb-2">Department Payment Categories</h6>{% endif %}
+        <div class="row g-2">
+        {% for p in payment_patients|slice:":1" %}
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=lab">Laboratory</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=radiology">Radiology</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=blood_bank">Blood Bank</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=radiology">ECG / Ultrasound</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=radiology">CT / MRI</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=surgery">Operation Theater</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=pharmacy">Pharmacy</a></div>
+            <div class="col-md-2 col-6"><a class="btn btn-outline-primary w-100 h-100" href="{% url 'billing:create_bill' p.pk %}?bill_type=other">Other Services</a></div>
+        {% endfor %}
+        </div>
+    {% else %}<p class="text-muted small mb-0">Search a patient first to enable payment category buttons.</p>{% endif %}
+</div>
+
+<div class="tuh-card p-4 mb-4 border border-warning">
+    <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="fw-bold mb-0 text-warning"><i class="bi bi-hourglass-split"></i> Pending Payments</h6><a href="{% url 'billing:patient_lookup' %}" class="btn btn-sm btn-outline-primary">Scan / Search</a></div>
+    <form method="post" action="{% url 'billing:pay_selected_bills' %}">{% csrf_token %}<div class="table-responsive"><table class="table table-hover align-middle small mb-0"><thead><tr><th></th><th>Bill #</th><th>Patient</th><th>Services</th><th>Amount</th><th></th></tr></thead><tbody>{% for bill in pending_bills %}<tr><td><input type="checkbox" name="bill_ids" value="{{ bill.id }}" class="form-check-input"></td><td>{{ bill.bill_number }}</td><td>{{ bill.patient.full_name }}<br><small>{{ bill.patient.patient_code }} · {{ bill.patient.phone_number }}</small></td><td>{% for item in bill.items.all %}<div>{{ item.service_name }}</div>{% endfor %}</td><td>NPR {{ bill.total_amount }}</td><td><a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">No pending payments.</td></tr>{% endfor %}</tbody></table></div><div class="d-flex gap-2 mt-3 justify-content-end"><select name="payment_method" class="form-select" style="max-width:180px;"><option value="cash">Cash</option><option value="esewa">eSewa</option><option value="card">Card</option></select><button class="btn btn-success"><i class="bi bi-check-circle"></i> Pay Selected</button></div></form>
+</div>
+<div class="tuh-card p-4">
+    <h6 class="fw-bold mb-3">Today's Collection / Latest 24 Hours</h6>
+    <div class="table-responsive"><table class="table table-hover align-middle small"><thead><tr><th>Bill #</th><th>Patient</th><th>Method</th><th>Amount</th><th></th></tr></thead><tbody>{% for bill in todays_bills %}<tr><td>{{ bill.bill_number }}</td><td>{{ bill.patient.full_name }}</td><td>{{ bill.get_payment_method_display }}</td><td>NPR {{ bill.total_amount }}</td><td><a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-sm btn-outline-primary">Invoice</a> <a href="{% url 'billing:invoice_pdf' bill.pk %}" class="btn btn-sm btn-outline-danger">PDF</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No bills in latest 24 hours.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

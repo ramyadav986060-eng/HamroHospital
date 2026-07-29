@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Services - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="tuh-hero text-center">
+    <div class="container">
+        <h1 class="mb-2">Services</h1>
+        <p class="mb-0" style="opacity:.85;">Quality care made simple: explore trusted hospital services designed for timely diagnosis, treatment, and recovery.</p>
+    </div>
+</section>
+<section class="container py-5">
+    <div class="accordion" id="servicesAccordion">
+        {% for service in services %}
+        <div class="accordion-item tuh-card mb-3 border-0">
+            <h2 class="accordion-header" id="heading{{ service.id }}">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ service.id }}" aria-expanded="false" aria-controls="collapse{{ service.id }}">
+                    <i class="{{ service.icon_class|default:'bi bi-heart-pulse' }} me-2 text-primary"></i> {{ service.name }}
+                </button>
+            </h2>
+            <div id="collapse{{ service.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ service.id }}" data-bs-parent="#servicesAccordion">
+                <div class="accordion-body">
+                    <p class="text-muted">{{ service.description }}</p>
+                    {% if service.department %}
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold small text-uppercase text-muted mb-2">Department</h6>
+                                <a href="{% url 'website:department_detail' service.department.slug %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-hospital"></i> {{ service.department.name }}
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold small text-uppercase text-muted mb-2">Available Doctors</h6>
+                                {% for doc in service.department.doctors.all|slice:":4" %}
+                                    {% if doc.is_active %}
+                                        <a href="{% url 'website:doctor_detail' doc.pk %}" class="badge badge-blue-soft text-decoration-none me-1 mb-1">Dr. {{ doc.full_name }}</a>
+                                    {% endif %}
+                                {% empty %}
+                                    <span class="text-muted small">No doctors listed yet.</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <a href="{% url 'website:department_detail' service.department.slug %}" class="btn btn-sm btn-link ps-0 mt-2">
+                            View full {{ service.department.name }} schedule <i class="bi bi-arrow-right"></i>
+                        </a>
+                    {% else %}
+                        <p class="text-muted small mb-0"><i class="bi bi-info-circle"></i> Contact the hospital for department and scheduling details for this service.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">Services will be listed here shortly.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

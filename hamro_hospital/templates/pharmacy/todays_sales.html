@@ -1,0 +1,37 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{% if is_today %}Today's Sales{% else %}Sales - {{ selected_date }}{% endif %}{% endblock %}
+{% block page_title %}{% if is_today %}Today's Sales{% else %}Sales History{% endif %}{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'pharmacy:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'pharmacy:patient_lookup' %}"><i class="bi bi-search"></i> Dispense Medicine</a>
+    <a class="nav-link active" href="{% url 'pharmacy:todays_sales' %}"><i class="bi bi-cash-stack"></i> Today's Sales</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-3 d-flex gap-2 align-items-center">
+    <label class="small fw-bold mb-0">View history for:</label>
+    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control form-control-sm" style="max-width:180px;">
+    <button class="btn btn-sm btn-primary">Go</button>
+    {% if not is_today %}<a href="{% url 'pharmacy:todays_sales' %}" class="btn btn-sm btn-outline-secondary">Back to Today</a>{% endif %}
+</form>
+<div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="stat-card blue"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.cash }}</h4><small>Cash</small></div></div>
+    <div class="col-md-4"><div class="stat-card green"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.esewa }}</h4><small>eSewa</small></div></div>
+    <div class="col-md-4"><div class="stat-card orange"><h4 class="fw-bold mb-0">NPR {{ totals_by_method.insurance }}</h4><small>Insurance</small></div></div>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Sale #</th><th>Patient</th><th>Method</th><th>Amount</th></tr></thead>
+            <tbody>
+            {% for sale in sales %}
+                <tr><td>{{ sale.sale_number }}</td><td>{% if sale.patient %}{{ sale.patient.full_name }}{% else %}Walk-in{% endif %}</td><td>{{ sale.get_payment_method_display }}</td><td>NPR {{ sale.total_amount }}</td></tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No sales yet today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
