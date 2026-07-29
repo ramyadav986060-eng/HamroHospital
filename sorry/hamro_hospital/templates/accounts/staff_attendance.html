@@ -24,9 +24,16 @@
 
 <div class="tuh-card p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h5 class="fw-bold mb-0"><i class="bi bi-calendar3"></i> Nepali Calendar Attendance View</h5>
-        <div class="small text-muted">{{ calendar_year }} / {{ calendar_month }} &middot; BS-ready display, records stored safely in database dates</div>
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar3"></i> Nepali Calendar (Bikram Sambat) Attendance View</h5>
+        <div class="small text-muted">{{ calendar_year }} / {{ calendar_month }} &middot; BS-ready display, Saturdays/weekly holidays highlighted</div>
     </div>
+    {% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
+    <div class="row g-2 mb-3 align-items-end">
+        <div class="col-md-5"><label class="form-label small fw-bold">Select Staff for Calendar Update</label><select id="calendarStaffId" class="form-select">{% for s in staff_users %}<option value="{{ s.id }}">{{ s.staff_id }} - {{ s.get_full_name|default:s.username }}{% if s.department %} ({{ s.department.name }}){% endif %}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Click Status</label><select id="calendarStatus" class="form-select"><option value="present">Present / Full Day</option><option value="leave">Approved Leave</option><option value="partial">Half Day</option><option value="absent">Absent</option></select></div>
+        <div class="col-md-4 small text-muted">Click any date below after choosing status. The date color updates immediately.</div>
+    </div>
+    {% endif %}
     <div class="d-flex gap-2 flex-wrap small mb-3">
         <span class="badge bg-success">Green = Present / Full Day</span>
         <span class="badge bg-success-subtle text-success border">Green = Approved Leave</span>
@@ -37,7 +44,7 @@
     <div class="row g-2">
         {% for d in calendar_days %}
         <div class="col-6 col-sm-4 col-md-2 col-lg-1">
-            <div class="border rounded p-2 h-100 {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'rejected_leave' %}bg-danger text-white{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" style="min-height:76px;">
+            <div class="border rounded p-2 h-100 attendance-day {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'rejected_leave' %}bg-danger text-white{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" data-date="{{ d.date|date:'Y-m-d' }}" style="min-height:76px; cursor:pointer;">
                 <div class="fw-bold">{{ d.day }}</div>
                 <div style="font-size:.7rem;">{{ d.date|date:'D' }}</div>
                 {% if d.records %}
@@ -69,4 +76,36 @@
         </table>
     </div>
 </div>
+{% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusSelect = document.getElementById('calendarStatus');
+    const staffSelect = document.getElementById('calendarStaffId');
+    const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+    const classMap = {
+        present: 'bg-success text-white',
+        leave: 'bg-success-subtle text-success',
+        partial: 'bg-warning-subtle text-dark',
+        absent: 'bg-danger text-white'
+    };
+    document.querySelectorAll('.attendance-day').forEach(function (day) {
+        day.addEventListener('click', function () {
+            if (!statusSelect || !staffSelect) return;
+            const form = new FormData();
+            form.append('date', day.dataset.date);
+            form.append('status', statusSelect.value);
+            form.append('staff_id', staffSelect.value);
+            fetch('{% url "accounts:staff_attendance_update_status" %}', {method: 'POST', headers: {'X-CSRFToken': token}, body: form})
+                .then(r => r.json()).then(data => {
+                    if (!data.ok) { alert(data.error || 'Update failed'); return; }
+                    day.className = 'border rounded p-2 h-100 attendance-day ' + (classMap[statusSelect.value] || 'bg-light');
+                    let label = day.querySelector('.calendar-status-label');
+                    if (!label) { label = document.createElement('div'); label.className = 'calendar-status-label'; label.style.fontSize = '.68rem'; day.appendChild(label); }
+                    label.textContent = data.label;
+                }).catch(() => alert('Attendance update failed'));
+        });
+    });
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -356,3 +356,25 @@ hamro_hospital/.env
 ```
 
 and update values for PostgreSQL, Redis, Celery, eSewa, email, SMS, and fingerprint device integration when deploying live.
+
+## Part 1 Improvements Added
+
+- Manage Doctor page now includes a doctor/name search box and department filter.
+- Finance dashboard defaults detailed records to the last 24 hours; older records are preserved and appear when date filters are applied.
+- Demo data creation now adds 10 realistic staff users across multiple hospital departments.
+- Demo data creation now generates biometric attendance records for those staff.
+- Staff card has been aligned with the patient-card print style and includes a Back button.
+- Staff profile includes a Back button.
+- Attendance calendar is interactive for Main Super Admin: choose a staff member, select Present / Approved Leave / Half Day / Absent, then click a date and the color updates immediately.
+- Attendance colors: Green Present, Light Green Approved Leave, Yellow Half Day, Red Absent or Rejected Leave.
+- Saturdays/configured weekly holidays are highlighted as holidays.
+- Patient Medical Reports now show real document PDF records with View and Download actions.
+- Demo data creation now adds 10 sample patient medical report PDFs that open in browser preview and download correctly.
+- Patient registration includes the existing Choose Photo / Upload Photo field.
+- Registration dashboard now has a Recent Patients section showing only patients registered in the last 24 hours; older patients are not deleted and remain searchable by filters.
+
+Run the following to create/update demo users, dummy staff, attendance and sample reports:
+
+```bash
+python manage.py create_demo_accounts
+```

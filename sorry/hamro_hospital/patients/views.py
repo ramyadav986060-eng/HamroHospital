@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 
 from accounts.decorators import registration_counter_required, patient_record_viewer_required, any_staff_required
 from accounts.models import AuditLog, Role
@@ -67,6 +68,7 @@ def dashboard(request):
         'todays_visits': todays_visits,
         'todays_count': todays_visits.count(),
         'todays_new_patients': Patient.objects.filter(created_at__date=today).count(),
+        'recent_patients': Patient.objects.filter(created_at__gte=timezone.now() - datetime.timedelta(hours=24)).select_related('district').order_by('-created_at')[:10],
         'todays_bookings': todays_bookings,
         'online_bookings': online_bookings,
         'pending_visits': pending_visits,
@@ -361,7 +363,7 @@ def patient_section(request, pk, section):
         'radiology': ('Radiology Reports', 'radiology/_patient_radiology_reports.html'),
         'blood_bank': ('Blood Bank History', 'blood_bank/_patient_blood_history.html'),
         'pharmacy': ('Pharmacy', 'pharmacy/_patient_sales.html'),
-        'medical_reports': ('Medical Reports', 'consultations/_patient_consultations.html'),
+        'medical_reports': ('Medical Reports', 'documents/_patient_documents.html'),
         'appointments': ('Appointments', 'appointments/_patient_appointments.html'),
         'visits': ('OPD Visit History', 'patients/_patient_visits.html'),
         'referrals': ('Previous Referrals', 'referrals/_patient_referrals.html'),
@@ -455,8 +457,11 @@ def patient_section(request, pk, section):
         from pharmacy.models import PharmacySale
         context['records'] = PharmacySale.objects.filter(patient=patient)
     elif section == 'medical_reports':
-        from consultations.models import Consultation
-        context['records'] = Consultation.objects.filter(visit__patient=patient).select_related('visit', 'doctor')
+        from documents.models import DocumentCategory
+        context['records'] = patient.documents.filter(
+            is_active=True,
+            category__in=[DocumentCategory.LAB_REPORT, DocumentCategory.RADIOLOGY_REPORT, DocumentCategory.DOCTOR_NOTE, DocumentCategory.DISCHARGE_SUMMARY, DocumentCategory.OPERATION_RECORD, DocumentCategory.OTHER],
+        ).select_related('uploaded_by')
     elif section == 'appointments':
         from appointments.models import Appointment
         context['records'] = Appointment.objects.filter(linked_patient=patient)

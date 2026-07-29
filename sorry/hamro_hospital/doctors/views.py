@@ -45,7 +45,17 @@ def doctor_list(request):
     doctors = Doctor.objects.select_related('department', 'user_account').all()
     if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
         doctors = doctors.filter(department=request.user.department)
-    return render(request, 'doctors/doctor_list.html', {'doctors': doctors})
+    q = request.GET.get('q', '').strip()
+    department_id = request.GET.get('department', '').strip()
+    if q:
+        doctors = doctors.filter(Q(full_name__icontains=q) | Q(specialization__icontains=q) | Q(qualification__icontains=q) | Q(department__name__icontains=q))
+    if department_id:
+        doctors = doctors.filter(department_id=department_id)
+    from departments.models import Department
+    departments = Department.objects.filter(is_active=True).order_by('name')
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        departments = departments.filter(pk=request.user.department_id)
+    return render(request, 'doctors/doctor_list.html', {'doctors': doctors, 'departments': departments, 'q': q, 'selected_department': department_id})
 
 
 @super_admin_required

@@ -424,6 +424,7 @@ def staff_attendance(request):
     return render(request, 'accounts/staff_attendance.html', {
         'page_obj': page_obj, 'filters': request.GET, 'departments': Department.objects.filter(is_active=True),
         'calendar_days': calendar_days, 'calendar_year': cal_year, 'calendar_month': cal_month,
+        'staff_users': User.objects.filter(is_active_staff=True).select_related('department').order_by('first_name', 'username'),
     })
 
 
@@ -653,6 +654,25 @@ def staff_salary_export(request):
     if request.GET.get('export') == 'pdf':
         return export_rows_to_pdf(headers, rows, 'salary_report.pdf', 'Salary / Payroll Report')
     return export_rows_to_excel(headers, rows, 'salary_report.xlsx', 'Salary')
+
+
+@super_admin_required
+def staff_attendance_update_status(request):
+    from django.http import JsonResponse
+    from accounts.models import StaffAttendance
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'POST required'}, status=405)
+    staff_id = request.POST.get('staff_id') or request.user.id
+    date = request.POST.get('date')
+    status = request.POST.get('status')
+    if status not in dict(StaffAttendance.Status.choices):
+        return JsonResponse({'ok': False, 'error': 'Invalid status'}, status=400)
+    staff = get_object_or_404(User, pk=staff_id, is_active_staff=True)
+    att, _ = StaffAttendance.objects.update_or_create(
+        staff=staff, date=date,
+        defaults={'status': status, 'source': 'super_admin_calendar', 'remarks': 'Updated from attendance calendar'},
+    )
+    return JsonResponse({'ok': True, 'status': att.status, 'label': att.get_status_display()})
 
 
 @super_admin_required

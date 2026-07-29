@@ -1,6 +1,7 @@
 import datetime
 
 from django.db.models import Sum
+from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -10,11 +11,17 @@ from billing.models import Bill, RefundRequest, DiscountRequest
 
 def _apply_date_filter(qs, request, field='created_at__date'):
     today = datetime.date.today()
-    date_filter = request.GET.get('date_filter', 'month')
+    # Default dashboard view: only last 24 hours. Older records are not deleted;
+    # they reappear whenever a date filter/search is applied.
+    if not request.GET:
+        return qs.filter(created_at__gte=timezone.now() - datetime.timedelta(hours=24)), 'last_24h', '', ''
+    date_filter = request.GET.get('date_filter', 'today')
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
 
-    if date_filter == 'today':
+    if date_filter == 'last_24h':
+        qs = qs.filter(created_at__gte=timezone.now() - datetime.timedelta(hours=24))
+    elif date_filter == 'today':
         qs = qs.filter(**{field: today})
     elif date_filter == 'week':
         qs = qs.filter(**{f'{field}__gte': today - datetime.timedelta(days=today.weekday())})

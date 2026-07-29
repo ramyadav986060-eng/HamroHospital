@@ -4,10 +4,26 @@
 {% block navbar %}{% endblock %}{% block footer %}{% endblock %}{% block back_button %}{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/print_unified.css' %}">{% endblock %}
 {% block content %}
+<div class="container py-3 no-print"><button onclick="history.back()" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</button></div>
 <div class="tuh-print-wrapper" id="tuhDoc">
-    <div class="tuh-print-header"><div class="brand"><img src="{{ HOSPITAL_LOGO_URL }}"><div><h1>{{ HOSPITAL_NAME }}</h1><h2>STAFF IDENTIFICATION CARD</h2><div class="location">{{ HOSPITAL_ADDRESS }}</div></div></div><div class="doc-meta"><div class="doc-no-label">Staff ID</div><div class="doc-no">{{ staff.staff_id }}</div>{% if staff.staff_barcode %}<img class="barcode" src="{{ staff.staff_barcode.url }}">{% endif %}</div></div>
-    <div class="tuh-print-banner"><i class="bi bi-person-badge"></i> STAFF <span class="status-pill paid">{{ staff.get_role_display }}</span></div>
-    <div class="tuh-meta-card"><div class="row-item"><div class="row-label">Name</div><div class="row-val"><strong>{{ staff.get_full_name|default:staff.username }}</strong></div></div><div class="row-item"><div class="row-label">Department</div><div class="row-val">{{ staff.department.name|default:'-' }}</div></div><div class="row-item"><div class="row-label">Designation</div><div class="row-val">{{ staff.designation|default:'-' }}</div></div><div class="row-item"><div class="row-label">Phone</div><div class="row-val">{{ staff.phone_number|default:'-' }}</div></div></div>
+    <div class="tuh-print-header">
+        <div class="brand"><img src="{{ HOSPITAL_LOGO_URL }}"><div><h1>{{ HOSPITAL_NAME }}</h1><h2>STAFF IDENTIFICATION CARD</h2><div class="location">{{ HOSPITAL_ADDRESS }}</div></div></div>
+        <div class="doc-meta"><div class="doc-no-label">Staff ID</div><div class="doc-no">{{ staff.staff_id }}</div>{% if staff.staff_barcode %}<img class="barcode" src="{{ staff.staff_barcode.url }}">{% endif %}</div>
+    </div>
+    <div class="tuh-print-banner"><i class="bi bi-person-vcard"></i> STAFF CARD <span class="status-pill paid">ACTIVE</span></div>
+    <div class="tuh-meta-card">
+        <div class="row-item"><div class="row-label">Staff Name</div><div class="row-val"><strong>{{ staff.get_full_name|default:staff.username }}</strong></div></div>
+        <div class="row-item"><div class="row-label">Staff ID</div><div class="row-val">{{ staff.staff_id }}</div></div>
+        <div class="row-item"><div class="row-label">Role</div><div class="row-val">{{ staff.get_role_display }}</div></div>
+        <div class="row-item"><div class="row-label">Department</div><div class="row-val">{{ staff.department.name|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Designation</div><div class="row-val">{{ staff.designation|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Employment Type</div><div class="row-val">{{ staff.get_employment_type_display|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Phone</div><div class="row-val">{{ staff.phone_number|default:'-' }}</div></div>
+        <div class="row-item"><div class="row-label">Email</div><div class="row-val">{{ staff.email|default:'-' }}</div></div>
+    </div>
+    <div class="tuh-section-title">Identification</div>
+    <table class="tuh-print-table"><tbody><tr><td>Login ID</td><td>{{ staff.staff_id }}</td></tr><tr><td>Username</td><td>{{ staff.username }}</td></tr><tr><td>Department Head</td><td>{% if staff.is_department_head %}Yes{% else %}No{% endif %}</td></tr></tbody></table>
+    <div class="tuh-print-footer"><div class="tuh-footer-cols"><div class="footer-col"><i class="bi bi-person-circle"></i><div><div class="f-title">Printed By</div><div>{{ request.user.get_full_name|default:request.user.username }}</div></div></div><div class="footer-col"><i class="bi bi-printer"></i><div><div class="f-title">Printed On</div><div>{% now "Y-m-d H:i" %}</div></div></div></div><div class="tuh-print-slogan">CARE &bull; TEACH &bull; RESEARCH &bull; EXCEL</div></div>
 </div>
-{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=staff.staff_id|default:'staff-card' hide_jpg=True %}
+{% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=staff.staff_id|add:'-staff-card' hide_jpg=True %}
 {% endblock %}

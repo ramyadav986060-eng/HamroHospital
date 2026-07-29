@@ -18,6 +18,7 @@ urlpatterns = [
     path('staff/<int:pk>/card/', views.staff_card, name='staff_card'),
     path('staff/attendance/', views.staff_attendance, name='staff_attendance'),
     path('staff/attendance/punch/', views.staff_attendance_punch, name='staff_attendance_punch'),
+    path('staff/attendance/update-status/', views.staff_attendance_update_status, name='staff_attendance_update_status'),
     path('staff/attendance/device-punch/', views.staff_attendance_device_punch, name='staff_attendance_device_punch'),
     path('staff/leave/', views.staff_leave_list, name='staff_leave_list'),
     path('staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
