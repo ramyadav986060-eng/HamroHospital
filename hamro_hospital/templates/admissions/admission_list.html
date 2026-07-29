@@ -1,23 +1,7 @@
 {% extends 'dashboard_base.html' %}
 {% block title %}Admissions - {{ HOSPITAL_NAME }}
-<div class="tuh-card p-4 mt-4 border border-info">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
-        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
-    </div>
-    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
-</div>
-
 {% endblock %}
 {% block page_title %}In-Patient Admissions
-<div class="tuh-card p-4 mt-4 border border-info">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
-        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
-    </div>
-    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
-</div>
-
 {% endblock %}
 {% block sidebar %}
 <nav class="nav flex-column">
@@ -27,14 +11,6 @@
     <a class="nav-link" href="{% url 'workflow:service_order_queue' %}"><i class="bi bi-list-task"></i> Service Orders</a>
     <a class="nav-link" href="{% url 'workflow:department_revenue' %}"><i class="bi bi-graph-up"></i> Revenue</a>
 </nav>
-
-<div class="tuh-card p-4 mt-4 border border-info">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0 text-info"><i class="bi bi-list-task"></i> ServiceOrder Queue</h6>
-        <a href="{% url 'workflow:service_order_queue' %}" class="btn btn-sm btn-outline-primary">Open Full Queue</a>
-    </div>
-    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Patient</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead><tbody>{% for order in service_orders %}<tr><td>{{ order.patient.full_name }}<br><small>{{ order.patient.patient_code }}</small></td><td>{{ order.service_name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.get_payment_status_display }}</td><td><a href="{% url 'workflow:service_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No active service orders.</td></tr>{% endfor %}</tbody></table></div>
-</div>
 
 {% endblock %}
 {% block dashboard_content %}
@@ -162,6 +138,7 @@
         </table>
     </div>
 </div>
+
 
 <div class="tuh-card p-4 mt-4 border border-info">
     <div class="d-flex justify-content-between align-items-center mb-3">
