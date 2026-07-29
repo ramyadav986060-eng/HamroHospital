@@ -11,6 +11,34 @@ from patients.models import Patient, Visit
 from referrals.models import Referral
 
 
+def ensure_doctor_profile_for_user(user):
+    """Guarantee active Doctor-role users have a linked Doctor profile.
+
+    This prevents doctor dashboards/profile pages from showing a broken
+    "not linked" warning after staff account creation.
+    """
+    if getattr(user, 'role', '') != 'doctor' and not getattr(user, 'is_superuser', False):
+        return getattr(user, 'doctor_profile', None)
+    profile = getattr(user, 'doctor_profile', None)
+    if profile:
+        return profile
+    from departments.models import Department
+    dept = getattr(user, 'department', None) or Department.objects.filter(is_active=True).first()
+    if not dept:
+        return None
+    full_name = user.get_full_name() or user.username
+    return Doctor.objects.create(
+        user_account=user,
+        department=dept,
+        full_name=full_name,
+        qualification='Not specified',
+        specialization=getattr(user, 'designation', '') or 'General',
+        consultation_fee=0,
+        contact_number=getattr(user, 'phone_number', ''),
+        is_active=True,
+    )
+
+
 @super_admin_required
 def doctor_list(request):
     doctors = Doctor.objects.select_related('department', 'user_account').all()
@@ -71,7 +99,7 @@ def doctor_delete(request, pk):
 
 @doctor_required
 def doctor_dashboard(request):
-    doctor_profile = getattr(request.user, 'doctor_profile', None)
+    doctor_profile = ensure_doctor_profile_for_user(request.user)
     todays_visits = 0
     todays_queue = Visit.objects.none()
     recent_referrals = Referral.objects.none()
@@ -103,9 +131,9 @@ def doctor_patient_search(request):
 
 @doctor_required
 def doctor_profile(request):
-    doctor = getattr(request.user, 'doctor_profile', None)
+    doctor = ensure_doctor_profile_for_user(request.user)
     if not doctor:
-        messages.error(request, 'Your staff account is not linked to a Doctor profile yet.')
+        messages.error(request, 'Doctor profile setup is incomplete. Please contact Super Admin.')
         return redirect('doctors:dashboard')
     if request.method == 'POST':
         form = DoctorProfileForm(request.POST, request.FILES, instance=doctor)

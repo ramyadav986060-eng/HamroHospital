@@ -320,3 +320,10 @@ The project includes fallback/manual options so the workflows can be tested loca
 - Universal report date filters now include Yesterday, Last 7 Days and Last 30 Days in addition to Today, Week, Month, Year, All Time and Custom Range.
 - Patient Portal registration supports optional patient photo upload.
 - Extension Service fees remain Finance/Accounts-managed.
+
+## Doctor/Admin and Operation Theatre Final Corrections
+
+- Doctor admin add/edit was verified and adjusted so Extension Service fee/quota fields no longer block saving when left at defaults.
+- Doctor profile auto-linking safeguards remain active so Doctor-role users are linked to Doctor profiles automatically when possible.
+- Operation Theatre surgery list now supports patient barcode/Hospital ID/name/phone/surgery-number search, department filter and status filter.
+- Duplicate ServiceOrder queue blocks were removed from department dashboards; each dashboard has one queue block in the main content area.

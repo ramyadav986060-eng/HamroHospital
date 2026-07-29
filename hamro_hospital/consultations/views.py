@@ -10,7 +10,7 @@ from consultations.forms import ConsultationForm, PrescriptionItemFormSet, LabTe
 
 
 def _get_doctor_or_none(request):
-    return getattr(request.user, 'doctor_profile', None)
+    return ensure_doctor_profile_for_user(request.user)
 
 
 @doctor_required

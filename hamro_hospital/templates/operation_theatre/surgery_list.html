@@ -9,23 +9,28 @@
 </nav>
 {% endblock %}
 {% block dashboard_content %}
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <select name="status" class="form-select" onchange="this.form.submit()">
-            <option value="">All Statuses</option>
-            {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
-        </select>
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<form method="get" class="tuh-card p-3 mb-3" id="surgerySearchForm">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label small fw-bold">Search</label><input type="text" id="id_q" name="q" value="{{ q }}" class="form-control" placeholder="Patient barcode, Hospital ID, name, phone, surgery #"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Department</label><select name="department" class="form-select"><option value="">All Departments</option>{% for d in departments %}<option value="{{ d.id }}" {% if selected_department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Status</label><select name="status" class="form-select"><option value="">All Statuses</option>{% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Search</button></div>
     </div>
 </form>
+<script>
+document.addEventListener('tuh:patient-scanned', function () { document.getElementById('surgerySearchForm').submit(); });
+</script>
 <div class="tuh-card p-4">
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead><tr><th>Surgery #</th><th>Patient</th><th>Surgery</th><th>Surgeon</th><th>Scheduled</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Surgery #</th><th>Patient</th><th>Phone</th><th>Surgery</th><th>Surgeon</th><th>Scheduled</th><th>Status</th><th></th></tr></thead>
             <tbody>
             {% for s in surgeries %}
                 <tr>
                     <td>{{ s.surgery_number }}</td>
-                    <td>{{ s.patient.full_name }}</td>
+                    <td>{{ s.patient.full_name }}<br><small class="text-muted">{{ s.patient.patient_code }}</small></td>
+                    <td>{{ s.patient.phone_number }}</td>
                     <td>{{ s.surgery_name }}</td>
                     <td>Dr. {{ s.surgeon.full_name }}</td>
                     <td>{{ s.scheduled_datetime|date:"M d, Y H:i" }}</td>
@@ -33,7 +38,7 @@
                     <td><a href="{% url 'operation_theatre:surgery_detail' s.pk %}" class="btn btn-sm btn-primary">Open</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="7" class="text-center text-muted">No surgeries found.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">No surgeries found.</td></tr>
             {% endfor %}
             </tbody>
         </table>

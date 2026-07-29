@@ -50,12 +50,27 @@ def dashboard(request):
 
 @operation_theatre_required
 def surgery_list(request):
-    surgeries = Surgery.objects.select_related('patient', 'surgeon', 'ot_room').all()
+    surgeries = Surgery.objects.select_related('patient', 'surgeon', 'ot_room', 'patient__district')
     status = request.GET.get('status', '')
+    department = request.GET.get('department', '')
+    q = request.GET.get('q', '').strip()
     if status:
         surgeries = surgeries.filter(status=status)
+    if department:
+        surgeries = surgeries.filter(surgeon__department_id=department)
+    if q:
+        surgeries = surgeries.filter(
+            Q(surgery_number__icontains=q) |
+            Q(patient__patient_code__icontains=q) |
+            Q(patient__first_name__icontains=q) |
+            Q(patient__last_name__icontains=q) |
+            Q(patient__phone_number__icontains=q) |
+            Q(surgery_name__icontains=q)
+        )
+    from departments.models import Department
     return render(request, 'operation_theatre/surgery_list.html', {
         'surgeries': surgeries, 'statuses': Surgery.Status.choices, 'selected_status': status,
+        'departments': Department.objects.filter(is_active=True), 'selected_department': department, 'q': q,
     })
 
 
