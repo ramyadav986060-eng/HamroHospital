@@ -327,3 +327,9 @@ The project includes fallback/manual options so the workflows can be tested loca
 - Doctor profile auto-linking safeguards remain active so Doctor-role users are linked to Doctor profiles automatically when possible.
 - Operation Theatre surgery list now supports patient barcode/Hospital ID/name/phone/surgery-number search, department filter and status filter.
 - Duplicate ServiceOrder queue blocks were removed from department dashboards; each dashboard has one queue block in the main content area.
+
+## Attendance Calendar Final Update
+
+- Staff Attendance now includes a month-based Nepali Calendar style view while keeping database dates stable and exportable.
+- Calendar colors follow the requested rules: Present = green, Approved Leave = green with leave label, Weekend/Holiday = red/holiday style, Absent = red, Partial = warning.
+- Attendance filters continue to support Staff name/ID/barcode, department, date, month, year and custom date range.

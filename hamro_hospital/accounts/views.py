@@ -307,10 +307,39 @@ def staff_attendance(request):
     if q:
         records = records.filter(
             Q(staff__staff_id__icontains=q) | Q(staff__username__icontains=q) |
-            Q(staff__first_name__icontains=q) | Q(staff__last_name__icontains=q)
+            Q(staff__first_name__icontains=q) | Q(staff__last_name__icontains=q) |
+            Q(staff__phone_number__icontains=q)
         )
     if department_id:
         records = records.filter(staff__department_id=department_id)
+
+    # Build a compact Nepali-calendar-style month grid using the selected
+    # month/year. Dates remain stored as AD for database safety; the grid is
+    # display-only and ready to connect to a BS converter later.
+    today = datetime.date.today()
+    cal_year = int(year) if str(year).isdigit() else today.year
+    cal_month = int(month) if str(month).isdigit() else today.month
+    import calendar
+    month_start = datetime.date(cal_year, cal_month, 1)
+    _, month_days_count = calendar.monthrange(cal_year, cal_month)
+    month_end = datetime.date(cal_year, cal_month, month_days_count)
+    calendar_records = list(records.filter(date__range=[month_start, month_end]).select_related('staff'))
+    by_date = {}
+    for rec in calendar_records:
+        by_date.setdefault(rec.date, []).append(rec)
+    weekend_codes = [c.strip().lower() for c in HospitalSetting.get_solo().default_weekend_days.split(',') if c.strip()]
+    weekday_code = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+    calendar_days = []
+    for day in range(1, month_days_count + 1):
+        date_obj = datetime.date(cal_year, cal_month, day)
+        recs = by_date.get(date_obj, [])
+        counts = {'present': 0, 'leave': 0, 'absent': 0, 'partial': 0, 'holiday': 0}
+        for rec in recs:
+            counts[rec.status] = counts.get(rec.status, 0) + 1
+        is_weekend = weekday_code[date_obj.weekday()] in weekend_codes
+        display_status = 'holiday' if is_weekend and not recs else ('present' if counts.get('present') else 'leave' if counts.get('leave') else 'absent' if counts.get('absent') else 'partial' if counts.get('partial') else 'blank')
+        calendar_days.append({'date': date_obj, 'day': day, 'records': recs, 'counts': counts, 'is_weekend': is_weekend, 'display_status': display_status})
+
     if date_filter:
         records = records.filter(date=date_filter)
     if month and year:
@@ -329,7 +358,10 @@ def staff_attendance(request):
         return export_rows_to_excel(headers, rows, 'staff_attendance.xlsx', 'Attendance')
     page_obj = Paginator(records, 31).get_page(request.GET.get('page'))
     from departments.models import Department
-    return render(request, 'accounts/staff_attendance.html', {'page_obj': page_obj, 'filters': request.GET, 'departments': Department.objects.filter(is_active=True)})
+    return render(request, 'accounts/staff_attendance.html', {
+        'page_obj': page_obj, 'filters': request.GET, 'departments': Department.objects.filter(is_active=True),
+        'calendar_days': calendar_days, 'calendar_year': cal_year, 'calendar_month': cal_month,
+    })
 
 
 @login_required

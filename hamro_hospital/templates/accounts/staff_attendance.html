@@ -2,6 +2,67 @@
 {% block title %}Staff Attendance{% endblock %}
 {% block page_title %}Staff Attendance{% endblock %}
 {% block dashboard_content %}
-<div class="mb-3 text-end"><a href="{% url 'accounts:staff_attendance_punch' %}" class="btn btn-primary"><i class="bi bi-fingerprint"></i> Punch Attendance</a></div><form method="get" class="tuh-card p-3 mb-4"><div class="row g-2 align-items-end"><div class="col-md-3"><label class="form-label small">Staff Name / ID / Barcode</label><input name="q" value="{{ filters.q }}" class="form-control"></div><div class="col-md-3"><label class="form-label small">Department</label><select name="department" class="form-select"><option value="">All</option>{% for d in departments %}<option value="{{ d.id }}" {% if filters.department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div><div class="col-md-2"><label class="form-label small">Date</label><input type="date" name="date" value="{{ filters.date }}" class="form-control"></div><div class="col-md-2"><label class="form-label small">Month</label><input type="number" min="1" max="12" name="month" value="{{ filters.month }}" class="form-control"></div><div class="col-md-2"><label class="form-label small">Year</label><input type="number" name="year" value="{{ filters.year }}" class="form-control"></div><div class="col-md-2"><label class="form-label small">From</label><input type="date" name="start_date" value="{{ filters.start_date }}" class="form-control"></div><div class="col-md-2"><label class="form-label small">To</label><input type="date" name="end_date" value="{{ filters.end_date }}" class="form-control"></div><div class="col-md-2"><button class="btn btn-primary w-100">Filter</button><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ filters.month }}&year={{ filters.year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=excel" class="btn btn-outline-success w-100">Excel</a><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ filters.month }}&year={{ filters.year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=pdf" class="btn btn-outline-danger w-100">PDF</a></div></div></form>
-<div class="tuh-card p-4"><div class="table-responsive"><table class="table table-hover small"><thead><tr><th>Date</th><th>Staff</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th></tr></thead><tbody>{% for a in page_obj %}<tr><td>{{ a.date }}</td><td><span class="badge bg-success">STAFF</span> {{ a.staff.get_full_name|default:a.staff.username }}<br><small>{{ a.staff.staff_id }}</small></td><td>{{ a.check_in|date:'H:i'|default:'-' }}</td><td>{{ a.check_out|date:'H:i'|default:'-' }}</td><td>{{ a.total_working_hours }}</td><td><span class="badge {% if a.status == 'present' %}bg-success{% elif a.status == 'leave' %}bg-danger{% elif a.status == 'holiday' %}bg-secondary{% else %}bg-warning text-dark{% endif %}">{{ a.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">No attendance records found.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="mb-3 text-end">
+    <a href="{% url 'accounts:staff_attendance_punch' %}" class="btn btn-primary"><i class="bi bi-fingerprint"></i> Punch Attendance</a>
+</div>
+<form method="get" class="tuh-card p-3 mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label small">Staff Name / ID / Barcode</label><input name="q" value="{{ filters.q }}" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label small">Department</label><select name="department" class="form-select"><option value="">All</option>{% for d in departments %}<option value="{{ d.id }}" {% if filters.department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><label class="form-label small">Date</label><input type="date" name="date" value="{{ filters.date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">Month</label><input type="number" min="1" max="12" name="month" value="{{ calendar_month }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">Year</label><input type="number" name="year" value="{{ calendar_year }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">From</label><input type="date" name="start_date" value="{{ filters.start_date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small">To</label><input type="date" name="end_date" value="{{ filters.end_date }}" class="form-control"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Filter</button></div>
+        <div class="col-md-2"><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ calendar_month }}&year={{ calendar_year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=excel" class="btn btn-outline-success w-100">Excel</a></div>
+        <div class="col-md-2"><a href="?q={{ filters.q }}&department={{ filters.department }}&date={{ filters.date }}&month={{ calendar_month }}&year={{ calendar_year }}&start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&export=pdf" class="btn btn-outline-danger w-100">PDF</a></div>
+    </div>
+</form>
+
+<div class="tuh-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar3"></i> Nepali Calendar Attendance View</h5>
+        <div class="small text-muted">{{ calendar_year }} / {{ calendar_month }} &middot; BS-ready display, records stored safely in database dates</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap small mb-3">
+        <span class="badge bg-success">Present</span>
+        <span class="badge bg-success-subtle text-success border">Approved Leave</span>
+        <span class="badge bg-danger">Absent</span>
+        <span class="badge bg-danger-subtle text-danger border">Weekend/Holiday</span>
+        <span class="badge bg-warning text-dark">Partial</span>
+    </div>
+    <div class="row g-2">
+        {% for d in calendar_days %}
+        <div class="col-6 col-sm-4 col-md-2 col-lg-1">
+            <div class="border rounded p-2 h-100 {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" style="min-height:76px;">
+                <div class="fw-bold">{{ d.day }}</div>
+                <div style="font-size:.7rem;">{{ d.date|date:'D' }}</div>
+                {% if d.records %}
+                    <div style="font-size:.68rem;">P:{{ d.counts.present }} L:{{ d.counts.leave }} A:{{ d.counts.absent }}</div>
+                {% elif d.is_weekend %}
+                    <div style="font-size:.68rem;">Holiday</div>
+                {% else %}
+                    <div style="font-size:.68rem;">No record</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover small">
+            <thead><tr><th>Date</th><th>Staff</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for a in page_obj %}
+                <tr><td>{{ a.date }}</td><td><span class="badge bg-success">STAFF</span> {{ a.staff.get_full_name|default:a.staff.username }}<br><small>{{ a.staff.staff_id }}</small></td><td>{{ a.check_in|date:'H:i'|default:'-' }}</td><td>{{ a.check_out|date:'H:i'|default:'-' }}</td><td>{{ a.total_working_hours }}</td><td><span class="badge {% if a.status == 'present' %}bg-success{% elif a.status == 'leave' %}bg-success{% elif a.status == 'holiday' %}bg-danger text-white{% elif a.status == 'absent' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ a.get_status_display }}</span></td></tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No attendance records found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
