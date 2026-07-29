@@ -15,6 +15,7 @@ admissions_staff_required = role_required(Role.SUPER_ADMIN, Role.REGISTRATION_CO
 @admissions_staff_required
 def admission_list(request):
     import datetime
+    from django.utils import timezone
     from consultations.models import Consultation
     from billing.models import Bill
     from django.db.models import Exists, OuterRef, Sum
@@ -24,6 +25,8 @@ def admission_list(request):
     year_start = today.replace(month=1, day=1)
 
     admissions = Admission.objects.select_related('patient', 'ward', 'bed', 'department').all()
+    if not request.GET:
+        admissions = admissions.filter(admission_date__gte=timezone.now() - datetime.timedelta(hours=24))
     status = request.GET.get('status', '')
     if status:
         admissions = admissions.filter(status=status)
@@ -63,10 +66,12 @@ def admission_list(request):
     return render(request, 'admissions/admission_list.html', {
         'admissions': admissions, 'statuses': Admission.Status.choices, 'selected_status': status,
         'selected_date': selected_date,
-        'todays_count': Admission.objects.filter(admission_date__date=today).count(),
+        'todays_count': Admission.objects.filter(admission_date__gte=timezone.now() - datetime.timedelta(hours=24)).count(),
         'monthly_count': Admission.objects.filter(admission_date__date__gte=month_start).count(),
         'yearly_count': Admission.objects.filter(admission_date__date__gte=year_start).count(),
         'currently_admitted_count': currently_admitted.count(),
+        'bed_occupancy_count': Bed.objects.filter(is_occupied=True).count(),
+        'available_beds_count': Bed.objects.filter(is_occupied=False).count(),
         'pending_admissions_count': pending_admissions_count,
         'todays_revenue': todays_revenue,
         'monthly_revenue': monthly_revenue,
@@ -75,6 +80,71 @@ def admission_list(request):
         'admission_referrals': admission_referrals,
         'service_orders': service_orders,
         'discharge_queue': currently_admitted.order_by('admission_date')[:15],
+    })
+
+
+@admissions_staff_required
+def admission_dashboard_details(request):
+    import datetime
+    from django.db.models import Q, Sum
+    from django.utils import timezone
+    from billing.models import Bill
+    metric = request.GET.get('metric', 'activity')
+    admissions = Admission.objects.select_related('patient', 'ward', 'bed', 'department', 'admitting_doctor')
+    beds = Bed.objects.select_related('ward').all()
+    title = 'Admission Details'
+    if metric == 'current':
+        admissions = admissions.filter(status=Admission.Status.ADMITTED)
+        title = 'Current Admitted Patients'
+    elif metric == 'occupied_beds':
+        beds = beds.filter(is_occupied=True)
+        title = 'Bed Occupancy'
+    elif metric == 'available_beds':
+        beds = beds.filter(is_occupied=False)
+        title = 'Available Beds'
+    elif metric == 'revenue':
+        admissions = admissions.none()
+        title = 'Admission Revenue Records'
+    else:
+        admissions = admissions.filter(admission_date__gte=timezone.now() - datetime.timedelta(hours=24))
+        title = 'Admission Activity - Latest 24 Hours'
+
+    q = (request.GET.get('q') or '').strip()
+    date_filter = request.GET.get('date_filter', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    today = timezone.localdate()
+    if q:
+        admissions = admissions.filter(Q(patient__patient_code__icontains=q) | Q(patient__first_name__icontains=q) | Q(patient__last_name__icontains=q) | Q(patient__phone_number__icontains=q) | Q(admission_number__icontains=q) | Q(ward__name__icontains=q) | Q(bed__bed_number__icontains=q))
+        beds = beds.filter(Q(ward__name__icontains=q) | Q(bed_number__icontains=q))
+    if date_filter or start_date or end_date:
+        if date_filter == 'today': admissions = admissions.filter(admission_date__date=today)
+        elif date_filter == 'week': admissions = admissions.filter(admission_date__date__gte=today - datetime.timedelta(days=today.weekday()))
+        elif date_filter == 'month': admissions = admissions.filter(admission_date__date__gte=today.replace(day=1))
+        elif date_filter == 'year': admissions = admissions.filter(admission_date__date__gte=today.replace(month=1, day=1))
+        elif date_filter == 'all': pass
+        try:
+            if start_date: admissions = admissions.filter(admission_date__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date: admissions = admissions.filter(admission_date__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError:
+            pass
+    revenue_bills = Bill.objects.filter(bill_type='ipd', status=Bill.Status.PAID).select_related('patient')
+    if metric == 'revenue':
+        if date_filter == 'today': revenue_bills = revenue_bills.filter(created_at__date=today)
+        elif date_filter == 'week': revenue_bills = revenue_bills.filter(created_at__date__gte=today - datetime.timedelta(days=today.weekday()))
+        elif date_filter == 'month' or not request.GET.get('date_filter'): revenue_bills = revenue_bills.filter(created_at__date__gte=today.replace(day=1))
+        elif date_filter == 'year': revenue_bills = revenue_bills.filter(created_at__date__gte=today.replace(month=1, day=1))
+        try:
+            if start_date: revenue_bills = revenue_bills.filter(created_at__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date: revenue_bills = revenue_bills.filter(created_at__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError: pass
+        if q:
+            revenue_bills = revenue_bills.filter(Q(bill_number__icontains=q) | Q(patient__patient_code__icontains=q) | Q(patient__first_name__icontains=q) | Q(patient__last_name__icontains=q))
+    return render(request, 'admissions/dashboard_details.html', {
+        'title': title, 'metric': metric, 'admissions': admissions.order_by('-admission_date')[:1000],
+        'beds': beds, 'revenue_bills': revenue_bills.order_by('-created_at')[:1000],
+        'revenue_total': revenue_bills.aggregate(t=Sum('total_amount'))['t'] or 0,
+        'q': q, 'date_filter': date_filter, 'start_date': start_date, 'end_date': end_date,
     })
 
 
@@ -104,6 +174,12 @@ def admit_patient(request, patient_id):
             admission.patient = patient
             admission.created_by = request.user
             admission.save()
+            if form.cleaned_data.get('admission_datetime'):
+                admission.admission_date = form.cleaned_data['admission_datetime']
+                admission.save(update_fields=['admission_date'])
+            if form.cleaned_data.get('notes'):
+                admission.reason_for_admission = f"{admission.reason_for_admission} | Notes: {form.cleaned_data['notes']}"
+                admission.save(update_fields=['reason_for_admission'])
             write_audit_log(
                 request, AuditLog.Action.ADMISSION,
                 f"Admitted {patient.full_name} to {admission.ward.name}",
@@ -244,6 +320,16 @@ def discharge_patient(request, pk):
                 condition=form.cleaned_data['discharge_condition'],
                 summary=form.cleaned_data['discharge_summary'],
                 follow_up_instructions=form.cleaned_data['follow_up_instructions'],
+                procedures_performed=form.cleaned_data.get('procedures_performed',''),
+                medicines_on_discharge=form.cleaned_data.get('medicines_on_discharge',''),
+                diet_advice=form.cleaned_data.get('diet_advice',''),
+                activity_recommendations=form.cleaned_data.get('activity_recommendations',''),
+                emergency_instructions=form.cleaned_data.get('emergency_instructions',''),
+                follow_up_date=form.cleaned_data.get('follow_up_date'),
+                follow_up_department=form.cleaned_data.get('follow_up_department'),
+                follow_up_doctor=form.cleaned_data.get('follow_up_doctor'),
+                recommended_investigations=form.cleaned_data.get('recommended_investigations',''),
+                follow_up_additional_notes=form.cleaned_data.get('follow_up_additional_notes',''),
             )
             write_audit_log(
                 request, AuditLog.Action.DISCHARGE,
@@ -306,7 +392,7 @@ def discharge_package_pdf(request, pk):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 
     admission = get_object_or_404(Admission.objects.select_related('patient', 'ward', 'bed', 'department', 'admitting_doctor'), pk=pk)
     checklist, _ = DischargeChecklist.objects.get_or_create(admission=admission)
@@ -320,9 +406,22 @@ def discharge_package_pdf(request, pk):
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='Small', parent=styles['BodyText'], fontSize=8, leading=10))
     story = []
-    story.append(Paragraph(f"{request.build_absolute_uri('/')[:-1]} - {admission.patient.patient_code}", styles['Small']))
-    story.append(Paragraph('Hamro Hospital - Discharge Package', styles['Title']))
-    story.append(Paragraph(f"Admission: {admission.admission_number}", styles['Heading2']))
+    from accounts.models import HospitalSetting
+    setting = HospitalSetting.get_solo()
+    if getattr(setting, 'logo', None):
+        try:
+            story.append(Image(setting.logo.path, width=.65*inch, height=.65*inch))
+        except Exception:
+            pass
+    story.append(Paragraph(setting.name, styles['Title']))
+    story.append(Paragraph(f"{setting.address} | {setting.phone} | {setting.email}", styles['Small']))
+    story.append(Paragraph('Professional Discharge Summary & Package', styles['Heading2']))
+    story.append(Paragraph(f"Admission: {admission.admission_number} | Patient: {admission.patient.patient_code}", styles['Small']))
+    if admission.barcode:
+        try:
+            story.append(Image(admission.barcode.path, width=1.8*inch, height=.42*inch))
+        except Exception:
+            pass
     story.append(Spacer(1, 8))
 
     patient_rows = [
@@ -334,7 +433,8 @@ def discharge_package_pdf(request, pk):
         ['Admitted', admission.admission_date.strftime('%Y-%m-%d %H:%M')],
         ['Discharged', admission.discharge_date.strftime('%Y-%m-%d %H:%M') if admission.discharge_date else 'Not discharged yet'],
         ['Status', admission.get_status_display()],
-        ['Diagnosis', admission.diagnosis or '-'],
+        ['Final Diagnosis', admission.diagnosis or '-'],
+        ['Treating Doctor', f"Dr. {admission.admitting_doctor.full_name}" if admission.admitting_doctor else '-'],
     ]
     story.append(_pdf_table(patient_rows))
     story.append(Spacer(1, 10))
@@ -345,8 +445,14 @@ def discharge_package_pdf(request, pk):
     ]]
     story.append(_pdf_table(checklist_rows))
     story.append(Spacer(1, 10))
+    story.append(Paragraph('Treatment / Discharge Summary', styles['Heading2']))
+    story.append(_pdf_table([['Treatment Summary', admission.discharge_summary or '-'], ['Procedures Performed', admission.procedures_performed or '-'], ['Medicines on Discharge', admission.medicines_on_discharge or '-'], ['Diet Advice', admission.diet_advice or '-'], ['Activity Recommendations', admission.activity_recommendations or '-'], ['Emergency Instructions', admission.emergency_instructions or '-']]))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph('Follow-up Information', styles['Heading2']))
+    story.append(_pdf_table([['Follow-up Date', admission.follow_up_date or '-'], ['Follow-up Department', admission.follow_up_department.name if admission.follow_up_department else '-'], ['Follow-up Doctor', f"Dr. {admission.follow_up_doctor.full_name}" if admission.follow_up_doctor else '-'], ['Follow-up Instructions', admission.follow_up_instructions or '-'], ['Recommended Investigations', admission.recommended_investigations or '-'], ['Additional Notes', admission.follow_up_additional_notes or '-']]))
+    story.append(Spacer(1, 10))
 
-    story.append(Paragraph('Financial Summary', styles['Heading2']))
+    story.append(Paragraph('Financial Summary / Discharge Billing', styles['Heading2']))
     bill_total = sum((b.total_amount for b in bills), start=0)
     paid_total = sum((b.total_amount for b in bills if b.status == Bill.Status.PAID), start=0)
     pending_total = sum((b.total_amount for b in bills if b.status == Bill.Status.PENDING), start=0)
@@ -367,6 +473,8 @@ def discharge_package_pdf(request, pk):
     timeline_rows = [['Date', 'Type', 'Event']] + [[e.event_at.strftime('%Y-%m-%d %H:%M'), e.get_event_type_display(), e.title] for e in timeline]
     story.append(_pdf_table(timeline_rows, header=True))
     story.append(Spacer(1, 12))
+    story.append(Spacer(1, 18))
+    story.append(_pdf_table([['Doctor Signature', '________________________'], ['Hospital Stamp', '________________________'], ['Authorized Signature', '________________________']]))
     story.append(Paragraph('This package is computer generated by Hamro Hospital HIS.', styles['Small']))
 
     doc.build(story)

@@ -99,6 +99,16 @@ class Admission(models.Model):
     discharge_condition = models.CharField(max_length=15, choices=DischargeCondition.choices, blank=True)
     discharge_summary = models.TextField(blank=True)
     follow_up_instructions = models.TextField(blank=True)
+    procedures_performed = models.TextField(blank=True)
+    medicines_on_discharge = models.TextField(blank=True)
+    diet_advice = models.TextField(blank=True)
+    activity_recommendations = models.TextField(blank=True)
+    emergency_instructions = models.TextField(blank=True)
+    follow_up_date = models.DateField(null=True, blank=True)
+    follow_up_department = models.ForeignKey('departments.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name='follow_up_admissions')
+    follow_up_doctor = models.ForeignKey('doctors.Doctor', on_delete=models.SET_NULL, null=True, blank=True, related_name='follow_up_admissions')
+    recommended_investigations = models.TextField(blank=True)
+    follow_up_additional_notes = models.TextField(blank=True)
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='admissions_created',
@@ -138,13 +148,16 @@ class Admission(models.Model):
         self.barcode.save(f"{self.admission_number}.png", generate_barcode_file(self.admission_number), save=False)
         Admission.objects.filter(pk=self.pk).update(barcode=self.barcode.name)
 
-    def discharge(self, condition, summary='', follow_up_instructions=''):
+    def discharge(self, condition, summary='', follow_up_instructions='', **kwargs):
         """Discharges the patient and frees the bed automatically."""
         self.status = self.Status.DISCHARGED
         self.discharge_date = timezone.now()
         self.discharge_condition = condition
         self.discharge_summary = summary
         self.follow_up_instructions = follow_up_instructions
+        for field, value in kwargs.items():
+            if hasattr(self, field):
+                setattr(self, field, value)
         self.save()
         if self.bed_id:
             Bed.objects.filter(pk=self.bed_id).update(is_occupied=False)

@@ -413,3 +413,15 @@ python manage.py create_demo_accounts
 - Selected medicine rows highlight immediately.
 - Added Scroll to Top and Scroll to Bottom controls for long medicine lists.
 - Existing dispensing workflow is preserved.
+
+## Part 6 Admission Improvements Added
+
+- Admission dashboard summary cards are clickable and open detailed views with search, date filters, and Close button.
+- Admission dashboard defaults to latest 24-hour admission activity; records are never deleted and can be retrieved by date/range.
+- Admission charge references are configurable by Main Super Admin through Hospital Settings: admission base fee, ICU daily charge, cabin/private daily charge, and ward daily rates.
+- Ward/bed pricing remains controlled through Super Admin-managed Ward daily rates; no admission pricing is hardcoded in admission workflow.
+- Admit Patient form now includes patient search/information, department, referring/admitting doctor, ward, available bed, diagnosis, admission reason, admission date/time and notes.
+- Bed selection only lists unoccupied beds and updates when admissions/transfers/discharges change occupancy.
+- Discharge form now includes professional follow-up fields: follow-up date, department, doctor, instructions, investigations and notes.
+- Discharge summary/package PDF redesigned with hospital header, patient details, admission details, treatment summary, medicines, diet/activity/emergency advice, follow-up section, financial summary, barcode and signature/stamp areas.
+- Discharge checklist workflow remains mandatory before discharge completion.

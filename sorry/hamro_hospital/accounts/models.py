@@ -252,6 +252,9 @@ class HospitalSetting(models.Model):
     ehs_new_ticket_fee = models.DecimalField(max_digits=10, decimal_places=2, default=1000, help_text='EHS Service new ticket fee configured by Main Super Admin.')
     ehs_followup_ticket_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500, help_text='EHS Service follow-up/old ticket fee configured by Main Super Admin.')
     ehs_additional_charges_note = models.CharField(max_length=255, blank=True, help_text='Optional note for future EHS charges/policies.')
+    admission_base_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Configurable admission fee charged in addition to ward/bed rates if used.')
+    icu_daily_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Optional standard ICU daily charge reference.')
+    cabin_daily_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Optional standard cabin/private room daily charge reference.')
 
     class Meta:
         db_table = 'accounts_hospital_setting'

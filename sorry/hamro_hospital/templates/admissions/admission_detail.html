@@ -73,8 +73,17 @@
             <form method="post" action="{% url 'admissions:discharge_patient' admission.pk %}">
                 {% csrf_token %}
                 <div class="mb-3"><label class="form-label">Condition</label>{{ discharge_form.discharge_condition }}</div>
-                <div class="mb-3"><label class="form-label">Discharge Summary</label>{{ discharge_form.discharge_summary }}</div>
+                <div class="mb-3"><label class="form-label">Discharge Summary / Treatment Summary</label>{{ discharge_form.discharge_summary }}</div>
+                <div class="mb-3"><label class="form-label">Procedures Performed</label>{{ discharge_form.procedures_performed }}</div>
+                <div class="mb-3"><label class="form-label">Medicines on Discharge</label>{{ discharge_form.medicines_on_discharge }}</div>
+                <div class="mb-3"><label class="form-label">Diet Advice</label>{{ discharge_form.diet_advice }}</div>
+                <div class="mb-3"><label class="form-label">Activity Recommendations</label>{{ discharge_form.activity_recommendations }}</div>
+                <div class="mb-3"><label class="form-label">Emergency Instructions</label>{{ discharge_form.emergency_instructions }}</div>
+                <hr><h6 class="fw-bold">Follow-up Section</h6>
+                <div class="row g-2"><div class="col-md-4"><label class="form-label">Follow-up Date</label>{{ discharge_form.follow_up_date }}</div><div class="col-md-4"><label class="form-label">Follow-up Department</label>{{ discharge_form.follow_up_department }}</div><div class="col-md-4"><label class="form-label">Follow-up Doctor</label>{{ discharge_form.follow_up_doctor }}</div></div>
                 <div class="mb-3"><label class="form-label">Follow-up Instructions</label>{{ discharge_form.follow_up_instructions }}</div>
+                <div class="mb-3"><label class="form-label">Recommended Investigations</label>{{ discharge_form.recommended_investigations }}</div>
+                <div class="mb-3"><label class="form-label">Additional Notes</label>{{ discharge_form.follow_up_additional_notes }}</div>
                 <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> Discharge</button>
             </form>
         </div>

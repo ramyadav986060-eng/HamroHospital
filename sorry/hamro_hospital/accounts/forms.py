@@ -133,6 +133,9 @@ class HospitalSettingForm(forms.ModelForm):
             'ehs_new_ticket_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'ehs_followup_ticket_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'ehs_additional_charges_note': forms.TextInput(attrs={'class': 'form-control'}),
+            'admission_base_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'icu_daily_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'cabin_daily_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
 

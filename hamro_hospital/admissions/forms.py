@@ -6,6 +6,8 @@ from doctors.models import Doctor
 
 
 class AdmissionForm(forms.ModelForm):
+    admission_datetime = forms.DateTimeField(required=False, label='Admission Date & Time', widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
+    notes = forms.CharField(required=False, label='Notes (optional)', widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}))
     class Meta:
         model = Admission
         fields = [
@@ -23,11 +25,19 @@ class AdmissionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        ward_id = None
+        if self.data.get('ward'):
+            ward_id = self.data.get('ward')
+        elif self.initial.get('ward'):
+            ward_id = self.initial.get('ward')
         self.fields['department'].queryset = Department.objects.filter(is_active=True)
         self.fields['admitting_doctor'].queryset = Doctor.objects.filter(is_active=True)
         self.fields['admitting_doctor'].required = False
         self.fields['ward'].queryset = Ward.objects.filter(is_active=True)
-        self.fields['bed'].queryset = Bed.objects.filter(is_occupied=False)
+        bed_qs = Bed.objects.filter(is_occupied=False)
+        if ward_id:
+            bed_qs = bed_qs.filter(ward_id=ward_id)
+        self.fields['bed'].queryset = bed_qs
         self.fields['bed'].required = False
 
 
@@ -39,9 +49,17 @@ class DischargeForm(forms.Form):
     discharge_summary = forms.CharField(
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}), required=False,
     )
-    follow_up_instructions = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), required=False,
-    )
+    follow_up_instructions = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), required=False)
+    procedures_performed = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    medicines_on_discharge = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    diet_advice = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    activity_recommendations = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    emergency_instructions = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    follow_up_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), required=False)
+    follow_up_department = forms.ModelChoiceField(queryset=Department.objects.filter(is_active=True), widget=forms.Select(attrs={'class': 'form-select'}), required=False)
+    follow_up_doctor = forms.ModelChoiceField(queryset=Doctor.objects.filter(is_active=True), widget=forms.Select(attrs={'class': 'form-select'}), required=False)
+    recommended_investigations = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
+    follow_up_additional_notes = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}), required=False)
 
 
 class WardForm(forms.ModelForm):

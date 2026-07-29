@@ -30,7 +30,7 @@ class HospitalSettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone', 'emergency_contact', 'email', 'updated_display')
     fieldsets = (
         ('Basic Information', {'fields': ('name', 'logo', 'address', 'phone', 'emergency_contact', 'email', 'website')}),
-        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency', 'staff_discount_enabled', 'staff_discount_percent', 'required_daily_working_hours', 'default_weekend_days', 'paid_leave_days_per_month', 'paid_leave_days_per_year', 'ehs_new_ticket_fee', 'ehs_followup_ticket_fee', 'ehs_additional_charges_note')}),
+        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency', 'staff_discount_enabled', 'staff_discount_percent', 'required_daily_working_hours', 'default_weekend_days', 'paid_leave_days_per_month', 'paid_leave_days_per_year', 'ehs_new_ticket_fee', 'ehs_followup_ticket_fee', 'ehs_additional_charges_note', 'admission_base_fee', 'icu_daily_charge', 'cabin_daily_charge')}),
         ('Display / Printing', {'fields': ('opening_hours', 'footer_information', 'receipt_settings', 'print_settings', 'theme_color', 'default_timezone')}),
         ('Social Links', {'fields': ('facebook_url', 'twitter_url')}),
     )
