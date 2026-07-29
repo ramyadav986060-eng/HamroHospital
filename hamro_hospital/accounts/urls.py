@@ -36,6 +36,8 @@ urlpatterns = [
     # Backwards-compatible alias for templates/bookmarks that used the old name.
     path('backups/', views.backup_list, name='backups_view'),
     path('backups/create/', views.backup_create, name='backup_create'),
+    path('backups/download/<path:name>/', views.backup_download, name='backup_download'),
+    path('backups/restore/', views.backup_restore, name='backup_restore'),
     path('notifications/create/', views.notification_create, name='notification_create'),
     path('notifications/mark-read/', views.mark_all_read, name='mark_all_read'),
     path('system-readiness/', views.system_readiness, name='system_readiness'),

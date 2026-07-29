@@ -30,6 +30,32 @@
         </div>
     </div>
 
+    <div class="tuh-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-person-lines-fill"></i> Doctor Availability & Quota</h5>
+        <div class="row g-3 small">
+            <div class="col-md-4"><strong>Department:</strong><br>{{ doctor.department.name }}</div>
+            <div class="col-md-4"><strong>Qualification:</strong><br>{{ doctor.qualification }}</div>
+            <div class="col-md-4"><strong>Specialty:</strong><br>{{ doctor.specialization }}</div>
+            <div class="col-md-4"><strong>Available Days:</strong><br>{% if doctor.available_days_list %}{{ doctor.available_days_list|join:', ' }}{% else %}As per hospital schedule{% endif %}</div>
+            <div class="col-md-4"><strong>Weekly Off Day:</strong><br>{{ doctor.get_extension_weekly_off_day_display|default:'-' }}</div>
+            <div class="col-md-4"><strong>Extension Service:</strong><br>{% if doctor.is_extension_service %}Available{% else %}Not available{% endif %}</div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100 bg-light">
+                    <strong>Morning Session</strong><br>
+                    {% if doctor.extension_morning_start %}{{ doctor.extension_morning_start|time:'h:i A' }} – {{ doctor.extension_morning_end|time:'h:i A' }}{% elif doctor.available_time_start %}{{ doctor.available_time_start|time:'h:i A' }} – {{ doctor.available_time_end|time:'h:i A' }}{% else %}Not configured{% endif %}<br>
+                    Quota: {{ doctor.extension_morning_quota|default:'-' }} Patients
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100 bg-light">
+                    <strong>Afternoon Session</strong><br>
+                    {% if doctor.extension_afternoon_start %}{{ doctor.extension_afternoon_start|time:'h:i A' }} – {{ doctor.extension_afternoon_end|time:'h:i A' }}{% else %}Not configured{% endif %}<br>
+                    Quota: {{ doctor.extension_afternoon_quota|default:'-' }} Patients
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tuh-card p-4">
         <h5 class="fw-bold mb-3"><i class="bi bi-calendar-week"></i> OPD Schedule</h5>
         {% with schedule=doctor.weekly_schedule %}

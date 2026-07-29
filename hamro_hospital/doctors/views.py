@@ -4,7 +4,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 
-from accounts.decorators import super_admin_required, doctor_required
+from accounts.decorators import super_admin_required, doctor_required, role_required
+from accounts.models import Role
 from doctors.models import Doctor
 from doctors.forms import DoctorForm, DoctorProfileForm
 from patients.models import Patient, Visit
@@ -39,9 +40,11 @@ def ensure_doctor_profile_for_user(user):
     )
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.DEPARTMENT_HEAD)
 def doctor_list(request):
     doctors = Doctor.objects.select_related('department', 'user_account').all()
+    if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
+        doctors = doctors.filter(department=request.user.department)
     return render(request, 'doctors/doctor_list.html', {'doctors': doctors})
 
 
@@ -62,21 +65,26 @@ def doctor_create(request):
     return render(request, 'doctors/doctor_form.html', {'form': form, 'title': 'Add Doctor'})
 
 
-@super_admin_required
+@role_required(Role.SUPER_ADMIN, Role.DEPARTMENT_HEAD)
 def doctor_edit(request, pk):
     doctor = get_object_or_404(Doctor, pk=pk)
+    is_department_head = request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser
+    if is_department_head and (not request.user.department_id or doctor.department_id != request.user.department_id):
+        messages.error(request, 'Department Heads can only manage doctor schedules in their own department.')
+        return redirect('doctors:doctor_list')
+    form_class = DoctorProfileForm if is_department_head else DoctorForm
     if request.method == 'POST':
-        form = DoctorForm(request.POST, request.FILES, instance=doctor)
+        form = form_class(request.POST, request.FILES, instance=doctor)
         if form.is_valid():
             form.save()
-            if form.generated_credentials:
+            if getattr(form, 'generated_credentials', None):
                 username, password = form.generated_credentials
                 messages.success(request, f'Doctor "{doctor.full_name}" updated. Login: {username} / {password}')
             else:
                 messages.success(request, f'Doctor "{doctor.full_name}" updated.')
             return redirect('doctors:doctor_list')
     else:
-        form = DoctorForm(instance=doctor)
+        form = form_class(instance=doctor)
     return render(request, 'doctors/doctor_form.html', {
         'form': form, 'title': f'Edit Dr. {doctor.full_name}', 'doctor': doctor,
     })

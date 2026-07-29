@@ -35,7 +35,7 @@ class DoctorForm(forms.ModelForm):
         model = Doctor
         fields = [
             'department', 'unit', 'full_name', 'qualification', 'specialization', 'experience_years',
-            'consultation_fee', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days',
+            'consultation_fee', 'extension_new_fee', 'extension_old_fee', 'biography', 'short_introduction', 'contact_number', 'esewa_id', 'esewa_phone', 'photo', 'available_days',
             'available_time_start', 'available_time_end', 'is_extension_service', 'extension_weekly_off_day', 'extension_morning_start', 'extension_morning_end', 'extension_morning_quota', 'extension_afternoon_start', 'extension_afternoon_end', 'extension_afternoon_quota', 'is_active', 'is_featured',
         ]
         widgets = {
@@ -46,6 +46,8 @@ class DoctorForm(forms.ModelForm):
             'specialization': forms.TextInput(attrs={'class': 'form-control'}),
             'experience_years': forms.NumberInput(attrs={'class': 'form-control'}),
             'consultation_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'extension_new_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'extension_old_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'biography': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'short_introduction': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={'class': 'form-control'}),

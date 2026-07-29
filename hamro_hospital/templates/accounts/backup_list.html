@@ -2,29 +2,65 @@
 {% block title %}Backups{% endblock %}
 {% block page_title %}System Backups{% endblock %}
 {% block dashboard_content %}
-<form method="post" action="{% url 'accounts:backup_create' %}" class="mb-4">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-arrow-down"></i> Create Backup Now</button>
-</form>
-<p class="text-muted small">
-    Backups are JSON dumps of the database, written to <code>backups/</code> on the server.
-    Uploaded files (photos, lab/radiology PDFs, patient documents) live under <code>media/</code>
-    and should be backed up separately (e.g. as part of your regular server file backups).
-    To restore, run <code>python manage.py restore_data &lt;path&gt;</code> from the server - this is
-    intentionally a command-line-only, confirmation-gated operation since it can overwrite live data.
-</p>
-<div class="tuh-card p-4">
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <form method="post" action="{% url 'accounts:backup_create' %}" class="tuh-card p-4 h-100">
+            {% csrf_token %}<input type="hidden" name="backup_type" value="database">
+            <h6 class="fw-bold"><i class="bi bi-database"></i> Database Backup</h6>
+            <p class="small text-muted">Creates a JSON dump of application data.</p>
+            <button type="submit" class="btn btn-primary btn-sm">Create Database Backup</button>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <form method="post" action="{% url 'accounts:backup_create' %}" class="tuh-card p-4 h-100">
+            {% csrf_token %}<input type="hidden" name="backup_type" value="media">
+            <h6 class="fw-bold"><i class="bi bi-images"></i> Media Backup</h6>
+            <p class="small text-muted">Creates a ZIP of uploaded photos, reports, and documents.</p>
+            <button type="submit" class="btn btn-outline-primary btn-sm">Create Media Backup</button>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <form method="post" action="{% url 'accounts:backup_create' %}" class="tuh-card p-4 h-100">
+            {% csrf_token %}<input type="hidden" name="backup_type" value="full">
+            <h6 class="fw-bold"><i class="bi bi-cloud-arrow-down"></i> Full Backup</h6>
+            <p class="small text-muted">Creates one ZIP containing database JSON plus media files.</p>
+            <button type="submit" class="btn btn-success btn-sm">Create Full Backup</button>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info small">
+    <strong>Automatic Scheduled Backup:</strong> configure cron/Task Scheduler/Celery Beat to run
+    <code>{{ schedule_command }}</code> daily. <strong>Cloud-ready:</strong> {{ cloud_note }}
+</div>
+
+<div class="tuh-card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history"></i> Backup History</h5>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead><tr><th>File</th><th>Size</th></tr></thead>
+            <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Action</th></tr></thead>
             <tbody>
             {% for b in backups %}
-                <tr><td>{{ b.name }}</td><td>{{ b.size_kb }} KB</td></tr>
+                <tr>
+                    <td>{{ b.name }}</td><td>{{ b.kind }}</td><td>{{ b.size_kb }} KB</td>
+                    <td><a class="btn btn-sm btn-outline-primary" href="{% url 'accounts:backup_download' b.name %}">Download</a></td>
+                </tr>
             {% empty %}
-                <tr><td colspan="2" class="text-center text-muted">No backups yet.</td></tr>
+                <tr><td colspan="4" class="text-center text-muted">No backups yet.</td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="tuh-card p-4 border-danger">
+    <h5 class="fw-bold text-danger"><i class="bi bi-arrow-counterclockwise"></i> Restore Database Backup</h5>
+    <p class="small text-muted">Only database JSON backups can be restored from this dashboard. Full/media ZIP restore should be performed on the server after verifying files. This operation is destructive and must be performed only by Main Super Admin.</p>
+    <form method="post" action="{% url 'accounts:backup_restore' %}" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-md-5"><label class="form-label small fw-bold">Backup JSON file name</label><input name="backup_name" class="form-control" placeholder="tuh_backup_YYYYMMDD_HHMMSS.json"></div>
+        <div class="col-md-4"><label class="form-label small fw-bold">Type RESTORE to confirm</label><input name="confirmation" class="form-control" placeholder="RESTORE"></div>
+        <div class="col-md-3"><button class="btn btn-danger w-100">Restore Database</button></div>
+    </form>
 </div>
 {% endblock %}

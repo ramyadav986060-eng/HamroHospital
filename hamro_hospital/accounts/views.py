@@ -182,12 +182,7 @@ def audit_log_list(request):
 
 @super_admin_required
 def backup_list(request):
-    """
-    Backup & restore (spec section 11). Lists existing backups and lets
-    Super Admin trigger a new one; restoring is intentionally left to the
-    command line (``python manage.py restore_data <file>``) since it is a
-    destructive, whole-database operation that should never be one click.
-    """
+    """Super Admin backup center: database, media, full backup, restore guidance and history."""
     import os
     from django.conf import settings
 
@@ -195,22 +190,69 @@ def backup_list(request):
     backups = []
     if os.path.isdir(backup_dir):
         for name in sorted(os.listdir(backup_dir), reverse=True):
-            if name.endswith('.json'):
+            if name.endswith(('.json', '.zip')):
                 full_path = os.path.join(backup_dir, name)
                 backups.append({
                     'name': name,
                     'size_kb': round(os.path.getsize(full_path) / 1024, 1),
+                    'modified': os.path.getmtime(full_path),
+                    'kind': 'Database' if name.endswith('.json') else ('Full / Media' if 'full' in name else 'Media'),
                 })
-    return render(request, 'accounts/backup_list.html', {'backups': backups})
+    return render(request, 'accounts/backup_list.html', {
+        'backups': backups,
+        'schedule_command': 'python manage.py backup_full',
+        'cloud_note': 'Configure S3, Google Drive, NAS, or another provider during deployment and sync BASE_DIR/backups securely.',
+    })
 
 
 @super_admin_required
 def backup_create(request):
     if request.method == 'POST':
         from django.core import management
-        management.call_command('backup_data')
-        write_audit_log(request, AuditLog.Action.BACKUP_CREATED, 'System backup created via dashboard')
-        messages.success(request, 'Backup created successfully.')
+        backup_type = request.POST.get('backup_type', 'database')
+        if backup_type == 'media':
+            management.call_command('backup_media')
+            label = 'media backup'
+        elif backup_type == 'full':
+            management.call_command('backup_full')
+            label = 'full database + media backup'
+        else:
+            management.call_command('backup_data')
+            label = 'database backup'
+        write_audit_log(request, AuditLog.Action.BACKUP_CREATED, f'System {label} created via dashboard')
+        messages.success(request, f'{label.title()} created successfully.')
+    return redirect('accounts:backup_list')
+
+
+@super_admin_required
+def backup_download(request, name):
+    import os
+    from django.conf import settings
+    from django.http import FileResponse, Http404
+    safe_name = os.path.basename(name)
+    path = os.path.join(settings.BASE_DIR, 'backups', safe_name)
+    if not os.path.exists(path) or not safe_name.endswith(('.json', '.zip')):
+        raise Http404('Backup not found')
+    return FileResponse(open(path, 'rb'), as_attachment=True, filename=safe_name)
+
+
+@super_admin_required
+def backup_restore(request):
+    if request.method == 'POST':
+        import os
+        from django.conf import settings
+        from django.core import management
+        backup_name = os.path.basename(request.POST.get('backup_name', ''))
+        confirmation = request.POST.get('confirmation', '')
+        path = os.path.join(settings.BASE_DIR, 'backups', backup_name)
+        if confirmation != 'RESTORE':
+            messages.error(request, 'Type RESTORE to confirm this destructive operation.')
+        elif not backup_name.endswith('.json') or not os.path.exists(path):
+            messages.error(request, 'Only database .json backups can be restored from the web dashboard. Full/media ZIP restore must be performed on the server after verification.')
+        else:
+            management.call_command('restore_data', path, yes=True)
+            write_audit_log(request, AuditLog.Action.RESTORE_PERFORMED, f'Database restored from {backup_name}')
+            messages.success(request, f'Database restore completed from {backup_name}.')
     return redirect('accounts:backup_list')
 
 
