@@ -257,7 +257,7 @@ JAZZMIN_SETTINGS = {
     'order_with_respect_to': [
         'accounts', 'patients', 'appointments', 'consultations', 'laboratory',
         'radiology', 'admissions', 'operation_theatre', 'billing', 'insurance',
-        'pharmacy', 'blood_bank', 'nursing', 'documents', 'medical_records',
+        'pharmacy', 'blood_bank', 'nursing', 'documents',
         'departments', 'doctors', 'website', 'reports', 'finance', 'patient_portal',
     'referrals',
     ],
@@ -306,7 +306,6 @@ JAZZMIN_SETTINGS = {
         'blood_bank': 'fas fa-tint',
         'nursing': 'fas fa-user-nurse',
         'documents': 'fas fa-file-archive',
-        'medical_records': 'fas fa-folder-open',
 
         'website.HospitalService': 'fas fa-list-ul',
         'website.Testimonial': 'fas fa-comment-medical',

@@ -202,99 +202,7 @@ class PatientRegisterDetailsForm(forms.Form):
         return name
 
 
-    def clean_phone_number(self):
-        phone = (self.cleaned_data.get('phone_number') or '').strip()
-        if not phone:
-            raise forms.ValidationError('Phone Number is required.')
-        if len(phone) < 7:
-            raise forms.ValidationError('Enter a valid phone number.')
-        return phone
 
-    def clean_age_input(self):
-        from patients.utils import parse_age_to_dob
-        age_input = self.cleaned_data['age_input'].strip()
-        if parse_age_to_dob(age_input) is None:
-            raise forms.ValidationError(
-                "Could not understand this age. Try formats like '24 Years', '11 Years 2 Months', or '15 Days'."
-            )
-        return age_input
-
-
-class PatientRegisterOTPForm(forms.Form):
-    otp_code = forms.CharField(
-        label='OTP Code',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control form-control-lg text-center', 'placeholder': '••••••',
-            'maxlength': 6, 'autofocus': True, 'inputmode': 'numeric',
-        }),
-    )
-
-
-class PatientRegisterPasswordForm(forms.Form):
-    password = forms.CharField(
-        label='Create Password',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'At least 8 characters', 'autofocus': True}),
-        min_length=8,
-    )
-    password_confirm = forms.CharField(
-        label='Confirm Password',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Re-enter your password'}),
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data.get('password') != cleaned_data.get('password_confirm'):
-            raise forms.ValidationError('Passwords do not match.')
-        return cleaned_data
-
-class PatientProfileUpdateForm(forms.ModelForm):
-    class Meta:
-        model = Patient
-        fields = [
-            'first_name', 'last_name', 'phone_number', 'email', 'gender', 'date_of_birth',
-            'district', 'municipality', 'ward_number', 'local_address', 'photo',
-            'has_insurance', 'insurance_company', 'insurance_policy_number',
-            'insurance_membership_number', 'insurance_card_number', 'insurance_expiry_date',
-            'insurance_remarks',
-        ]
-        widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'gender': forms.Select(attrs={'class': 'form-select'}),
-            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'district': forms.Select(attrs={'class': 'form-select district-autocomplete'}),
-            'municipality': forms.TextInput(attrs={'class': 'form-control'}),
-            'ward_number': forms.NumberInput(attrs={'class': 'form-control'}),
-            'local_address': forms.TextInput(attrs={'class': 'form-control'}),
-            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'has_insurance': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'insurance_company': forms.Select(attrs={'class': 'form-select'}),
-            'insurance_policy_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'insurance_membership_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'insurance_card_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'insurance_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'insurance_remarks': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['district'].queryset = District.objects.select_related('province').order_by('name')
-        from patients.models import InsuranceCompany
-        self.fields['insurance_company'].queryset = InsuranceCompany.objects.filter(is_active=True)
-        self.fields['insurance_company'].required = False
-        for f in ['email', 'municipality', 'ward_number', 'local_address', 'photo', 'insurance_policy_number', 'insurance_membership_number', 'insurance_card_number', 'insurance_expiry_date', 'insurance_remarks']:
-            self.fields[f].required = False
-
-    def clean_phone_number(self):
-        phone = (self.cleaned_data.get('phone_number') or '').strip()
-        if not phone:
-            raise forms.ValidationError('Phone Number is required.')
-        qs = Patient.objects.filter(phone_number=phone).exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError('This phone number is already used by another patient profile.')
-        return phone
 
 
 class PatientPortalPasswordChangeForm(forms.Form):
@@ -317,3 +225,53 @@ class PatientPortalPasswordChangeForm(forms.Form):
         if cleaned.get('new_password') and cleaned.get('confirm_password') and cleaned['new_password'] != cleaned['confirm_password']:
             raise forms.ValidationError('New passwords do not match.')
         return cleaned
+
+# Re-declared final portal forms (kept at end so imports remain stable after profile restrictions).
+class PatientRegisterOTPForm(forms.Form):
+    otp_code = forms.CharField(
+        label='OTP / Verification Code',
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-lg text-center', 'placeholder': '••••••'}),
+    )
+
+
+class PatientRegisterPasswordForm(forms.Form):
+    password = forms.CharField(
+        label='Password', min_length=8,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'At least 8 characters', 'autofocus': True}),
+    )
+    password_confirm = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Re-enter your password'}),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('password') and cleaned.get('password_confirm') and cleaned['password'] != cleaned['password_confirm']:
+            raise forms.ValidationError('Passwords do not match.')
+        return cleaned
+
+
+class PatientProfileUpdateForm(forms.ModelForm):
+    """Patient portal profile update: permitted contact/address/photo only.
+
+    Patient ID, hospital registration number, registered name and registered phone
+    are intentionally excluded; changes to those require authorized staff workflow.
+    """
+    class Meta:
+        model = Patient
+        fields = ['email', 'district', 'municipality', 'ward_number', 'local_address', 'photo', 'insurance_remarks']
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'district': forms.Select(attrs={'class': 'form-select district-autocomplete'}),
+            'municipality': forms.TextInput(attrs={'class': 'form-control'}),
+            'ward_number': forms.NumberInput(attrs={'class': 'form-control'}),
+            'local_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'insurance_remarks': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['district'].queryset = District.objects.select_related('province').order_by('name')
+        for f in ['email', 'municipality', 'ward_number', 'local_address', 'photo', 'insurance_remarks']:
+            self.fields[f].required = False

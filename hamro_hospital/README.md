@@ -179,7 +179,7 @@ This codebase contains the integrated Hospital Management System modules request
 - Patient portal, OPD visit/token workflow, and appointment/booking bridge.
 - Doctor consultation, prescription, referral, lab/radiology/admission/nursing/OT/blood-bank workflows.
 - Cash counter billing, receipts, pending payments, refunds, staff discount and admission deposit credit.
-- Laboratory, Radiology, Pharmacy, Admissions/Ward, Nursing, Operation Theatre, Blood Bank, Insurance and Medical Records modules.
+- Laboratory, Radiology, Pharmacy, Admissions/Ward, Nursing, Operation Theatre, Blood Bank, Insurance and Medical History/Documents modules.
 - Staff profile, staff barcode, attendance, Nepali-calendar-style attendance view, leave requests/review and payroll/salary records.
 - Finance/Accounts reporting, extension fee management, department revenue and payroll reports.
 - Comprehensive reports with date filters, search, print, PDF export and Excel export.
@@ -467,3 +467,16 @@ python manage.py create_demo_accounts
 - Leave notifications are sent for leave request submission, approval and rejection.
 - Leave status remains Pending, Approved, Rejected or Cancelled and staff can track status from the Leave module.
 - Department Heads receive no extra salary/payroll/billing permissions.
+
+## Part 10 Final System-Wide Medical History and Portal Improvements Added
+
+- Patient Portal login supports Patient ID + registered phone/email + password, and phone/email remains optional after account creation when Patient ID + password are valid.
+- Patient Portal dashboard provides access to profile, online registration, OPD/EHS booking, visits, billing, insurance, admissions, lab/radiology, pharmacy, referrals/prescriptions and Medical History documents.
+- Patient Portal profile editing is restricted to permitted fields only: email, address/local details, district, photo and approved remarks. Patient ID, registered name and registered phone are not editable from portal.
+- Standalone Medical Records user/module remains removed; Medical History is now a feature inside patient, doctor and clinical workflows.
+- Automatic Medical History document creation added through system signals for registrations, EHS/OPD visits, invoices, doctor notes, lab reports, radiology reports, pharmacy receipts, admissions, discharge summaries, nursing notes, surgery records, insurance claims and referrals.
+- Patient Medical History documents can be viewed/downloaded by the patient portal but not modified/deleted by patients.
+- Doctors and authorized clinical roles access Medical History through patient profile/document sections.
+- Staff financial access remains restricted: staff cannot see hospital-wide revenue/cash collection/financial reports; salary/payment access is limited to own staff context or Finance/Super Admin workflows.
+- Django Admin navigation was synchronized by removing active Medical Records app/role references.
+- Universal patient search and staff lookup continue to support ID/barcode/QR/phone/name patterns where applicable.
