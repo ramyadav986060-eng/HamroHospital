@@ -124,3 +124,51 @@ STF000001,2026-07-28T18:05:00,out,DEV002
 ## Final status
 
 The system is ready for acceptance testing and staged production configuration. External services such as Redis, Celery workers, eSewa live credentials and fingerprint device SDK/API must be configured on the deployment server.
+
+## Easiest local start
+
+For Windows, double-click or run:
+
+```bat
+run.bat
+```
+
+For Linux/macOS:
+
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+These scripts will:
+
+1. Create `.venv` if missing.
+2. Install requirements.
+3. Copy `.env.example` to `.env` if needed.
+4. Run migrations.
+5. Ensure demo accounts exist.
+6. Start the Django development server.
+
+After the first run, daily development is normally just:
+
+```bash
+python manage.py runserver
+```
+
+or run the script again.
+
+## Environment template
+
+The project includes:
+
+```text
+hamro_hospital/.env.example
+```
+
+Copy it to:
+
+```text
+hamro_hospital/.env
+```
+
+and update values for PostgreSQL, Redis, Celery, eSewa, email, SMS, and fingerprint device integration when deploying live.

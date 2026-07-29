@@ -13,6 +13,13 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env automatically when python-dotenv is installed.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except Exception:
+    pass
+
 # ---------------------------------------------------------------------------
 # Security
 # ---------------------------------------------------------------------------
