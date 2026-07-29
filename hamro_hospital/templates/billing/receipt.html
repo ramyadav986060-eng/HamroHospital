@@ -564,6 +564,7 @@
 </div>
 {% endif %}
 
+<div class="container no-print text-center my-3"><a class="btn btn-outline-danger" href="{% url 'billing:invoice_pdf' bill.pk %}"><i class="bi bi-file-earmark-pdf"></i> Download Invoice PDF</a></div>
 <!-- Actions row -->
 {% include 'includes/print_actions.html' with target_id='tuhDoc' file_name=bill.bill_number %}
 {% endblock %}

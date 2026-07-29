@@ -378,3 +378,17 @@ Run the following to create/update demo users, dummy staff, attendance and sampl
 ```bash
 python manage.py create_demo_accounts
 ```
+
+## Part 2 Cash Counter Improvements Added
+
+- Cash Counter dashboard cards are now clickable and open detailed billing drill-down pages.
+- Drill-down pages include search, date filter, payment method filter, patient filter, department filter, and Close button.
+- Cash Counter dashboard and Today's Collections default to latest 24 hours; older records are hidden from dashboard only and remain retrievable through filters.
+- Large amounts use compact display through the shared short amount formatter, with full details available in drill-down pages.
+- Added a dedicated Payment Section on Cash Counter dashboard with patient search and department payment category buttons.
+- Payment categories include Laboratory, Radiology, Blood Bank, ECG/Ultrasound, CT/MRI, Operation Theater, Pharmacy, and Other Services.
+- Laboratory and Radiology billing screens now show category-specific guidance, service search, checkbox selection, and selected-row highlighting.
+- Operation Theater payment screen includes review notes, referring department/doctor fields, operation category, staff discount, insurance fields, and supporting document upload.
+- Staff discount remains configurable by Super Admin and is applied by scanning/entering Staff ID.
+- Invoice/receipt page now includes a direct PDF download button.
+- Demo setup now creates sample billable hospital services for lab, radiology, blood bank, OT, pharmacy, and other services.

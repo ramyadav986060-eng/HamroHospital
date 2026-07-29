@@ -28,7 +28,10 @@ def dashboard(request):
     month_start = today.replace(day=1)
     year_start = today.replace(month=1, day=1)
 
-    todays_bills = Bill.objects.filter(created_at__date=today, status=Bill.Status.PAID)
+    # Default dashboard collection window is last 24 hours. Records older than
+    # 24h are hidden from the dashboard only; they remain searchable in details.
+    dashboard_window_start = timezone.now() - datetime.timedelta(hours=24)
+    todays_bills = Bill.objects.filter(created_at__gte=dashboard_window_start, status=Bill.Status.PAID)
     pending_bills = Bill.objects.filter(status=Bill.Status.PENDING).select_related('patient').prefetch_related('items')
     totals_by_method = {
         method: todays_bills.filter(payment_method=method).aggregate(total=Sum('total_amount'))['total'] or 0
@@ -36,6 +39,17 @@ def dashboard(request):
     }
     monthly_bills = Bill.objects.filter(created_at__date__gte=month_start, status=Bill.Status.PAID)
     yearly_bills = Bill.objects.filter(created_at__date__gte=year_start, status=Bill.Status.PAID)
+
+    payment_q = (request.GET.get('payment_q') or '').strip()
+    payment_id = (request.GET.get('payment_id') or '').strip()
+    payment_phone = (request.GET.get('payment_phone') or '').strip()
+    payment_patients = Patient.objects.none()
+    patient_query = payment_q or payment_id or payment_phone
+    if patient_query:
+        payment_patients = Patient.objects.filter(
+            Q(patient_code__icontains=patient_query) | Q(first_name__icontains=patient_query) |
+            Q(last_name__icontains=patient_query) | Q(phone_number__icontains=patient_query)
+        ).select_related('district')[:10]
 
     return render(request, 'billing/dashboard.html', {
         'todays_bills': todays_bills.select_related('patient'),
@@ -47,6 +61,81 @@ def dashboard(request):
         'monthly_total': monthly_bills.aggregate(t=Sum('total_amount'))['t'] or 0,
         'yearly_count': yearly_bills.count(),
         'yearly_total': yearly_bills.aggregate(t=Sum('total_amount'))['t'] or 0,
+        'payment_q': payment_q, 'payment_id': payment_id, 'payment_phone': payment_phone, 'payment_patients': payment_patients,
+    })
+
+
+@cash_counter_required
+def dashboard_details(request):
+    """Detailed drill-down for every Cash Counter dashboard card."""
+    metric = request.GET.get('metric', 'today')
+    bills = Bill.objects.filter(status=Bill.Status.PAID).select_related('patient', 'cashier').prefetch_related('items')
+    now = timezone.now()
+    today = timezone.localdate()
+    title = 'Billing Details'
+    if metric == 'today':
+        bills = bills.filter(created_at__gte=now - datetime.timedelta(hours=24))
+        title = 'Bills in Last 24 Hours'
+    elif metric == 'month':
+        bills = bills.filter(created_at__date__gte=today.replace(day=1))
+        title = 'Bills This Month'
+    elif metric == 'year':
+        bills = bills.filter(created_at__date__gte=today.replace(month=1, day=1))
+        title = 'Bills This Year'
+    elif metric == 'cash':
+        bills = bills.filter(payment_method=PaymentMethod.CASH, created_at__gte=now - datetime.timedelta(hours=24))
+        title = 'Cash Payments - Last 24 Hours'
+    elif metric == 'esewa':
+        bills = bills.filter(payment_method=PaymentMethod.ESEWA, created_at__gte=now - datetime.timedelta(hours=24))
+        title = 'eSewa Payments - Last 24 Hours'
+    elif metric == 'insurance':
+        bills = bills.filter(payment_method=PaymentMethod.INSURANCE, created_at__gte=now - datetime.timedelta(hours=24))
+        title = 'Insurance Payments - Last 24 Hours'
+    elif metric == 'revenue':
+        title = 'Revenue Records'
+
+    q = (request.GET.get('q') or '').strip()
+    date_filter = request.GET.get('date_filter', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    payment_method = request.GET.get('payment_method', '')
+    patient_q = (request.GET.get('patient') or '').strip()
+    department = request.GET.get('department', '')
+
+    if q:
+        bills = bills.filter(Q(bill_number__icontains=q) | Q(patient__patient_code__icontains=q) | Q(patient__first_name__icontains=q) | Q(patient__last_name__icontains=q) | Q(patient__phone_number__icontains=q))
+    if date_filter or start_date or end_date:
+        if date_filter == 'today':
+            bills = bills.filter(created_at__date=today)
+        elif date_filter == 'week':
+            bills = bills.filter(created_at__date__gte=today - datetime.timedelta(days=today.weekday()))
+        elif date_filter == 'month':
+            bills = bills.filter(created_at__date__gte=today.replace(day=1))
+        elif date_filter == 'year':
+            bills = bills.filter(created_at__date__gte=today.replace(month=1, day=1))
+        elif date_filter == 'all':
+            pass
+        try:
+            if start_date:
+                bills = bills.filter(created_at__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date:
+                bills = bills.filter(created_at__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError:
+            pass
+    if payment_method:
+        bills = bills.filter(payment_method=payment_method)
+    if patient_q:
+        bills = bills.filter(Q(patient__patient_code__icontains=patient_q) | Q(patient__first_name__icontains=patient_q) | Q(patient__last_name__icontains=patient_q) | Q(patient__phone_number__icontains=patient_q))
+    if department:
+        bills = bills.filter(Q(items__service__department_id=department) | Q(admission__department_id=department)).distinct()
+
+    from departments.models import Department
+    total = bills.aggregate(t=Sum('total_amount'))['t'] or 0
+    return render(request, 'billing/dashboard_details.html', {
+        'title': title, 'metric': metric, 'bills': bills.order_by('-created_at')[:1000], 'total': total,
+        'payment_methods': PaymentMethod.choices, 'departments': Department.objects.filter(is_active=True),
+        'q': q, 'date_filter': date_filter, 'start_date': start_date, 'end_date': end_date,
+        'payment_method': payment_method, 'patient_q': patient_q, 'selected_department': department,
     })
 
 
@@ -124,6 +213,18 @@ def create_bill(request, patient_id):
         bill_type = 'radiology'
     else:
         bill_type = request.POST.get('bill_type') or request.GET.get('bill_type', 'opd')
+
+    # Payment category screens: pre-filter service buttons by department/type.
+    if bill_type == 'lab':
+        services = services.filter(Q(department__name__icontains='lab') | Q(name__icontains='blood') | Q(name__icontains='urine') | Q(name__icontains='stool') | Q(name__icontains='culture'))
+    elif bill_type == 'radiology':
+        services = services.filter(Q(department__name__icontains='radiology') | Q(name__icontains='x-ray') | Q(name__icontains='xray') | Q(name__icontains='ecg') | Q(name__icontains='echo') | Q(name__icontains='ultrasound') | Q(name__icontains='ct') | Q(name__icontains='mri') | Q(name__icontains='doppler') | Q(name__icontains='mammography'))
+    elif bill_type == 'blood_bank':
+        services = services.filter(Q(department__name__icontains='blood') | Q(name__icontains='blood'))
+    elif bill_type == 'surgery':
+        services = services.filter(Q(department__name__icontains='operation') | Q(name__icontains='surgery') | Q(name__icontains='operation'))
+    elif bill_type == 'pharmacy':
+        services = services.filter(Q(department__name__icontains='pharmacy') | Q(name__icontains='medicine') | Q(name__icontains='pharmacy'))
     admission_id = request.POST.get('admission_id') or request.GET.get('admission_id')
     surgery_id = request.POST.get('surgery_id') or request.GET.get('surgery_id')
 
@@ -226,6 +327,17 @@ def create_bill(request, patient_id):
                     s.save()
 
             bill.recalculate_total()
+            # Optional Operation Theater/payment supporting document upload.
+            support_file = request.FILES.get('supporting_document')
+            payment_notes = (request.POST.get('payment_notes') or '').strip()
+            if support_file:
+                from documents.models import PatientDocument, DocumentCategory
+                PatientDocument.objects.create(
+                    patient=patient, category=DocumentCategory.OPERATION_RECORD if bill_type == 'surgery' else DocumentCategory.INVOICE,
+                    title=f'Supporting Document for {bill.bill_number}', file=support_file,
+                    department_note=forced_counter_name, remarks=payment_notes,
+                    uploaded_by=request.user, uploaded_by_role=request.user.effective_role,
+                )
             if staff_beneficiary:
                 from accounts.models import HospitalSetting
                 setting = HospitalSetting.get_solo()
@@ -537,21 +649,38 @@ def reprint_receipt(request, pk):
 @cash_counter_required
 def todays_collections(request):
     date_str = request.GET.get('date', '')
-    try:
-        selected_date = datetime.date.fromisoformat(date_str) if date_str else datetime.date.today()
-    except ValueError:
-        selected_date = datetime.date.today()
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    bills = Bill.objects.filter(cashier=request.user, status=Bill.Status.PAID).select_related('patient')
+    selected_date = None
+    is_today = False
+    if date_str:
+        try:
+            selected_date = datetime.date.fromisoformat(date_str)
+            bills = bills.filter(created_at__date=selected_date)
+            is_today = selected_date == timezone.localdate()
+        except ValueError:
+            selected_date = None
+    elif start_date or end_date:
+        try:
+            if start_date:
+                bills = bills.filter(created_at__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date:
+                bills = bills.filter(created_at__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError:
+            pass
+    else:
+        selected_date = timezone.localdate()
+        is_today = True
+        bills = bills.filter(created_at__gte=timezone.now() - datetime.timedelta(hours=24))
 
-    bills = Bill.objects.filter(
-        cashier=request.user, created_at__date=selected_date, status=Bill.Status.PAID,
-    ).select_related('patient')
     totals_by_method = {
         method: bills.filter(payment_method=method).aggregate(total=Sum('total_amount'))['total'] or 0
         for method, _ in PaymentMethod.choices
     }
     return render(request, 'billing/todays_collections.html', {
-        'bills': bills, 'totals_by_method': totals_by_method, 'grand_total': sum(totals_by_method.values()),
-        'selected_date': selected_date, 'is_today': selected_date == datetime.date.today(),
+        'bills': bills.order_by('-created_at'), 'totals_by_method': totals_by_method, 'grand_total': sum(totals_by_method.values()),
+        'selected_date': selected_date, 'is_today': is_today, 'start_date': start_date, 'end_date': end_date,
     })
 
 

@@ -49,6 +49,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         departments = self.ensure_departments()
+        self.ensure_billable_services(departments)
         for username, role in DEMO_USERS.items():
             user, created = User.objects.get_or_create(
                 username=username,
@@ -80,6 +81,28 @@ class Command(BaseCommand):
             dept, _ = Department.objects.get_or_create(name=name, defaults={'description': f'{name} Department', 'is_active': True})
             result[name] = dept
         return result
+
+
+    def ensure_billable_services(self, departments):
+        from website.models import HospitalService
+        services = [
+            ('LAB-BLOOD', 'Blood Test / CBC', 'Laboratory', 500), ('LAB-STOOL', 'Stool Test', 'Laboratory', 300),
+            ('LAB-URINE', 'Urine Test', 'Laboratory', 250), ('LAB-CULTURE', 'Culture Test', 'Laboratory', 800),
+            ('RAD-XRAY', 'X-Ray', 'Radiology', 700), ('RAD-ECG', 'ECG', 'Radiology', 500),
+            ('RAD-ECHO', 'Echo', 'Radiology', 1500), ('RAD-USG', 'Ultrasound', 'Radiology', 1200),
+            ('RAD-CT', 'CT Scan', 'Radiology', 6000), ('RAD-MRI', 'MRI', 'Radiology', 9000),
+            ('RAD-DOP', 'Doppler', 'Radiology', 2000), ('RAD-MAM', 'Mammography', 'Radiology', 2500),
+            ('BB-BLOOD', 'Blood Bank Service Charge', 'Blood Bank', 1000),
+            ('OT-MINOR', 'Minor Operation Package', 'Operation Theatre', 5000),
+            ('OT-MAJOR', 'Major Operation Package', 'Operation Theatre', 25000),
+            ('PH-MED', 'Pharmacy Medicine Sale', 'Pharmacy', 100),
+            ('GEN-OTHER', 'Other Hospital Service', 'General Medicine', 500),
+        ]
+        for code, name, dept_name, price in services:
+            HospitalService.objects.update_or_create(
+                service_code=code,
+                defaults={'name': name, 'department': departments.get(dept_name), 'price': price, 'is_active': True},
+            )
 
     def create_realistic_staff(self, departments):
         for username, first, last, designation, dept_name, employment_type in DEMO_STAFF:

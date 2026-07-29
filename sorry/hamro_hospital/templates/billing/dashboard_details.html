@@ -1,0 +1,34 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'billing:dashboard' %}"><i class="bi bi-x-circle"></i> Close / Back to Cash Counter</a>
+    <a class="nav-link" href="{% url 'billing:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient / Bill</a>
+    <a class="nav-link" href="{% url 'billing:todays_collections' %}"><i class="bi bi-cash-stack"></i> Collections</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="stat-card green d-inline-block px-4 py-3"><h6>Total Amount</h6><h3>NPR {{ total|short_amount }}</h3></div>
+    <a href="{% url 'billing:dashboard' %}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Close</a>
+</div>
+<form method="get" class="tuh-card p-3 mb-4">
+    <input type="hidden" name="metric" value="{{ metric }}">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2"><label class="form-label small fw-bold">Search</label><input name="q" value="{{ q }}" class="form-control" placeholder="Bill #, ID, name, phone"></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Date Filter</label><select name="date_filter" class="form-select"><option value="">Default</option><option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option><option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option><option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option><option value="year" {% if date_filter == 'year' %}selected{% endif %}>This Year</option><option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option></select></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">From</label><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">To</label><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Payment Method</label><select name="payment_method" class="form-select"><option value="">All</option>{% for value,label in payment_methods %}<option value="{{ value }}" {% if payment_method == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Patient Filter</label><input name="patient" value="{{ patient_q }}" class="form-control" placeholder="Patient name/ID/phone"></div>
+        <div class="col-md-2"><label class="form-label small fw-bold">Department</label><select name="department" class="form-select"><option value="">All</option>{% for d in departments %}<option value="{{ d.id }}" {% if selected_department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Apply</button></div>
+        <div class="col-md-2"><a class="btn btn-outline-secondary w-100" href="{% url 'billing:dashboard_details' %}?metric={{ metric }}">Clear</a></div>
+    </div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Bill #</th><th>Patient</th><th>Payment</th><th>Type</th><th>Services</th><th>Amount</th><th>Date</th><th></th></tr></thead><tbody>{% for bill in bills %}<tr><td>{{ bill.bill_number }}</td><td>{{ bill.patient.full_name }}<br><small>{{ bill.patient.patient_code }} · {{ bill.patient.phone_number }}</small></td><td>{{ bill.get_payment_method_display }}</td><td>{{ bill.get_bill_type_display }}</td><td>{% for item in bill.items.all %}<div>{{ item.service_name }} x {{ item.quantity }}</div>{% endfor %}</td><td>NPR {{ bill.total_amount }}</td><td>{{ bill.created_at|date:'Y-m-d H:i' }}</td><td><a href="{% url 'billing:receipt' bill.pk %}" class="btn btn-sm btn-outline-primary">Invoice</a></td></tr>{% empty %}<tr><td colspan="8" class="text-center text-muted">No records found.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

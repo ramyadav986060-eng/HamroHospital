@@ -5,6 +5,7 @@ app_name = 'billing'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/details/', views.dashboard_details, name='dashboard_details'),
     path('search/', views.patient_lookup, name='patient_lookup'),
     path('bill/new/<int:patient_id>/', views.create_bill, name='create_bill'),
     path('bill/<int:pk>/edit/', views.edit_bill, name='edit_bill'),

@@ -53,7 +53,7 @@
     Insurance on file: <strong>{{ patient.insurance_company }}</strong> - Policy {{ patient.insurance_policy_number }}
 </div>
 {% endif %}
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" name="bill_type" value="{{ bill_type }}">
     {% if admission_id %}<input type="hidden" name="admission_id" value="{{ admission_id }}">{% endif %}
@@ -119,7 +119,10 @@
     </div>
     {% else %}
     <div class="tuh-card p-4 mb-4">
-        <h6 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Select Services</h6>
+        <h6 class="fw-bold mb-3"><i class="bi bi-list-check"></i> {% if bill_type == 'lab' %}Laboratory Investigations{% elif bill_type == 'radiology' %}Radiology Investigations{% elif bill_type == 'surgery' %}Operation Theater Payment Review{% else %}Select Services{% endif %}</h6>
+        {% if bill_type == 'lab' %}<div class="alert alert-info small">Search examples: B = Blood Test, S = Stool Test, U = Urine Test, C = Culture Test. Click checkboxes to select multiple tests.</div>{% endif %}
+        {% if bill_type == 'radiology' %}<div class="alert alert-info small">Search examples: X = X-Ray, E = ECG/Echo, U = Ultrasound, C = CT Scan, M = MRI. Click checkboxes to select multiple investigations.</div>{% endif %}
+        {% if bill_type == 'surgery' %}<div class="alert alert-warning small">Review patient information, referring department/doctor, operation type/category, insurance and staff discount. Pricing is configured by Super Admin/Accounts; cashier reviews and processes payment.</div>{% endif %}
         <input type="text" id="service-search" class="form-control mb-3"
                placeholder="Type to search services, e.g. &quot;X&quot; for X-Ray, &quot;U&quot; for Ultrasound, &quot;B&quot; for Blood Test..."
                autocomplete="off">
@@ -129,7 +132,7 @@
                 <tbody>
                 {% for service in services %}
                     <tr class="service-row" data-service-name="{{ service.name|lower }}" data-service-code="{{ service.service_code|lower }}">
-                        <td><input type="checkbox" name="service_id" value="{{ service.id }}" class="form-check-input"></td>
+                        <td><input type="checkbox" name="service_id" value="{{ service.id }}" class="form-check-input service-checkbox"></td>
                         <td>{{ service.name }} <small class="text-muted">({{ service.service_code }})</small></td>
                         <td>{{ service.price }}</td>
                         <td><input type="number" name="quantity_{{ service.id }}" value="1" min="1" class="form-control form-control-sm" style="width:80px;"></td>
@@ -170,6 +173,13 @@
                 <label class="form-label">Insurance Coverage Amount</label>
                 {{ payment_form.insurance_coverage_amount }}
             </div>
+            {% if bill_type == 'surgery' %}
+            <div class="col-md-6"><label class="form-label">Referring Department</label><input class="form-control" name="referring_department" placeholder="Department / Unit"></div>
+            <div class="col-md-6"><label class="form-label">Referring Doctor</label><input class="form-control" name="referring_doctor" placeholder="Doctor name"></div>
+            <div class="col-md-6"><label class="form-label">Operation Type / Category</label><input class="form-control" name="operation_category" placeholder="Major / Minor / Emergency"></div>
+            <div class="col-md-6"><label class="form-label">Upload Supporting PDF/Documents</label><input type="file" name="supporting_document" class="form-control" accept="application/pdf,image/*"></div>
+            <div class="col-12"><label class="form-label">Notes</label><textarea name="payment_notes" class="form-control" rows="2" placeholder="Insurance status, staff discount notes, approval/reference notes"></textarea></div>
+            {% endif %}
         </div>
     </div>
 
@@ -193,6 +203,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (matches) visibleCount += 1;
         });
         if (noMatch) noMatch.style.display = visibleCount === 0 ? '' : 'none';
+    });
+    document.querySelectorAll('.service-checkbox').forEach(function (box) {
+        box.addEventListener('change', function () {
+            const row = box.closest('tr');
+            if (!row) return;
+            row.classList.toggle('table-success', box.checked);
+            row.classList.toggle('fw-semibold', box.checked);
+        });
     });
 });
 </script>
