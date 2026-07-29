@@ -1,62 +1,25 @@
 {% extends 'dashboard_base.html' %}
 {% block title %}{{ surgery.surgery_number }}{% endblock %}
 {% block page_title %}{{ surgery.surgery_name }} - {{ surgery.patient.full_name }}{% endblock %}
-{% block sidebar %}
-<nav class="nav flex-column">
-    <a class="nav-link" href="{% url 'operation_theatre:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a class="nav-link" href="{% url 'operation_theatre:surgery_list' %}"><i class="bi bi-list-check"></i> All Surgeries</a>
-</nav>
-{% endblock %}
+{% block sidebar %}<nav class="nav flex-column"><a class="nav-link" href="{% url 'operation_theatre:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a><a class="nav-link" href="{% url 'operation_theatre:surgery_list' %}"><i class="bi bi-list-check"></i> All Surgeries</a><a class="nav-link" href="{% url 'operation_theatre:patient_lookup' %}"><i class="bi bi-credit-card"></i> Operation Theater Payment</a></nav>{% endblock %}
 {% block dashboard_content %}
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="tuh-card p-4">
-            <h5>{{ surgery.surgery_number }}</h5>
-            <p class="mb-1"><strong>Patient:</strong> {{ surgery.patient.full_name }} ({{ surgery.patient.patient_code }})</p>
-            <p class="mb-1"><strong>Surgeon:</strong> Dr. {{ surgery.surgeon.full_name }}</p>
-            {% if surgery.assistant_surgeons %}<p class="mb-1"><strong>Assistants:</strong> {{ surgery.assistant_surgeons }}</p>{% endif %}
-            <p class="mb-1"><strong>OT Room:</strong> {{ surgery.ot_room|default:"-" }}</p>
-            <p class="mb-1"><strong>Anesthesia:</strong> {{ surgery.get_anesthesia_type_display|default:"-" }}</p>
-            <p class="mb-1"><strong>Scheduled:</strong> {{ surgery.scheduled_datetime|date:"M d, Y H:i" }}</p>
-            {% if surgery.pre_op_notes %}<p class="mb-1"><strong>Pre-op notes:</strong> {{ surgery.pre_op_notes }}</p>{% endif %}
-            <p class="mb-1"><strong>Charge:</strong> NPR {{ surgery.charge_amount }}</p>
-            <div class="mt-3 d-flex gap-2 flex-wrap">
-                <a href="{% url 'operation_theatre:surgery_slip' surgery.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print OT Slip</a>
-                <a href="{% url 'billing:create_bill' surgery.patient.pk %}?bill_type=surgery&surgery_id={{ surgery.pk }}" class="btn btn-sm btn-outline-primary">Bill Surgery</a>
-                <a href="{% url 'documents:document_list' surgery.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a>
-                <a href="{% url 'patients:patient_detail' surgery.patient.pk %}" class="btn btn-sm btn-outline-secondary">Full Patient History</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-7">
-        <div class="tuh-card p-4">
-            <h5 class="mb-3">Update Operative Record</h5>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                    </div>
-                {% endfor %}
-                <div class="mb-3">
-                    <label class="form-label">Upload Operative Report / Surgical Notes / Scanned Documents</label>
-                    <input type="file" name="operative_files" class="form-control" multiple>
-                    <small class="text-muted">Select more than one if needed - each becomes part of the patient's permanent Medical Record.</small>
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap"><div><h5 class="fw-bold mb-1 text-break">{{ surgery.surgery_number }}</h5><span class="badge bg-primary">{{ surgery.get_status_display }}</span></div>{% if surgery.barcode %}<img src="{{ surgery.barcode.url }}" alt="Surgery Barcode" style="max-width:180px;max-height:48px;object-fit:contain;">{% endif %}</div>
+            <div class="border rounded p-3 bg-light mb-3">
+                <div class="row g-2 small align-items-start">
+                    <div class="col-5 text-muted">Patient</div><div class="col-7 fw-semibold text-break">{{ surgery.patient.full_name }}</div>
+                    <div class="col-5 text-muted">Patient ID</div><div class="col-7 text-break"><code>{{ surgery.patient.patient_code }}</code></div>
+                    <div class="col-5 text-muted">Phone</div><div class="col-7">{{ surgery.patient.phone_number }}</div>
+                    <div class="col-5 text-muted">OP/EN/Surgery No.</div><div class="col-7 text-break"><code>{{ surgery.surgery_number }}</code></div>
+                    <div class="col-5 text-muted">Admission/Ward</div><div class="col-7">{% if surgery.admission %}{{ surgery.admission.ward.name }}{% if surgery.admission.bed %} / Bed {{ surgery.admission.bed.bed_number }}{% endif %}{% else %}-{% endif %}</div>
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
-            </form>
+            </div>
+            <dl class="row small mb-0"><dt class="col-sm-5">Procedure</dt><dd class="col-sm-7 text-break">{{ surgery.surgery_name }}</dd><dt class="col-sm-5">Operation Type</dt><dd class="col-sm-7">{{ surgery.operation_type|default:'-' }}</dd><dt class="col-sm-5">Surgeon</dt><dd class="col-sm-7">Dr. {{ surgery.surgeon.full_name }}</dd><dt class="col-sm-5">Department</dt><dd class="col-sm-7">{{ surgery.surgeon.department.name|default:'-' }}</dd><dt class="col-sm-5">OT Room</dt><dd class="col-sm-7">{{ surgery.ot_room|default:'-' }}</dd><dt class="col-sm-5">Anesthesia</dt><dd class="col-sm-7">{{ surgery.get_anesthesia_type_display|default:'-' }}</dd><dt class="col-sm-5">Scheduled</dt><dd class="col-sm-7">{{ surgery.scheduled_datetime|date:'M d, Y H:i' }}</dd><dt class="col-sm-5">Charge</dt><dd class="col-sm-7">NPR {{ surgery.charge_amount }}</dd></dl>
+            <div class="mt-3 d-flex gap-2 flex-wrap"><a href="{% url 'operation_theatre:surgery_slip' surgery.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print OT Slip</a><a href="{% url 'billing:create_bill' surgery.patient.pk %}?bill_type=surgery&surgery_id={{ surgery.pk }}" class="btn btn-sm btn-outline-primary">Operation Theater Payment</a><a href="{% url 'documents:document_list' surgery.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a><a href="{% url 'patients:patient_detail' surgery.patient.pk %}" class="btn btn-sm btn-outline-secondary">Full Patient History</a></div>
         </div>
-        {% if uploaded_docs %}
-        <div class="tuh-card p-4 mt-4">
-            <h6 class="fw-bold mb-3">Uploaded Documents</h6>
-            <ul class="list-unstyled mb-0 small">
-            {% for doc in uploaded_docs %}
-                <li class="mb-1"><a href="{% url 'documents:document_view' doc.pk %}" target="_blank">{{ doc.title }}</a> <span class="text-muted">({{ doc.uploaded_at|date:"M d, Y H:i" }})</span></li>
-            {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
     </div>
+    <div class="col-lg-7"><div class="tuh-card p-4"><h5 class="mb-3">Update Operative Record</h5><form method="post" enctype="multipart/form-data">{% csrf_token %}{% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}<div class="mb-3"><label class="form-label">Upload Operative Report / Surgical Notes / Scanned Documents</label><input type="file" name="operative_files" class="form-control" multiple><small class="text-muted">Each file becomes part of the patient's permanent Medical Record.</small></div><button type="submit" class="btn btn-primary">Save</button></form></div>{% if uploaded_docs %}<div class="tuh-card p-4 mt-4"><h6 class="fw-bold mb-3">Uploaded Documents</h6><ul class="list-unstyled mb-0 small">{% for doc in uploaded_docs %}<li class="mb-1"><a href="{% url 'documents:document_view' doc.pk %}" target="_blank">{{ doc.title }}</a> <span class="text-muted">({{ doc.uploaded_at|date:'M d, Y H:i' }})</span></li>{% endfor %}</ul></div>{% endif %}</div>
 </div>
 {% endblock %}

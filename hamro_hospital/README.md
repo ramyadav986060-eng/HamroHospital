@@ -425,3 +425,15 @@ python manage.py create_demo_accounts
 - Discharge form now includes professional follow-up fields: follow-up date, department, doctor, instructions, investigations and notes.
 - Discharge summary/package PDF redesigned with hospital header, patient details, admission details, treatment summary, medicines, diet/activity/emergency advice, follow-up section, financial summary, barcode and signature/stamp areas.
 - Discharge checklist workflow remains mandatory before discharge completion.
+
+## Part 7 Operation Theater Improvements Added
+
+- Operation Theater patient information cards were redesigned to prevent long SURG/OP/EN numbers from overlapping or wrapping badly.
+- OT dashboard summary cards are clickable and open detailed pages with search, date filter and Close button.
+- OT dashboard defaults to latest 24-hour records; old records are not deleted and can be retrieved by filters.
+- Patient lookup in OT supports patient ID/barcode/QR value, phone and name through the existing search and scanner pattern.
+- OT slip was redesigned with hospital logo, patient details, patient barcode, patient QR, doctor, department, OT room, scheduled procedure, date/time, ward/bed and signature areas.
+- Operation charges are based on Super Admin-managed Operation Types and synced billable hospital services; no cashier-entered fixed pricing is required.
+- "ServiceOrder Queue" wording in Operation Theater dashboard was replaced with Operation Theater Payment / Active payment records.
+- Operation Theater Payment redirects to the standard surgery billing workflow with staff discount and insurance support.
+- OT revenue detail page follows the same search/date/close behavior as other finance modules.

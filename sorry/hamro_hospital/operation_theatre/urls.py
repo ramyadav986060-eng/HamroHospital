@@ -5,6 +5,8 @@ app_name = 'operation_theatre'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/details/', views.dashboard_details, name='dashboard_details'),
+    path('payment/<int:patient_id>/', views.ot_payment, name='ot_payment'),
     path('surgeries/', views.surgery_list, name='surgery_list'),
     path('patient-lookup/', views.patient_lookup, name='patient_lookup'),
     path('schedule/<int:patient_id>/', views.surgery_schedule, name='surgery_schedule'),

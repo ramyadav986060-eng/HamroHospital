@@ -1,8 +1,9 @@
 import datetime
 
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.decorators import operation_theatre_required
@@ -10,8 +11,57 @@ from accounts.models import AuditLog
 from accounts.utils import write_audit_log
 from documents.models import PatientDocument, DocumentCategory
 from operation_theatre.forms import SurgeryScheduleForm, SurgeryUpdateForm
-from operation_theatre.models import Surgery
+from operation_theatre.models import Surgery, OperationType
 from patients.models import Patient
+
+
+@operation_theatre_required
+def dashboard_details(request):
+    metric = request.GET.get('metric', 'scheduled')
+    today = timezone.localdate()
+    surgeries = Surgery.objects.select_related('patient', 'surgeon', 'ot_room', 'admission', 'surgeon__department')
+    title = 'Operation Theatre Details'
+    if metric == 'current':
+        surgeries = surgeries.filter(status=Surgery.Status.IN_PROGRESS); title = 'Current Operations'
+    elif metric == 'scheduled':
+        surgeries = surgeries.filter(status=Surgery.Status.SCHEDULED, scheduled_datetime__gte=timezone.now() - datetime.timedelta(hours=24)); title = 'Scheduled Operations - Latest 24 Hours'
+    elif metric == 'completed':
+        surgeries = surgeries.filter(status=Surgery.Status.COMPLETED, completed_at__gte=timezone.now() - datetime.timedelta(hours=24)); title = 'Completed Operations - Latest 24 Hours'
+    elif metric == 'revenue':
+        surgeries = surgeries.none(); title = 'Operation Theater Revenue'
+    q = (request.GET.get('q') or '').strip()
+    date_filter = request.GET.get('date_filter','')
+    start_date = request.GET.get('start_date','')
+    end_date = request.GET.get('end_date','')
+    if q:
+        surgeries = surgeries.filter(Q(surgery_number__icontains=q)|Q(patient__patient_code__icontains=q)|Q(patient__first_name__icontains=q)|Q(patient__last_name__icontains=q)|Q(patient__phone_number__icontains=q)|Q(surgery_name__icontains=q)|Q(surgeon__full_name__icontains=q))
+    if date_filter or start_date or end_date:
+        if date_filter == 'today': surgeries = surgeries.filter(scheduled_datetime__date=today)
+        elif date_filter == 'week': surgeries = surgeries.filter(scheduled_datetime__date__gte=today - datetime.timedelta(days=today.weekday()))
+        elif date_filter == 'month': surgeries = surgeries.filter(scheduled_datetime__date__gte=today.replace(day=1))
+        elif date_filter == 'year': surgeries = surgeries.filter(scheduled_datetime__date__gte=today.replace(month=1, day=1))
+        try:
+            if start_date: surgeries = surgeries.filter(scheduled_datetime__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date: surgeries = surgeries.filter(scheduled_datetime__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError: pass
+    from billing.models import Bill
+    revenue_bills = Bill.objects.filter(bill_type='surgery', status=Bill.Status.PAID).select_related('patient')
+    if metric == 'revenue':
+        if date_filter == 'today': revenue_bills = revenue_bills.filter(created_at__date=today)
+        elif date_filter == 'week': revenue_bills = revenue_bills.filter(created_at__date__gte=today - datetime.timedelta(days=today.weekday()))
+        elif date_filter == 'month' or not date_filter: revenue_bills = revenue_bills.filter(created_at__date__gte=today.replace(day=1))
+        elif date_filter == 'year': revenue_bills = revenue_bills.filter(created_at__date__gte=today.replace(month=1, day=1))
+        try:
+            if start_date: revenue_bills = revenue_bills.filter(created_at__date__gte=datetime.date.fromisoformat(start_date))
+            if end_date: revenue_bills = revenue_bills.filter(created_at__date__lte=datetime.date.fromisoformat(end_date))
+        except ValueError: pass
+        if q: revenue_bills = revenue_bills.filter(Q(bill_number__icontains=q)|Q(patient__patient_code__icontains=q)|Q(patient__first_name__icontains=q)|Q(patient__last_name__icontains=q))
+    return render(request, 'operation_theatre/dashboard_details.html', {'title': title, 'metric': metric, 'surgeries': surgeries.order_by('-scheduled_datetime')[:1000], 'revenue_bills': revenue_bills.order_by('-created_at')[:1000], 'revenue_total': revenue_bills.aggregate(t=Sum('total_amount'))['t'] or 0, 'q': q, 'date_filter': date_filter, 'start_date': start_date, 'end_date': end_date})
+
+
+@operation_theatre_required
+def ot_payment(request, patient_id):
+    return redirect(f"{reverse('billing:create_bill', args=[patient_id])}?bill_type=surgery")
 
 
 @operation_theatre_required
@@ -29,22 +79,24 @@ def patient_lookup(request):
 @operation_theatre_required
 def dashboard(request):
     today = datetime.date.today()
+    window_start = timezone.now() - datetime.timedelta(hours=24)
     scheduled = Surgery.objects.filter(status=Surgery.Status.SCHEDULED).select_related('patient', 'surgeon')
-    today_list = scheduled.filter(scheduled_datetime__date=today)
+    today_list = scheduled.filter(scheduled_datetime__gte=window_start)
     in_progress = Surgery.objects.filter(status=Surgery.Status.IN_PROGRESS).select_related('patient', 'surgeon')
-    completed_today = Surgery.objects.filter(status=Surgery.Status.COMPLETED, completed_at__date=today)
+    completed_today = Surgery.objects.filter(status=Surgery.Status.COMPLETED, completed_at__gte=window_start)
     recent_uploads = PatientDocument.objects.filter(
         category__in=[DocumentCategory.OPERATION_RECORD, DocumentCategory.CONSENT_FORM],
     ).select_related('patient', 'uploaded_by').order_by('-uploaded_at')[:10]
 
-    from workflow.models import ServiceOrder
-    service_orders = ServiceOrder.objects.filter(service_type=ServiceOrder.ServiceType.OPERATION_THEATRE).exclude(status=ServiceOrder.Status.COMPLETED).select_related('patient', 'bill')[:10]
+    from billing.models import Bill
+    todays_revenue = Bill.objects.filter(bill_type='surgery', status=Bill.Status.PAID, created_at__gte=window_start).aggregate(t=Sum('total_amount'))['t'] or 0
+    ot_payments = Bill.objects.filter(bill_type='surgery').exclude(status=Bill.Status.CANCELLED).select_related('patient').order_by('-created_at')[:10]
 
     return render(request, 'operation_theatre/dashboard.html', {
         'today_list': today_list, 'in_progress': in_progress,
         'scheduled_count': scheduled.count(), 'in_progress_count': in_progress.count(),
         'completed_today_count': completed_today.count(), 'recent_uploads': recent_uploads,
-        'service_orders': service_orders,
+        'todays_revenue': todays_revenue, 'ot_payments': ot_payments,
     })
 
 
@@ -82,6 +134,9 @@ def surgery_schedule(request, patient_id):
         if form.is_valid():
             surgery = form.save(commit=False)
             surgery.patient = patient
+            if surgery.operation_type:
+                surgery.surgery_name = surgery.surgery_name or surgery.operation_type.name
+                surgery.charge_amount = surgery.operation_type.fixed_price
             surgery.created_by = request.user
             surgery.save()
 

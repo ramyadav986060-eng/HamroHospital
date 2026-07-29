@@ -1,6 +1,6 @@
 from django import forms
 
-from operation_theatre.models import Surgery, OTRoom
+from operation_theatre.models import Surgery, OTRoom, OperationType
 from doctors.models import Doctor
 
 
@@ -8,10 +8,11 @@ class SurgeryScheduleForm(forms.ModelForm):
     class Meta:
         model = Surgery
         fields = [
-            'surgery_name', 'surgeon', 'assistant_surgeons', 'ot_room', 'anesthesia_type',
+            'operation_type', 'surgery_name', 'surgeon', 'assistant_surgeons', 'ot_room', 'anesthesia_type',
             'scheduled_datetime', 'admission', 'pre_op_notes', 'charge_amount',
         ]
         widgets = {
+            'operation_type': forms.Select(attrs={'class': 'form-select', 'id': 'id_operation_type'}),
             'surgery_name': forms.TextInput(attrs={'class': 'form-control'}),
             'surgeon': forms.Select(attrs={'class': 'form-select'}),
             'assistant_surgeons': forms.TextInput(attrs={'class': 'form-control'}),
@@ -25,6 +26,8 @@ class SurgeryScheduleForm(forms.ModelForm):
 
     def __init__(self, *args, patient=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['operation_type'].queryset = OperationType.objects.filter(is_active=True)
+        self.fields['operation_type'].required = False
         self.fields['surgeon'].queryset = Doctor.objects.filter(is_active=True)
         self.fields['ot_room'].queryset = OTRoom.objects.filter(is_active=True)
         self.fields['admission'].required = False

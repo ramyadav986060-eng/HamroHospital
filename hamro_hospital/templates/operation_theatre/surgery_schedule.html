@@ -2,20 +2,15 @@
 {% block title %}Schedule Surgery - {{ patient.full_name }}{% endblock %}
 {% block page_title %}Schedule Surgery for {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
 {% block dashboard_content %}
-<form method="post" enctype="multipart/form-data" class="tuh-card p-4" style="max-width:650px;">
+<div class="tuh-card p-4 mb-4"><h5 class="fw-bold mb-3"><i class="bi bi-search"></i> Patient Search / Information</h5><div class="input-group mb-3"><input id="otPatientLookup" class="form-control" value="{{ patient.patient_code }}" placeholder="Search by Patient ID, barcode/QR, phone"><button type="button" id="otLookupBtn" class="btn btn-primary">Search</button></div><div class="row g-2 small"><div class="col-md-3"><strong>Patient ID</strong><div id="pCode">{{ patient.patient_code }}</div></div><div class="col-md-3"><strong>Name</strong><div id="pName">{{ patient.full_name }}</div></div><div class="col-md-2"><strong>Age/Gender</strong><div id="pAgeGender">{{ patient.age }} / {{ patient.get_gender_display }}</div></div><div class="col-md-2"><strong>Phone</strong><div id="pPhone">{{ patient.phone_number }}</div></div><div class="col-md-2"><strong>Address</strong><div id="pAddress">{{ patient.district.name }}</div></div></div></div>
+<form method="post" enctype="multipart/form-data" class="tuh-card p-4" style="max-width:850px;">
     {% csrf_token %}
-    {% for field in form %}
-        <div class="mb-3">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
-        </div>
-    {% endfor %}
-    <div class="mb-3">
-        <label class="form-label">Upload PDF / Scanned Consent Form</label>
-        <input type="file" name="consent_files" class="form-control" multiple>
-        <small class="text-muted">Optional at scheduling time - becomes part of the patient's permanent Medical Record.</small>
-    </div>
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.name == 'operation_type' %}<div class="form-text">Prices are configured by Super Admin in Operation Types. Selecting an operation type uses its configured fixed price.</div>{% endif %}{% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
+    <div class="mb-3"><label class="form-label">Upload PDF / Scanned Consent Form</label><input type="file" name="consent_files" class="form-control" multiple><small class="text-muted">Optional at scheduling time - becomes part of the patient's permanent Medical Record.</small></div>
     <button type="submit" class="btn btn-primary">Schedule Surgery</button>
+    <button type="button" onclick="history.back()" class="btn btn-outline-secondary">Back</button>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function(){ const btn=document.getElementById('otLookupBtn'), input=document.getElementById('otPatientLookup'); function lookup(){const q=(input.value||'').trim(); if(!q)return; fetch('{% url "patients:qr_lookup" %}?code='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{if(!d.found){alert('Patient not found');return;} document.getElementById('pCode').innerText=d.patient_code; document.getElementById('pName').innerText=d.full_name; document.getElementById('pAgeGender').innerText=(d.age_display||d.age)+' / '+d.gender_display; document.getElementById('pPhone').innerText=d.phone_number; document.getElementById('pAddress').innerText=[d.local_address,d.municipality,d.district].filter(Boolean).join(', ')||'-';});} btn.addEventListener('click', lookup); input.addEventListener('keydown', e=>{if(e.key==='Enter'){e.preventDefault();lookup();}}); });
+</script>
 {% endblock %}
