@@ -5,9 +5,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from doctors import views as doctor_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Backward-compatible doctor workspace URLs. The management URLs remain the
+    # canonical named routes, but these prevent older dashboard links/bookmarks
+    # from producing 404s while keeping the public /doctors/ page unchanged.
+    path('doctors/dashboard/', doctor_views.doctor_dashboard, name='legacy_doctor_dashboard'),
+    path('doctors/patients/search/', doctor_views.doctor_patient_search, name='legacy_doctor_patient_search'),
+    path('doctors/profile/', doctor_views.doctor_profile, name='legacy_doctor_profile'),
+    path('doctors/profile/password/', doctor_views.doctor_change_password, name='legacy_doctor_change_password'),
 
     path('', include('website.urls')),
     path('accounts/', include('accounts.urls')),
