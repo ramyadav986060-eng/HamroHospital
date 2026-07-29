@@ -121,9 +121,63 @@ STF000001,2026-07-28T09:00:00,in,DEV001
 STF000001,2026-07-28T18:05:00,out,DEV002
 ```
 
+## Completed production-ready modules
+
+- Patient registration, OPD visit/token workflow, patient barcode/QR lookup, and patient portal.
+- EHS / Extension Service registration using the same patient database with separated visit/revenue marking.
+- Doctor consultation, prescriptions, referrals, department service orders, and patient timeline.
+- Laboratory, Radiology, Pharmacy, Admissions/Ward, Nursing, Operation Theatre, Blood Bank, Insurance, Medical Records, Billing/Cash Counter, Finance, Attendance, Leave, and Payroll modules.
+- Comprehensive reports with date filters, search, sorting, print, PDF export, and Excel export.
+- Staff identity with Staff ID/barcode, staff profile, attendance history, leave history, payroll and salary slips.
+- Notifications and audit trail foundations for sensitive workflows.
+
+## User roles and permission summary
+
+- **Main Super Admin**: full access to all modules, settings, staff, finance, reports, dashboards, and administration.
+- **Finance / Accounts**: revenue, billing summaries, extension fees, attendance reports, payroll, salary history/payment records, and financial exports. Clinical records remain outside normal finance workflow.
+- **Department Head / Sub-Admin**: own-department staff list/edit, own-department attendance review, own-department leave review, own-department referrals/notifications, and department-scoped reports only. No finance, payroll, global settings, registration, or other-department confidential data.
+- **Registration / EHS Counter**: patient lookup, patient registration, OPD/EHS visit creation, tokens, and registration receipts.
+- **Cashier**: billing, payment collection, pending bills, receipts, refunds, and bill lookup.
+- **Doctor**: consultation queue, patient search, clinical notes, prescriptions, referrals, lab/radiology/admission/nursing/OT/blood-bank requests.
+- **Laboratory / Radiology / Pharmacy / Nursing / Admission / Blood Bank / Operation Theatre / Insurance / Medical Records**: module-specific operational dashboards and workflows.
+- **Hospital Staff**: own profile, staff card/barcode, attendance, leave requests/history, notifications, and password change.
+- **Patient**: portal dashboard, profile, patient card, visit booking, timeline, visits, bills, lab/radiology report viewing where available.
+
+## Important workflows
+
+- Registration -> OPD token -> Doctor consultation -> Department referrals/service orders -> Cash Counter payment -> Department completion -> Reports.
+- Doctor -> Laboratory/Radiology/Pharmacy/Admission/Nursing/Blood Bank/Operation Theatre referrals with department notification and patient timeline updates.
+- Attendance -> Leave request -> Department Head review -> Super Admin override for leave-limit exceptions.
+- Finance -> Payroll generation -> Salary payment -> Salary slip/report export.
+- Billing -> Receipts -> Reports and revenue dashboards.
+
+## PostgreSQL deployment
+
+SQLite is the default local development database. PostgreSQL is enabled entirely by environment variables, without changing code:
+
+```env
+DJANGO_DB_ENGINE=postgres
+POSTGRES_DB=hamro_hospital
+POSTGRES_USER=hamro_hospital
+POSTGRES_PASSWORD=change-me
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+POSTGRES_CONN_MAX_AGE=60
+```
+
+Then run:
+
+```bash
+python manage.py migrate
+python manage.py create_demo_accounts
+python manage.py collectstatic
+```
+
+Use the included `POSTGRESQL_MIGRATION_GUIDE.pdf` for data migration from SQLite to PostgreSQL.
+
 ## Final status
 
-The system is ready for acceptance testing and staged production configuration. External services such as Redis, Celery workers, eSewa live credentials and fingerprint device SDK/API must be configured on the deployment server.
+The system has passed final code checks, clean migration verification, workflow/report tests, report export checks, role dashboard smoke tests, and PostgreSQL settings validation. It is ready for acceptance testing and staged production configuration. External services such as Redis, Celery workers, eSewa/Khalti/FonePay live credentials and fingerprint device SDK/API must be configured on the deployment server.
 
 ## Easiest local start
 
