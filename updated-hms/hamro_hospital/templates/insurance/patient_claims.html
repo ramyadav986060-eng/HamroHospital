@@ -1,0 +1,37 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Claims - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Insurance Claims - {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+{% if patient.has_insurance %}
+<div class="alert alert-info">Policy: {{ patient.insurance_company }} - {{ patient.insurance_policy_number }}</div>
+{% else %}
+<div class="alert alert-warning">This patient has no insurance on file.</div>
+{% endif %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'insurance:claim_submit' patient.pk %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Submit New Claim</a>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Claim #</th><th>Company</th><th>Claimed</th><th>Approved</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for claim in claims %}
+                <tr>
+                    <td>{{ claim.claim_number }}</td>
+                    <td>{{ claim.insurance_company }}</td>
+                    <td>NPR {{ claim.amount_claimed }}</td>
+                    <td>{% if claim.approved_amount %}NPR {{ claim.approved_amount }}{% else %}-{% endif %}</td>
+                    <td><span class="badge badge-success-soft">{{ claim.get_status_display }}</span></td>
+                    <td>
+                        <a href="{% url 'insurance:claim_review' claim.pk %}" class="btn btn-sm btn-outline-primary">Review</a>
+                        <a href="{% url 'insurance:claim_slip' claim.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-printer"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No claims submitted yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

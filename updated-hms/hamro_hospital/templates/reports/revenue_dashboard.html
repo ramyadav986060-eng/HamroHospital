@@ -1,0 +1,173 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Revenue Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Financial Revenue Dashboard{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='revenue' %}{% endblock %}
+{% block dashboard_content %}
+<!-- Search & Filter Controls Card (spec section 18) -->
+<form method="get" class="tuh-card p-3 mb-4 bg-light border shadow-sm" id="revenueFilterForm">
+    <div class="row g-3 align-items-center">
+        <!-- Date Preset Filter -->
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small fw-bold">Select Date Filter</label>
+            <select name="date_filter" class="form-select form-select-sm" id="dateFilterSelect">
+                <option value="all_time" {% if date_filter == 'all_time' %}selected{% endif %}>All Time</option>
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today's Revenue</option>
+                <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                <option value="weekly" {% if date_filter == 'weekly' %}selected{% endif %}>Weekly Summary</option>
+                <option value="monthly" {% if date_filter == 'monthly' %}selected{% endif %}>Monthly Revenue</option>
+                <option value="yearly" {% if date_filter == 'yearly' %}selected{% endif %}>Yearly Summary</option>
+                <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Date Range</option>
+            </select>
+        </div>
+        
+        <!-- Custom date inputs -->
+        <div class="col-md-3 col-sm-6" id="startDateWrapper" style="display:none;">
+            <label class="form-label small fw-bold">Start Date</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3 col-sm-6" id="endDateWrapper" style="display:none;">
+            <label class="form-label small fw-bold">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
+        </div>
+
+        <div class="col-auto align-self-end d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i> Apply Filter</button>
+            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</button>
+            <a class="btn btn-sm btn-outline-success" href="?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=excel"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+            <a class="btn btn-sm btn-outline-danger" href="?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+        </div>
+    </div>
+</form>
+
+{% if not filter_applied %}
+<div class="tuh-card p-5 text-center text-muted mb-4">
+    <i class="bi bi-funnel fs-1 d-block mb-2 opacity-50"></i>
+    <h5 class="fw-bold mb-1">Select a date filter above and click Apply</h5>
+    <div class="small">Revenue statistics stay hidden until a range is chosen, so nothing is shown out of context.</div>
+</div>
+{% else %}
+<!-- Four Primary Revenue Statistic Cards (spec section 18 - Guaranteed no-overflow responsive scaling) -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-sm-6">
+        <div class="stat-card blue shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Today Revenue', 'NPR {{ todays_revenue|floatformat:2 }}')">
+            <span class="small text-uppercase fw-bold opacity-75">Today's Revenue</span>
+            <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ todays_revenue|short_amount }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="stat-card green shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Monthly Revenue', 'NPR {{ monthly_revenue|floatformat:2 }}')">
+            <span class="small text-uppercase fw-bold opacity-75">Monthly Revenue</span>
+            <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ monthly_revenue|short_amount }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="stat-card orange shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Yearly Revenue', 'NPR {{ yearly_revenue|floatformat:2 }}')">
+            <span class="small text-uppercase fw-bold opacity-75">Yearly Revenue</span>
+            <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ yearly_revenue|short_amount }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="stat-card gray shadow-sm d-flex flex-column justify-content-between p-3 click-amount-card" style="min-height: 110px;" onclick="showFullValue('Total Revenue (All Time)', 'NPR {{ total_revenue|floatformat:2 }}')">
+            <span class="small text-uppercase fw-bold opacity-75">Total Revenue (All Time)</span>
+            <h3 class="fw-bold m-0" style="font-size: clamp(1rem, 2vw, 1.75rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ total_revenue|short_amount }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Filtered Revenue breakdown block -->
+<div class="tuh-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-pie-chart"></i> Revenue Breakdown for Selected Filter</h5>
+        <span class="badge bg-light text-dark border fw-bold text-uppercase">{{ date_filter }}</span>
+    </div>
+    
+    <div class="row g-4 align-items-center">
+        <!-- Visual progress bars representing proportions -->
+        <div class="col-md-7">
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="fw-bold">OPD Walk-in Registrations</span>
+                    <span class="text-muted">NPR {{ opd_total }}</span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ opd_percent }}%;"></div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="fw-bold">General Cash Counter Bills</span>
+                    <span class="text-muted">NPR {{ bill_total }}</span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ bill_percent }}%;"></div>
+                </div>
+            </div>
+
+            <div class="mb-0">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="fw-bold">Pharmacy Dispensing Sales</span>
+                    <span class="text-muted">NPR {{ pharmacy_total }}</span>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ pharmacy_percent }}%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grand Total Summary Card -->
+        <div class="col-md-5">
+            <div class="bg-light p-4 rounded text-center border">
+                <span class="text-muted text-uppercase small fw-bold">Grand Total Filtered Collections</span>
+                <h2 class="fw-bold text-primary mt-2 mb-2" style="font-size: clamp(1.2rem, 3vw, 2.5rem); word-wrap: break-word; overflow-wrap: break-word;">NPR {{ grand_total|floatformat:2 }}</h2>
+                <div class="form-text text-muted" style="font-size: 0.75rem;">Includes all confirmed digital and physical collections for selected range.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tuh-card p-4 mt-4">
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-diagram-3"></i> Department-wise OPD Revenue</h5>
+    <div class="table-responsive">
+        <table class="table table-hover small align-middle">
+            <thead><tr><th>Department</th><th>Visits</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+            {% for row in department_revenue %}
+                <tr><td>{{ row.department__name|default:'Unknown' }}</td><td>{{ row.visits }}</td><td class="text-end">NPR {{ row.total|floatformat:2 }}</td></tr>
+            {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">No department revenue found for this range.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('dateFilterSelect');
+    const startWrapper = document.getElementById('startDateWrapper');
+    const endWrapper = document.getElementById('endDateWrapper');
+
+    function updateInputs() {
+        const val = select.value;
+        if (val === 'custom') {
+            startWrapper.style.display = 'block';
+            endWrapper.style.display = 'block';
+        } else {
+            startWrapper.style.display = 'none';
+            endWrapper.style.display = 'none';
+        }
+    }
+
+    select.addEventListener('change', function() {
+        updateInputs();
+        if (select.value !== 'custom') {
+            document.getElementById('revenueFilterForm').submit();
+        }
+    });
+    updateInputs();
+});
+</script>
+{% endblock %}

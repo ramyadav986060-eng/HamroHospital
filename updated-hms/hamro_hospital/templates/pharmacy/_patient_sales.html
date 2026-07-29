@@ -1,0 +1,20 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Sale #</th><th>Date</th><th>Amount</th><th></th></tr></thead>
+        <tbody>
+        {% for s in records %}
+            <tr>
+                <td>{{ s.sale_number }}</td>
+                <td>{{ s.created_at|date:"Y-m-d H:i" }}</td>
+                <td>NPR {{ s.total_amount }}</td>
+                <td><a href="{% url 'pharmacy:receipt' s.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">Receipt</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No pharmacy records for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

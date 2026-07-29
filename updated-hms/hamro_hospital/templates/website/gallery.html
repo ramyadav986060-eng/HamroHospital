@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Gallery - {{ HOSPITAL_NAME }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">Hospital Gallery</h1>
+    <div class="row g-3">
+        {% for image in images %}
+        <div class="col-md-3 col-sm-6">
+            <div class="tuh-card overflow-hidden">
+                <img src="{{ image.image.url }}" class="img-fluid w-100" style="height:200px;object-fit:cover;" alt="{{ image.title }}">
+                <div class="p-2"><small class="text-muted">{{ image.title }}</small></div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No gallery images published yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

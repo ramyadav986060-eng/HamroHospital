@@ -1,0 +1,50 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Doctor Dashboard - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patients</span></a>
+    <a class="nav-link" href="{% url 'consultations:queue' %}"><i class="bi bi-clock-history"></i> <span>Consultation Queue</span></a>
+    <a class="nav-link" href="{% url 'referrals:referral_create' %}"><i class="bi bi-send"></i> <span>Send Referral</span></a>
+    <a class="nav-link" href="{% url 'referrals:my_referrals' %}"><i class="bi bi-inboxes"></i> <span>My Referrals</span></a>
+    <a class="nav-link" href="{% url 'blood_bank:doctor_patient_lookup' %}"><i class="bi bi-droplet"></i> <span>Request Blood Bank</span></a>
+    <a class="nav-link" href="{% url 'doctors:profile' %}"><i class="bi bi-person-gear"></i> <span>Profile Settings</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+{% if not doctor_profile %}
+<div class="alert alert-warning">Doctor profile setup is incomplete. Please contact Super Admin.</div>
+{% else %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card blue"><i class="bi bi-calendar-check fs-3"></i><h2>{{ todays_visits }}</h2><small>Today's OPD Visits</small></div></div>
+    <div class="col-md-3"><a href="{% url 'doctors:patient_search' %}" class="text-decoration-none"><div class="stat-card green"><i class="bi bi-search fs-3"></i><h2><i class="bi bi-person-vcard"></i></h2><small>Search Patients</small></div></a></div>
+    <div class="col-md-3"><a href="{% url 'referrals:referral_create' %}" class="text-decoration-none"><div class="stat-card orange"><i class="bi bi-send fs-3"></i><h2><i class="bi bi-arrow-right-circle"></i></h2><small>Create Referral</small></div></a></div>
+    <div class="col-md-3"><a href="{% url 'doctors:profile' %}" class="text-decoration-none"><div class="stat-card gray"><i class="bi bi-person-gear fs-3"></i><h2><i class="bi bi-gear"></i></h2><small>Profile</small></div></a></div>
+</div>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="tuh-card p-4 h-100">
+            <h5 class="fw-bold"><i class="bi bi-clock-history"></i> Today's Consultation Queue</h5>
+            <div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Token</th><th>Patient</th><th>Phone</th><th>Department</th></tr></thead><tbody>{% for visit in todays_queue %}<tr><td>{{ visit.token_number }}</td><td><a href="{% url 'patients:patient_detail' visit.patient.pk %}">{{ visit.patient.full_name }}</a><br><small>{{ visit.patient.patient_code }}</small></td><td>{{ visit.patient.phone_number }}</td><td>{{ visit.department.name }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No OPD visits assigned today.</td></tr>{% endfor %}</tbody></table></div>
+            <a href="{% url 'consultations:queue' %}" class="btn btn-primary">Open Consultation Queue</a>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="tuh-card p-4 h-100">
+            <h5 class="fw-bold"><i class="bi bi-person-badge"></i> My Profile</h5>
+            <p class="mb-1"><strong>Dr. {{ doctor_profile.full_name }}</strong></p>
+            <p class="text-muted small mb-1">{{ doctor_profile.qualification }} &middot; {{ doctor_profile.specialization }}</p>
+            <p class="text-muted small mb-1">Department: {{ doctor_profile.department.name }}</p>
+            <p class="text-muted small">Contact: {{ doctor_profile.contact_number|default:'-' }}</p>
+            <a href="{% url 'doctors:profile' %}" class="btn btn-outline-primary btn-sm">Update Profile</a>
+            <a href="{% url 'doctors:change_password' %}" class="btn btn-outline-secondary btn-sm">Change Password</a>
+        </div>
+    </div>
+</div>
+<div class="tuh-card p-4 mt-4">
+    <h5 class="fw-bold"><i class="bi bi-send"></i> Recent Referrals Sent</h5>
+    <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Patient</th><th>Destination</th><th>Status</th><th></th></tr></thead><tbody>{% for ref in recent_referrals %}<tr><td>{{ ref.patient.full_name }}</td><td>{{ ref.get_referral_type_display }}</td><td>{{ ref.get_status_display }}</td><td><a href="{% url 'referrals:referral_detail' ref.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">No referrals sent yet.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

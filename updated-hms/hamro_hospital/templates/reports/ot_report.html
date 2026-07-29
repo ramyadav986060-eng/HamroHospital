@@ -1,0 +1,10 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Operation Theatre Report{% endblock %}
+{% block page_title %}Operation Theatre Report{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='ot' %}{% endblock %}
+{% block dashboard_content %}
+{% include 'reports/report_filter.html' %}
+<div class="row g-4 mb-4"><div class="col-md-4"><div class="stat-card blue"><h6>Total Surgeries</h6><h3>{{ total_surgeries }}</h3></div></div><div class="col-md-4"><div class="stat-card green"><h6>Completed</h6><h3>{{ completed }}</h3></div></div><div class="col-md-4"><div class="stat-card orange click-amount-card" onclick="showFullValue('Total Surgery Charges', 'NPR {{ total_charges|floatformat:2 }}')"><h6>Total Charges</h6><h3>NPR {{ total_charges|short_amount }}</h3></div></div></div>
+<div class="tuh-card p-4"><h5 class="mb-3">Surgeries</h5><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Surgery #</th><th>Patient</th><th>Surgery</th><th>Surgeon</th><th>Status</th><th class="text-end">Charge</th><th>Scheduled</th></tr></thead><tbody>{% for s in surgeries %}<tr><td>{{ s.surgery_number }}</td><td>{{ s.patient.full_name }}<br><small>{{ s.patient.patient_code }}</small></td><td>{{ s.surgery_name }}</td><td>Dr. {{ s.surgeon.full_name }}</td><td>{{ s.get_status_display }}</td><td class="text-end">NPR {{ s.charge_amount|floatformat:2 }}</td><td>{{ s.scheduled_datetime|date:'Y-m-d H:i' }}</td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted">No surgeries found.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

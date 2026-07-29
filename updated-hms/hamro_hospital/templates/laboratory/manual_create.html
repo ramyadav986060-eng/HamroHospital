@@ -1,0 +1,17 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}New Lab Record - {{ patient.full_name }}{% endblock %}
+{% block page_title %}New Laboratory Record (Walk-in){% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-3">
+    <p class="mb-0"><strong>Patient:</strong> {{ patient.full_name }} ({{ patient.patient_code }}) &nbsp;|&nbsp; {{ patient.phone_number }}</p>
+</div>
+<form method="post" enctype="multipart/form-data" class="tuh-card p-4">
+    {% csrf_token %}
+    <p class="text-muted small">Use this when a patient arrives with a physical referral letter instead of an electronic request. The record is marked Accepted immediately.</p>
+    {% for field in form %}
+        <div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}</div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Open Record</button>
+    <a href="{% url 'laboratory:search_patient' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

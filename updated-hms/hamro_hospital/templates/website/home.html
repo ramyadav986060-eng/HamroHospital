@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}{{ HOSPITAL_NAME }} - Quality Healthcare in Nepal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<div class="home-notice-ticker" aria-label="Home notification">
+    <div class="home-notice-track">
+        <span><i class="bi bi-megaphone-fill me-2"></i>{% if home_notification %}{{ home_notification.message }}{% else %}हाम्रो अस्पतालमा तपाईंलाई हार्दिक स्वागत छ। गुणस्तरीय स्वास्थ्य सेवा, अनुभवी चिकित्सक र सुरक्षित उपचारका लागि हामी सधैं तपाईंको सेवामा छौं।{% endif %}</span>
+    </div>
+</div>
+
+<section class="tuh-hero text-center home-hero">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">हाम्रो अस्पताल — स्वास्थ्य नै सबैभन्दा ठूलो धन हो।</h1>
+        <p class="lead mb-3 nepali-hero-copy">
+            हाम्रो अस्पतालले अनुभवी चिकित्सक, जिम्मेवार स्वास्थ्यकर्मी र आधुनिक प्रविधिको सहायताले सुरक्षित, छिटो र विश्वसनीय स्वास्थ्य सेवा उपलब्ध गराउँछ।
+            बिरामीको सम्मान, सहज उपचार र निरन्तर हेरचाह हाम्रो प्रमुख प्रतिबद्धता हो।
+        </p>
+        <p class="hero-subcopy mb-4">
+            Hamro Hospital brings together expert doctors, compassionate care teams, and modern facilities to provide dependable healthcare for every patient.
+        </p>
+        <a href="{% url 'patient_portal:login' %}" class="btn btn-light btn-lg hero-patient-login">
+            <i class="bi bi-person-circle"></i> Patient Login
+        </a>
+    </div>
+</section>
+
+<section class="container home-quick-links">
+    <div class="row text-center g-3 justify-content-center">
+        <div class="col-lg-2 col-md-4 col-6">
+            <a href="{% url 'website:medical_services' %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
+                    <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-heart-pulse text-primary"></i></div>
+                    <h6 class="mb-0 text-dark">Services</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <a href="{% url 'website:home' %}#ehs" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
+                    <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-diagram-3 text-primary"></i></div>
+                    <h6 class="mb-0 text-dark">Departments</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <a href="{% url 'website:doctor_list' %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
+                    <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-person-badge text-primary"></i></div>
+                    <h6 class="mb-0 text-dark">Doctors</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <a href="{% url 'patient_portal:signup' %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
+                    <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-person-plus text-primary"></i></div>
+                    <h6 class="mb-0 text-dark">Patient Registration</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <a href="{% url 'website:extension_services' %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100 shadow-sm bg-white home-action-card">
+                    <div class="tuh-icon-circle mx-auto mb-2"><i class="bi bi-plus-circle text-primary"></i></div>
+                    <h6 class="mb-0 text-dark">Extension Services</h6>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="ehs" class="container py-5 scroll-target-section">
+    <h2 class="text-center mb-2 fw-bold">External Hospital Services (EHS)</h2>
+    <p class="text-center text-muted mb-4">Choose a service area to view consultation details, doctors, and schedules.</p>
+    <div class="row g-4">
+        {% for dept in departments %}
+        <div class="col-md-3 col-sm-6">
+            <a href="{% url 'website:department_detail' dept.slug %}" class="text-decoration-none">
+                <div class="tuh-card p-4 h-100 text-center service-card-clean">
+                    <div class="tuh-icon-circle mx-auto mb-3"><i class="{{ dept.icon_class|default:'bi bi-hospital' }}"></i></div>
+                    <h6 class="text-dark mb-1">{{ dept.name }}</h6>
+                    <small class="text-muted">NPR {{ dept.consultation_fee }}</small>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">Departments will appear here once added by the administrator.</p>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'website:department_list' %}" class="btn btn-outline-primary">View All EHS Departments</a>
+    </div>
+</section>
+
+{% if featured_doctors %}
+<section class="container py-5">
+    <h2 class="text-center mb-4 fw-bold">Featured Doctors</h2>
+    <div class="row g-4">
+        {% for doctor in featured_doctors %}
+        <div class="col-md-4">
+            <div class="tuh-card p-4 h-100 text-center">
+                {% if doctor.photo %}
+                    <img src="{{ doctor.photo.url }}" class="rounded-circle mb-3" width="90" height="90" style="object-fit:cover;" alt="{{ doctor.full_name }}">
+                {% else %}
+                    <div class="tuh-icon-circle mx-auto mb-3" style="width:90px;height:90px;font-size:2.2rem;"><i class="bi bi-person"></i></div>
+                {% endif %}
+                <h6 class="mb-0">Dr. {{ doctor.full_name }}</h6>
+                <small class="text-muted d-block mb-2">{{ doctor.specialization }}</small>
+                <a href="{% url 'website:doctor_detail' doctor.pk %}" class="btn btn-sm btn-outline-primary">View Profile</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if diseases %}
+<section class="container py-5">
+    <h2 class="text-center mb-4 fw-bold">Diseases We Treat</h2>
+    <div class="row g-4">
+        {% for disease in diseases %}
+        <div class="col-md-3 col-sm-6">
+            <a href="{% url 'website:disease_detail' disease.slug %}" class="text-decoration-none">
+                <div class="tuh-card p-3 h-100">
+                    <h6 class="text-dark mb-1"><i class="{{ disease.icon_class|default:'bi bi-clipboard-pulse' }} text-primary"></i> {{ disease.name }}</h6>
+                    <small class="text-muted">{{ disease.summary }}</small>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if testimonials %}
+<section class="container py-5">
+    <h2 class="text-center mb-4 fw-bold">Patient Testimonials</h2>
+    <div class="row g-4">
+        {% for t in testimonials %}
+        <div class="col-md-4">
+            <div class="tuh-card p-4 h-100">
+                <p class="fst-italic">&ldquo;{{ t.message }}&rdquo;</p>
+                <p class="fw-semibold mb-0">- {{ t.patient_name }}</p>
+                <small class="text-warning">{% for i in "12345" %}{% if forloop.counter <= t.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

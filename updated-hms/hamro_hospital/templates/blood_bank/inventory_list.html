@@ -1,0 +1,49 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Blood Inventory{% endblock %}
+{% block page_title %}Blood Inventory{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'blood_bank:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'blood_bank:inventory_list' %}"><i class="bi bi-droplet"></i> Inventory</a>
+    <a class="nav-link" href="{% url 'blood_bank:unit_add' %}"><i class="bi bi-plus-circle"></i> Add Blood Unit</a>
+    <a class="nav-link" href="{% url 'blood_bank:patient_lookup' %}"><i class="bi bi-search"></i> Issue Blood</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="group" class="form-select" onchange="this.form.submit()">
+            <option value="">All Groups</option>
+            {% for value, label in groups %}<option value="{{ value }}" {% if selected_group == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </div>
+</form>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Bag #</th><th>Group</th><th>Component</th><th>Qty (ml)</th><th>Collected</th><th>Expires</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for u in units %}
+                <tr>
+                    <td>{{ u.bag_number }}</td>
+                    <td><strong>{{ u.blood_group }}</strong></td>
+                    <td>{{ u.get_component_display }}</td>
+                    <td>{{ u.quantity_ml }}</td>
+                    <td>{{ u.collection_date }}</td>
+                    <td>{{ u.expiry_date }}</td>
+                    <td><span class="badge badge-{% if u.status == 'available' %}success{% elif u.status == 'expired' %}danger{% else %}secondary{% endif %}-soft">{{ u.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No blood units found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

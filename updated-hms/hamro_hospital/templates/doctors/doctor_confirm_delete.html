@@ -1,0 +1,13 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Deactivate Dr. {{ doctor.full_name }}{% endblock %}
+{% block page_title %}Deactivate Doctor{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4" style="max-width:500px;">
+    <p>Deactivate <strong>Dr. {{ doctor.full_name }}</strong>? Their historical visit records will be kept.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger"><i class="bi bi-slash-circle"></i> Yes, Deactivate</button>
+        <a href="{% url 'doctors:doctor_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

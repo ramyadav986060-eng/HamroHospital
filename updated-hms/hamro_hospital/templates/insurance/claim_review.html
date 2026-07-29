@@ -1,0 +1,19 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Review Claim - {{ claim.claim_number }}{% endblock %}
+{% block page_title %}Review Claim {{ claim.claim_number }}{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4">
+    <p><strong>Patient:</strong> {{ claim.patient.full_name }}</p>
+    <p><strong>Insurance Company:</strong> {{ claim.insurance_company }}</p>
+    <p><strong>Amount Claimed:</strong> NPR {{ claim.amount_claimed }}</p>
+    <p><strong>Cashless:</strong> {{ claim.is_cashless|yesno:"Yes,No" }}</p>
+    <p><strong>Remarks:</strong> {{ claim.remarks|default:"-" }}</p>
+    <a href="{% url 'insurance:claim_slip' claim.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print Claim Slip</a>
+</div>
+<form method="post" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button type="submit" class="btn btn-primary">Save Decision</button>
+    <a href="{% url 'insurance:patient_claims' claim.patient.pk %}" class="btn btn-outline-secondary">Back</a>
+</form>
+{% endblock %}

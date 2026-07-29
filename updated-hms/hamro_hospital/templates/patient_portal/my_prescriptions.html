@@ -1,0 +1,38 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Prescriptions - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Prescriptions{% endblock %}
+{% block portal_content %}
+{% for c in consultations %}
+<div class="tuh-card p-4 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0">{{ c.visit.department.name }} - {{ c.created_at|date:"M d, Y" }}</h6>
+        <div class="text-end">
+            <small class="text-muted d-block">Dr. {{ c.doctor.full_name }}</small>
+            {% if c.prescription_file %}
+                <a href="{{ c.prescription_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1"><i class="bi bi-download"></i> Download Scanned Prescription</a>
+            {% endif %}
+        </div>
+    </div>
+    {% if c.diagnosis %}<p class="mb-2"><strong>Diagnosis:</strong> {{ c.diagnosis }}</p>{% endif %}
+    
+    {% if c.prescription_items.all %}
+        <div class="table-responsive mt-3">
+            <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light"><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+                <tbody>
+                {% for item in c.prescription_items.all %}
+                    <tr><td><strong>{{ item.medicine_name }}</strong></td><td>{{ item.dosage }}</td><td>{{ item.frequency }}</td><td>{{ item.duration }}</td><td>{{ item.instructions }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        {% if not c.prescription_file %}
+            <p class="text-muted small mb-0 mt-2">No medicines prescribed at this visit.</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% empty %}
+<div class="tuh-card p-4"><p class="text-muted mb-0 text-center py-4">No prescriptions on file yet.</p></div>
+{% endfor %}
+{% endblock %}

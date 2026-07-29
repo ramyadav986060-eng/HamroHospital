@@ -1,0 +1,16 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}System Readiness{% endblock %}
+{% block page_title %}System Readiness{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4">
+    <h5 class="fw-bold mb-3">Production / Local Readiness Checklist</h5>
+    <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Status</th><th>Check</th><th>Detail</th></tr></thead><tbody>{% for c in checks %}<tr><td>{% if c.ok %}<span class="badge bg-success">Ready</span>{% else %}<span class="badge bg-warning text-dark">Needs Config</span>{% endif %}</td><td>{{ c.name }}</td><td><code>{{ c.detail }}</code></td></tr>{% endfor %}</tbody></table></div>
+</div>
+<div class="tuh-card p-4 mt-4">
+    <h6 class="fw-bold">Commands</h6>
+    <pre class="mb-0"><code>python manage.py verify_production_config
+python manage.py sync_fingerprint_attendance attendance.csv
+celery -A config worker -l info
+celery -A config beat -l info</code></pre>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ section_title }} - {{ patient.full_name }}{% endblock %}
+{% block page_title %}{{ section_title }}{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'patients:patient_detail' patient.pk %}"><i class="bi bi-arrow-left-circle"></i> Back to Patient Profile</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'billing' %}"><i class="bi bi-receipt"></i> Billing</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'insurance' %}"><i class="bi bi-shield-check"></i> Insurance</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'admission' %}"><i class="bi bi-hospital"></i> Admission</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'laboratory' %}"><i class="bi bi-clipboard2-pulse"></i> Laboratory Reports</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'radiology' %}"><i class="bi bi-camera"></i> Radiology Reports</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'blood_bank' %}"><i class="bi bi-droplet"></i> Blood Bank History</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'pharmacy' %}"><i class="bi bi-capsule-pill"></i> Pharmacy</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'medical_reports' %}"><i class="bi bi-file-medical"></i> Medical Reports</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'appointments' %}"><i class="bi bi-calendar-check"></i> Appointments</a>
+    <a class="nav-link" href="{% url 'patients:patient_section' patient.pk 'visits' %}"><i class="bi bi-clock-history"></i> OPD Visit History</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-3 mb-3 d-flex justify-content-between align-items-center">
+    <div>
+        <strong>{{ patient.full_name }}</strong> &middot; {{ patient.patient_code }} &middot; {{ patient.phone_number }}
+    </div>
+</div>
+<div class="tuh-card p-4">
+{% block section_body %}{% endblock %}
+</div>
+{% endblock %}

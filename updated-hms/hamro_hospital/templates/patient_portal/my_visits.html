@@ -1,0 +1,28 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}My Visits - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}My Visits{% endblock %}
+{% block portal_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Receipt #</th><th>Date</th><th>Department</th><th>Doctor</th><th>Type</th><th>Fee</th><th>Token</th><th></th></tr></thead>
+            <tbody>
+            {% for visit in visits %}
+                <tr>
+                    <td>{{ visit.receipt_number }}</td>
+                    <td>{{ visit.visit_date }}</td>
+                    <td>{{ visit.department.name }}</td>
+                    <td>{% if visit.doctor %}Dr. {{ visit.doctor.full_name }}{% else %}-{% endif %}</td>
+                    <td>{{ visit.get_patient_type_display }}</td>
+                    <td>NPR {{ visit.registration_fee }}</td>
+                    <td>{{ visit.token_number }}</td>
+                    <td><a href="{% url 'patient_portal:my_ticket' visit.id %}" class="btn btn-sm btn-outline-primary" target="_blank">View / Print Ticket</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted">No visits yet. <a href="{% url 'patient_portal:book_visit' %}">Book your first visit</a>.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

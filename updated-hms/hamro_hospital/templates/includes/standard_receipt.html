@@ -1,0 +1,32 @@
+{% comment %}
+Reusable hospital print identity block for future receipts/slips/reports.
+Pass a `receipt` dict/object with: title, number, department, service_name,
+amount, payment_status, payment_method, barcode_url, patient, printed_by.
+Existing print pages can migrate to this include gradually without changing UI.
+{% endcomment %}
+<div class="tuh-print-header">
+    <div class="brand">
+        <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
+        <div>
+            <h1>{{ HOSPITAL_NAME }}</h1>
+            <h2>{{ receipt.title|default:'Hospital Receipt' }}</h2>
+            <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
+        </div>
+    </div>
+    <div class="doc-meta">
+        <div class="doc-no-label">Receipt No.</div>
+        <div class="doc-no">{{ receipt.number }}</div>
+        {% if receipt.patient.barcode %}<img class="barcode" src="{{ receipt.patient.barcode.url }}" alt="Patient Barcode">{% endif %}
+        {% if receipt.barcode_url %}<img class="barcode" src="{{ receipt.barcode_url }}" alt="Receipt Barcode">{% endif %}
+    </div>
+</div>
+<div class="tuh-meta-card">
+    <div class="row-item"><div class="row-label">Patient</div><div class="row-val"><strong>{{ receipt.patient.full_name }}</strong> ({{ receipt.patient.patient_code }})</div></div>
+    <div class="row-item"><div class="row-label">Phone</div><div class="row-val">{{ receipt.patient.phone_number }}</div></div>
+    <div class="row-item"><div class="row-label">Department</div><div class="row-val">{{ receipt.department }}</div></div>
+    <div class="row-item"><div class="row-label">Service</div><div class="row-val">{{ receipt.service_name }}</div></div>
+    <div class="row-item"><div class="row-label">Amount</div><div class="row-val">NPR {{ receipt.amount }}</div></div>
+    <div class="row-item"><div class="row-label">Payment</div><div class="row-val">{{ receipt.payment_status }}{% if receipt.payment_method %} · {{ receipt.payment_method }}{% endif %}</div></div>
+    <div class="row-item"><div class="row-label">Printed By</div><div class="row-val">{{ receipt.printed_by.get_full_name|default:receipt.printed_by.username|default:'System' }}</div></div>
+    <div class="row-item"><div class="row-label">Printed On</div><div class="row-val">{% now "Y-m-d H:i" %}</div></div>
+</div>
