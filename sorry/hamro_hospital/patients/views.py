@@ -411,7 +411,7 @@ def patient_section(request, pk, section):
         ],
         'medical_reports': [
             Role.SUPER_ADMIN, Role.DOCTOR, Role.WARD_ADMISSION, Role.NURSING, 
-            Role.OPERATION_THEATRE, Role.MEDICAL_RECORDS
+            Role.OPERATION_THEATRE
         ],
         'appointments': [
             Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR
@@ -420,8 +420,8 @@ def patient_section(request, pk, section):
             Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR
         ],
         'referrals': [Role.SUPER_ADMIN, Role.DOCTOR, Role.LABORATORY, Role.RADIOLOGY, Role.PHARMACY, Role.NURSING, Role.WARD_ADMISSION, Role.OPERATION_THEATRE, Role.BLOOD_BANK],
-        'documents': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.MEDICAL_RECORDS, Role.NURSING, Role.WARD_ADMISSION],
-        'timeline': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.MEDICAL_RECORDS, Role.NURSING, Role.WARD_ADMISSION],
+        'documents': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.NURSING, Role.WARD_ADMISSION],
+        'timeline': [Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.DOCTOR, Role.NURSING, Role.WARD_ADMISSION],
     }
 
     if section in allowed_roles_for_section:

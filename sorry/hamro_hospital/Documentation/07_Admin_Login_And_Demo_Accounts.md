@@ -21,7 +21,6 @@ Log in at: `/accounts/login/`
 | `operationtheatre` | Operation Theatre | Surgery scheduling |
 | `bloodbank` | Blood Bank | Blood unit inventory and issues |
 | `accounts` | Accounts Department | Financial reports |
-| `medicalrecords` | Medical Records | Patient documents |
 
 ## Creating your own superuser instead
 ```powershell

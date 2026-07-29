@@ -18,7 +18,6 @@ class Role(models.TextChoices):
     OPERATION_THEATRE = 'operation_theatre', 'Operation Theatre'
     BLOOD_BANK = 'blood_bank', 'Blood Bank'
     ACCOUNTS_DEPT = 'accounts_dept', 'Finance'
-    MEDICAL_RECORDS = 'medical_records', 'Medical Records'
     HOSPITAL_STAFF = 'hospital_staff', 'Hospital Staff'
     DEPARTMENT_HEAD = 'department_head', 'Department Head / Sub-Admin'
 
@@ -48,6 +47,10 @@ class User(AbstractUser):
     staff_id = models.CharField(max_length=30, unique=True, blank=True, null=True, db_index=True)
     staff_barcode = models.ImageField(upload_to='staff/barcodes/', blank=True, null=True)
     staff_qr_code = models.ImageField(upload_to='staff/qrcodes/', blank=True, null=True)
+    staff_photo = models.ImageField(upload_to='staff/photos/', blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True)
+    emergency_contact = models.CharField(max_length=100, blank=True)
+    blood_group = models.CharField(max_length=5, blank=True)
     department = models.ForeignKey('departments.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_users')
     designation = models.CharField(max_length=120, blank=True)
     employment_type = models.CharField(max_length=20, choices=EmploymentType.choices, default=EmploymentType.FULL_TIME)
@@ -88,7 +91,6 @@ class User(AbstractUser):
             Role.OPERATION_THEATRE: 'operation_theatre:dashboard',
             Role.BLOOD_BANK: 'blood_bank:dashboard',
             Role.ACCOUNTS_DEPT: 'finance:dashboard',
-            Role.MEDICAL_RECORDS: 'medical_records:dashboard',
             Role.HOSPITAL_STAFF: 'accounts:staff_profile',
             Role.DEPARTMENT_HEAD: 'accounts:staff_profile',
         }
@@ -393,11 +395,17 @@ class StaffLeaveRequest(models.Model):
 
 
 class StaffSalaryProfile(models.Model):
+    class SalaryType(models.TextChoices):
+        MONTHLY = 'monthly', 'Monthly Salary'
+        DAILY = 'daily', 'Daily Wage'
+
     staff = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salary_profile')
     bank_name = models.CharField(max_length=150, blank=True)
     bank_account_name = models.CharField(max_length=150, blank=True)
     bank_account_number = models.CharField(max_length=80, blank=True)
     pan_number = models.CharField(max_length=80, blank=True)
+    salary_type = models.CharField(max_length=15, choices=SalaryType.choices, default=SalaryType.MONTHLY)
+    effective_date = models.DateField(null=True, blank=True)
     base_monthly_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     per_day_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     bonus_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -435,6 +443,8 @@ class StaffSalaryPayment(models.Model):
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.DRAFT)
     prepared_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='salary_payments_prepared')
     paid_at = models.DateTimeField(null=True, blank=True)
+    bank_transfer_status = models.CharField(max_length=30, blank=True, default='', help_text='Future bank integration status/reference.')
+    transaction_reference = models.CharField(max_length=100, blank=True)
     remarks = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

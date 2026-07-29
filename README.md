@@ -458,3 +458,18 @@ python manage.py create_demo_accounts
 - "ServiceOrder Queue" wording in Operation Theater dashboard was replaced with Operation Theater Payment / Active payment records.
 - Operation Theater Payment redirects to the standard surgery billing workflow with staff discount and insurance support.
 - OT revenue detail page follows the same search/date/close behavior as other finance modules.
+
+## Part 8 Staff Module and Salary Management Improvements Added
+
+- Standalone Medical Records role/module was removed from active routing and demo users. Medical information remains available through patient profile sections, documents, doctors, admission, laboratory, radiology and patient portal.
+- Hospital staff profile now includes staff photo, Staff ID, unique barcode, unique QR code, department, designation, contact, address, emergency contact, blood group and employment status.
+- Staff ID Card redesigned as a professional Hospital Staff ID Card with front/back information, hospital branding, staff photo, barcode and QR code.
+- Staff dashboard/profile now uses staff-specific actions: View Staff Card, Attendance, Leave Record, Change Password, Book OPD/EHS as Patient and Staff Medical Portal.
+- Staff can access medical care through the Patient Portal/Online Registration flow while attendance remains exclusive to the Staff Module.
+- Staff attendance retains monthly records, date range filters, department filter, search, All Time-style retrieval via reports, PDF/Excel export and history.
+- Dedicated Salary Management section is available in Accounts via Staff Salary Profiles and Salary Payments.
+- Salary configuration now includes salary type, effective date, bank account number, bank name, daily salary or monthly salary and future bank-transfer status fields.
+- Salary payments record bank transfer readiness/status and transaction reference for future banking integration.
+- Salary filters support staff search, department, employment type and individual staff.
+- Long staff lists include Scroll to Top and Scroll to Bottom controls.
+- Departments and Department Heads remain blocked from salary/payroll access.

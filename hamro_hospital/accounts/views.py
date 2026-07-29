@@ -58,10 +58,21 @@ def dashboard_super_admin(request):
 
 @role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT, Role.DEPARTMENT_HEAD)
 def staff_list(request):
+    from django.db.models import Q
     staff = User.objects.all().select_related('department').order_by('role', 'first_name')
     if request.user.effective_role == Role.DEPARTMENT_HEAD and not request.user.is_superuser:
         staff = staff.filter(department=request.user.department)
-    return render(request, 'accounts/staff_list.html', {'staff': staff, 'roles': Role.choices})
+    q = request.GET.get('q', '').strip()
+    department_id = request.GET.get('department', '').strip()
+    role = request.GET.get('role', '').strip()
+    if q:
+        staff = staff.filter(Q(staff_id__icontains=q) | Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(phone_number__icontains=q) | Q(designation__icontains=q))
+    if department_id:
+        staff = staff.filter(department_id=department_id)
+    if role:
+        staff = staff.filter(role=role)
+    from departments.models import Department
+    return render(request, 'accounts/staff_list.html', {'staff': staff, 'roles': Role.choices, 'departments': Department.objects.filter(is_active=True), 'q': q, 'selected_department': department_id, 'selected_role': role})
 
 
 @super_admin_required
@@ -636,7 +647,9 @@ def staff_salary_mark_paid(request, pk):
     if request.method == 'POST':
         payment.status = StaffSalaryPayment.Status.PAID
         payment.paid_at = timezone.now()
-        payment.save(update_fields=['status', 'paid_at'])
+        payment.bank_transfer_status = payment.bank_transfer_status or 'manual_paid_ready_for_bank_gateway'
+        payment.transaction_reference = payment.transaction_reference or f'MANUAL-{payment.pk}-{timezone.now():%Y%m%d%H%M%S}'
+        payment.save(update_fields=['status', 'paid_at', 'bank_transfer_status', 'transaction_reference'])
         from accounts.utils import create_notification
         create_notification('Salary Processed', f'Your salary for {payment.year}-{payment.month:02d} has been processed.', user=payment.staff, related_url=reverse('accounts:staff_profile'))
         messages.success(request, 'Salary marked as paid and staff notified.')

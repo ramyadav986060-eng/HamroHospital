@@ -40,7 +40,6 @@ urlpatterns = [
     path('blood-bank/', include('blood_bank.urls')),
     path('finance/', include('finance.urls')),
     path('referrals/', include('referrals.urls')),
-    path('medical-records/', include('medical_records.urls')),
     path('workflow/', include('workflow.urls')),
 ]
 

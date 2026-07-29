@@ -91,9 +91,6 @@ def accounts_dept_required(view_func):
     return role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)(view_func)
 
 
-def medical_records_required(view_func):
-    return role_required(Role.SUPER_ADMIN, Role.MEDICAL_RECORDS)(view_func)
-
 
 # Any staff role that legitimately needs to see a patient's full record
 # (used by patients.views.patient_detail - editing stays registration-only).

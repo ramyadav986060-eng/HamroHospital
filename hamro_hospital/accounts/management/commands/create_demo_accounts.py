@@ -25,7 +25,6 @@ DEMO_USERS = {
     'operationtheatre': Role.OPERATION_THEATRE,
     'bloodbank': Role.BLOOD_BANK,
     'accounts': Role.ACCOUNTS_DEPT,
-    'medicalrecords': Role.MEDICAL_RECORDS,
     'staff': Role.HOSPITAL_STAFF,
     'departmenthead': Role.DEPARTMENT_HEAD,
 }
@@ -49,6 +48,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         departments = self.ensure_departments()
+        User.objects.filter(username='medicalrecords').delete()
         self.ensure_billable_services(departments)
         for username, role in DEMO_USERS.items():
             user, created = User.objects.get_or_create(
@@ -141,7 +141,7 @@ class Command(BaseCommand):
         from documents.models import PatientDocument, DocumentCategory
         province, _ = Province.objects.get_or_create(number=3, defaults={'name': 'Bagmati Province'})
         district, _ = District.objects.get_or_create(province=province, name='Kathmandu')
-        uploader = User.objects.filter(role=Role.MEDICAL_RECORDS).first() or User.objects.filter(is_superuser=True).first()
+        uploader = User.objects.filter(is_superuser=True).first()
         names = [('Aarav','Sharma'),('Anita','Rai'),('Bimala','Tamang'),('Dipak','Shrestha'),('Elina','Gurung'),('Kiran','KC'),('Maya','Thapa'),('Nabin','Maharjan'),('Puja','Bista'),('Ramesh','Khadka')]
         for i, (first, last) in enumerate(names, start=1):
             patient, _ = Patient.objects.get_or_create(
@@ -150,7 +150,7 @@ class Command(BaseCommand):
             )
             if not patient.documents.filter(title__startswith='Sample Medical Report').exists():
                 pdf = self.make_report_pdf(patient, i)
-                doc = PatientDocument(patient=patient, category=DocumentCategory.OTHER, title=f'Sample Medical Report {i}', uploaded_by=uploader, uploaded_by_role=getattr(uploader, 'role', ''), department_note='Medical Records', remarks='Demo report opens in PDF preview.')
+                doc = PatientDocument(patient=patient, category=DocumentCategory.OTHER, title=f'Sample Medical Report {i}', uploaded_by=uploader, uploaded_by_role=getattr(uploader, 'role', ''), department_note='Documents', remarks='Demo report opens in PDF preview.')
                 doc.file.save(f'sample_medical_report_{i}.pdf', ContentFile(pdf), save=True)
 
     def make_report_pdf(self, patient, index):

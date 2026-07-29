@@ -10,10 +10,10 @@ class CustomUserAdmin(UserAdmin):
     list_display = ('staff_id', 'username', 'first_name', 'last_name', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff', 'is_superuser')
     list_filter = ('role', 'department', 'is_department_head', 'is_active_staff', 'is_superuser')
     fieldsets = UserAdmin.fieldsets + (
-        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'staff_qr_code', 'role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'staff_qr_code', 'staff_photo', 'role', 'department', 'designation', 'employment_type', 'phone_number', 'address', 'emergency_contact', 'blood_group', 'is_department_head', 'is_active_staff')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Hospital Role', {'fields': ('role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('role', 'department', 'designation', 'employment_type', 'phone_number', 'address', 'emergency_contact', 'blood_group', 'is_department_head', 'is_active_staff')}),
     )
 
 
@@ -77,14 +77,14 @@ class StaffLeaveRequestAdmin(admin.ModelAdmin):
 
 @admin.register(StaffSalaryProfile)
 class StaffSalaryProfileAdmin(admin.ModelAdmin):
-    list_display = ('staff', 'bank_name', 'bank_account_number', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'is_active')
-    list_filter = ('is_active', 'bank_name')
+    list_display = ('staff', 'salary_type', 'effective_date', 'bank_name', 'bank_account_number', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'is_active')
+    list_filter = ('is_active', 'salary_type', 'bank_name')
     search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name', 'bank_account_number')
 
 
 @admin.register(StaffSalaryPayment)
 class StaffSalaryPaymentAdmin(admin.ModelAdmin):
-    list_display = ('staff', 'year', 'month', 'present_days', 'leave_days', 'half_days', 'absent_days', 'net_amount', 'status')
+    list_display = ('staff', 'year', 'month', 'present_days', 'leave_days', 'half_days', 'absent_days', 'net_amount', 'status', 'bank_transfer_status')
     list_filter = ('year', 'month', 'status')
     search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name')
     readonly_fields = ('created_at',)

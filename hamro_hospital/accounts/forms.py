@@ -41,7 +41,7 @@ class StaffCreateForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'is_department_head']
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'staff_photo', 'address', 'emergency_contact', 'blood_group', 'is_department_head']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -52,6 +52,10 @@ class StaffCreateForm(UserCreationForm):
             'department': forms.Select(attrs={'class': 'form-select'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
             'employment_type': forms.Select(attrs={'class': 'form-select'}),
+            'staff_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
+            'blood_group': forms.TextInput(attrs={'class': 'form-control'}),
             'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -66,7 +70,7 @@ class StaffEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'is_department_head', 'is_active_staff']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'staff_photo', 'address', 'emergency_contact', 'blood_group', 'is_department_head', 'is_active_staff']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -76,6 +80,10 @@ class StaffEditForm(forms.ModelForm):
             'department': forms.Select(attrs={'class': 'form-select'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
             'employment_type': forms.Select(attrs={'class': 'form-select'}),
+            'staff_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
+            'blood_group': forms.TextInput(attrs={'class': 'form-control'}),
             'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -179,13 +187,15 @@ class StaffLeaveReviewForm(forms.ModelForm):
 class StaffSalaryProfileForm(forms.ModelForm):
     class Meta:
         model = StaffSalaryProfile
-        fields = ['staff', 'bank_name', 'bank_account_name', 'bank_account_number', 'pan_number', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'overtime_rate_per_hour', 'is_active']
+        fields = ['staff', 'bank_name', 'bank_account_name', 'bank_account_number', 'pan_number', 'salary_type', 'effective_date', 'base_monthly_salary', 'per_day_salary', 'bonus_amount', 'overtime_rate_per_hour', 'is_active']
         widgets = {
             'staff': forms.Select(attrs={'class': 'form-select'}),
             'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
             'bank_account_name': forms.TextInput(attrs={'class': 'form-control'}),
             'bank_account_number': forms.TextInput(attrs={'class': 'form-control'}),
             'pan_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'salary_type': forms.Select(attrs={'class': 'form-select'}),
+            'effective_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'base_monthly_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'per_day_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'bonus_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),

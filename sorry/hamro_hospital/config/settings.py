@@ -69,7 +69,6 @@ INSTALLED_APPS = [
     'blood_bank',
     'finance',
     'referrals',
-    'medical_records',
     'workflow.apps.WorkflowConfig',
 ]
 
