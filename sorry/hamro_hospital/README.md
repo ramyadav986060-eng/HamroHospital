@@ -150,8 +150,7 @@ Same password for **every** demo account: **`password`**
 |---|---|
 | admin | Main Super Admin |
 | registration | Registration Counter |
-| extension | EHS / Extension Registration Counter |
-| ehs | EHS / Extension Registration Counter |
+| ehs | EHS Service Counter |
 | cashier | Cash Counter |
 | doctor | Doctor |
 | pharmacy | Pharmacy |
@@ -166,7 +165,7 @@ Same password for **every** demo account: **`password`**
 | staff | Hospital Staff |
 | departmenthead | Department Head / Sub-Admin |
 
-Total demo staff users: **18**.
+Total demo staff users: **17**.
 
 Safe to re-run — updates password/role instead of duplicating if accounts already exist.
 

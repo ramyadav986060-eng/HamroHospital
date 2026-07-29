@@ -12,7 +12,6 @@ DEMO_PASSWORD = 'password'
 DEMO_USERS = {
     'admin': Role.SUPER_ADMIN,
     'registration': Role.REGISTRATION_COUNTER,
-    'extension': Role.EXTENSION_COUNTER,
     'ehs': Role.EXTENSION_COUNTER,
     'cashier': Role.CASH_COUNTER,
     'doctor': Role.DOCTOR,
@@ -48,7 +47,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         departments = self.ensure_departments()
-        User.objects.filter(username='medicalrecords').delete()
+        User.objects.filter(username__in=['medicalrecords', 'extension']).delete()
         self.ensure_billable_services(departments)
         for username, role in DEMO_USERS.items():
             user, created = User.objects.get_or_create(
