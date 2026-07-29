@@ -173,11 +173,29 @@ def doctor_profile(request):
         form = DoctorProfileForm(request.POST, request.FILES, instance=doctor)
         if form.is_valid():
             form.save()
+            # Keep the linked staff account's visible staff photo/contact aligned where possible.
+            if doctor.user_account_id:
+                staff = doctor.user_account
+                staff.phone_number = doctor.contact_number or staff.phone_number
+                if doctor.photo and not staff.staff_photo:
+                    staff.staff_photo = doctor.photo
+                staff.save(update_fields=['phone_number', 'staff_photo'])
             messages.success(request, 'Profile updated successfully.')
             return redirect('doctors:profile')
     else:
         form = DoctorProfileForm(instance=doctor)
-    return render(request, 'doctors/profile.html', {'form': form, 'doctor_profile': doctor})
+
+    staff_user = doctor.user_account or request.user
+    completion_fields = [doctor.full_name, doctor.qualification, doctor.specialization, doctor.contact_number, doctor.photo, doctor.biography or doctor.short_introduction]
+    profile_completion = int(sum(1 for value in completion_fields if value) / len(completion_fields) * 100)
+    salary_profile = getattr(staff_user, 'salary_profile', None)
+    salary_payments = staff_user.salary_payments.all()[:6] if hasattr(staff_user, 'salary_payments') else []
+    notifications = staff_user.notifications.filter(is_read=False)[:10] if hasattr(staff_user, 'notifications') else []
+    return render(request, 'doctors/profile.html', {
+        'form': form, 'doctor_profile': doctor, 'staff_user': staff_user,
+        'profile_completion': profile_completion, 'salary_profile': salary_profile,
+        'salary_payments': salary_payments, 'notifications': notifications,
+    })
 
 
 @doctor_required

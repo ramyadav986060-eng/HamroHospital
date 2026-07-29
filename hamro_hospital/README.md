@@ -492,3 +492,14 @@ python manage.py create_demo_accounts
 - Accounts users cannot approve/reject leave and cannot modify attendance records.
 - Department Heads can review leave requests only for staff in their own department and cannot review their own leave.
 - Super Admin keeps full leave-policy and override control.
+
+## Part 11 Doctor Profile and Final Integration Addendum Added
+
+- Doctor profile now behaves as a hospital staff profile inside the Doctor Dashboard.
+- Doctor profile displays doctor photo, Staff ID, Doctor ID, department, designation, contact, profile completion, staff barcode and staff QR code.
+- Doctors can open their Hospital Staff ID Card directly from the doctor profile/dashboard.
+- Doctors can access self-service staff functions: attendance, leave history, leave request, change password, salary information read-only and OPD/EHS booking as patient.
+- Doctor Professional Note / Profile Description is editable by doctors and appears on public website doctor profile according to hospital policy.
+- Staff ID cards remain the standard identity document for doctors; doctors do not use Patient ID cards.
+- Medical History automatic-save architecture and standard document actions remain active for clinical modules.
+- Role-based responsibilities remain enforced: doctors handle clinical care/referrals, accounts handles finance/salary, and Super Admin retains full control.
