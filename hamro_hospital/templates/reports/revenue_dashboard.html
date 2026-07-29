@@ -31,8 +31,11 @@
             <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
         </div>
 
-        <div class="col-auto align-self-end">
+        <div class="col-auto align-self-end d-flex gap-2 flex-wrap">
             <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i> Apply Filter</button>
+            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</button>
+            <a class="btn btn-sm btn-outline-success" href="?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=excel"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+            <a class="btn btn-sm btn-outline-danger" href="?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
         </div>
     </div>
 </form>
