@@ -107,58 +107,85 @@ built-in auth system.
 ## Project layout
 
 ```
-tu_hospital_management_system/
+hamro_hospital/
 ├── manage.py
 ├── requirements.txt
 ├── README.md
-├── .gitignore
 ├── .env.example
-├── config/           settings, urls, wsgi/asgi
-├── accounts/         custom User, roles, audit log, staff management
-├── website/          public site + Hospital Services catalogue
-├── departments/      department CRUD
-├── doctors/          doctor CRUD
-├── patients/         Nepal address system, patient registration, OPD visits, QR
-├── appointments/     online booking + eSewa integration
-├── consultations/    doctor workflow: diagnosis, prescriptions, lab/radiology requests
-├── laboratory/       lab request queue and results
-├── radiology/        imaging request queue and reports
-├── admissions/       ward/bed management, admit/discharge
-├── billing/          Cash Counter billing and receipts
-├── pharmacy/         medicine catalogue, inventory, dispensing
-├── insurance/        insurer directory, claims workflow
-├── reports/          revenue dashboard and per-module reports
-├── patient_portal/   patient self-service signup/login, records, self-booking
-├── templates/
-├── static/
-└── media/            uploaded photos, QR codes (created at runtime)
+├── config/              settings, urls, ASGI/WSGI, Celery, Channels
+├── accounts/            staff users, roles, notifications, audit, backups, attendance, leave, payroll
+├── website/             public homepage, departments, doctors, services, EHS/Extension pages
+├── departments/         departments and units
+├── doctors/             doctors, profiles, schedules, extension fees, quota/leave
+├── patients/            patient registration, Hospital ID, barcode/QR, OPD visits, tokens
+├── patient_portal/      patient login, profile, booking, timeline, bills, reports
+├── appointments/        online booking and Extension Service booking bridge
+├── consultations/       doctor consultation, prescriptions, lab/radiology requests
+├── referrals/           referral workflow, department queues, pending bill generation
+├── workflow/            service orders, payment events, patient timeline
+├── billing/             cash counter, bills, receipts, refunds, staff discounts
+├── finance/             accounts dashboard, extension fees, financial workflow
+├── reports/             revenue, department, staff, payroll, PDF/Excel exports
+├── laboratory/          lab queue, manual tests, panels, results, verification
+├── radiology/           imaging queue, templates, reports, verification
+├── pharmacy/            medicines, batches, suppliers, stock ledger, dispensing
+├── admissions/          wards, beds, admission, deposits, transfers, discharge
+├── nursing/             vitals, notes, medication, inpatient nursing workflow
+├── operation_theatre/   OT rooms, operation types, surgeries, charges
+├── blood_bank/          blood units, requests, compatibility, issue records
+├── insurance/           insurance companies and claims
+├── documents/           patient documents and medical file uploads
+├── medical_records/     medical-records dashboard and patient record access
+├── templates/           shared and module templates
+├── static/              CSS, JS, logo, favicon assets
+└── media/               runtime uploads/barcodes/QR files (not committed)
 ```
 
 ## Demo Accounts
 
-Created automatically by `seed_all` (or run `python manage.py
-create_demo_accounts` on its own to (re)create/reset them):
+Created automatically by `python manage.py create_demo_accounts`.
 
-Same password for **every** account: **`password`**
+Same password for **every** demo account: **`password`**
 
 | Username | Role |
 |---|---|
-| admin | Super Admin |
+| admin | Main Super Admin |
 | registration | Registration Counter |
+| extension | EHS / Extension Registration Counter |
+| ehs | EHS / Extension Registration Counter |
 | cashier | Cash Counter |
 | doctor | Doctor |
 | pharmacy | Pharmacy |
 | laboratory | Laboratory |
-| radiology | Radiology |
-| insurance | Insurance |
-| admission | Ward/Admission |
+| radiology | Radiology Counter |
+| insurance | Insurance Counter |
+| admission | Ward / Admission |
 | nursing | Nursing |
 | operationtheatre | Operation Theatre |
 | bloodbank | Blood Bank |
-| accounts | Accounts Dept |
+| accounts | Finance / Accounts |
 | medicalrecords | Medical Records |
+| staff | Hospital Staff |
+| departmenthead | Department Head / Sub-Admin |
+
+Total demo staff users: **18**.
 
 Safe to re-run — updates password/role instead of duplicating if accounts already exist.
+
+## Implemented module summary
+
+This codebase contains the integrated Hospital Management System modules requested for production readiness:
+
+- Registration and EHS/Extension registration with shared patient identity.
+- Patient barcode/QR lookup and Hospital ID based search.
+- Patient portal, OPD visit/token workflow, and appointment/booking bridge.
+- Doctor consultation, prescription, referral, lab/radiology/admission/nursing/OT/blood-bank workflows.
+- Cash counter billing, receipts, pending payments, refunds, staff discount and admission deposit credit.
+- Laboratory, Radiology, Pharmacy, Admissions/Ward, Nursing, Operation Theatre, Blood Bank, Insurance and Medical Records modules.
+- Staff profile, staff barcode, attendance, Nepali-calendar-style attendance view, leave requests/review and payroll/salary records.
+- Finance/Accounts reporting, extension fee management, department revenue and payroll reports.
+- Comprehensive reports with date filters, search, print, PDF export and Excel export.
+- Super Admin backup center with database, media, full backup, restore guidance/history and cloud-ready deployment notes.
 
 ## Notes
 
