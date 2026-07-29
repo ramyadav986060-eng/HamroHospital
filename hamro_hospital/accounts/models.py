@@ -19,6 +19,7 @@ class Role(models.TextChoices):
     BLOOD_BANK = 'blood_bank', 'Blood Bank'
     ACCOUNTS_DEPT = 'accounts_dept', 'Finance'
     MEDICAL_RECORDS = 'medical_records', 'Medical Records'
+    HOSPITAL_STAFF = 'hospital_staff', 'Hospital Staff'
     DEPARTMENT_HEAD = 'department_head', 'Department Head / Sub-Admin'
 
 
@@ -79,6 +80,7 @@ class User(AbstractUser):
             Role.BLOOD_BANK: 'blood_bank:dashboard',
             Role.ACCOUNTS_DEPT: 'finance:dashboard',
             Role.MEDICAL_RECORDS: 'medical_records:dashboard',
+            Role.HOSPITAL_STAFF: 'accounts:staff_profile',
             Role.DEPARTMENT_HEAD: 'accounts:staff_profile',
         }
         return mapping.get(self.effective_role, 'accounts:dashboard_super_admin')

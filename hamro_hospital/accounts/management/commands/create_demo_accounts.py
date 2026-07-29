@@ -21,6 +21,8 @@ DEMO_USERS = {
     'bloodbank': Role.BLOOD_BANK,
     'accounts': Role.ACCOUNTS_DEPT,
     'medicalrecords': Role.MEDICAL_RECORDS,
+    'staff': Role.HOSPITAL_STAFF,
+    'departmenthead': Role.DEPARTMENT_HEAD,
 }
 
 
@@ -47,6 +49,16 @@ class Command(BaseCommand):
             user.is_staff = True
             if role == Role.SUPER_ADMIN:
                 user.is_superuser = True
+            if role == Role.DEPARTMENT_HEAD:
+                from departments.models import Department
+                dept = Department.objects.filter(is_active=True).first()
+                user.department = dept
+                user.is_department_head = True
+                user.designation = 'Department In-charge'
+            elif role == Role.HOSPITAL_STAFF:
+                from departments.models import Department
+                user.department = Department.objects.filter(is_active=True).first()
+                user.designation = 'Hospital Staff'
             user.save()
             state = 'created' if created else 'updated'
             self.stdout.write(self.style.SUCCESS(f'{state}: {username} ({role})'))
