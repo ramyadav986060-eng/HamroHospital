@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from accounts.decorators import registration_counter_required, patient_record_viewer_required, any_staff_required
-from accounts.models import AuditLog, Role
+from accounts.models import AuditLog, Role, HospitalSetting
 from accounts.utils import write_audit_log, create_notification
 from django.urls import reverse
 from patients.forms import PatientForm, VisitForm, PatientSearchForm
@@ -111,7 +111,7 @@ def patient_register(request, extension_mode=False):
                 visit_date = candidate_visit.visit_date or datetime.date.today()
                 quota_error_context = {
                     'patient_form': patient_form, 'visit_form': visit_form,
-                    'new_fee': 100, 'old_fee': 50, 'existing_patient': existing_patient,
+                    'new_fee': settings.NEW_PATIENT_REGISTRATION_FEE if not extension_mode else HospitalSetting.get_solo().ehs_new_ticket_fee, 'old_fee': settings.OLD_PATIENT_REGISTRATION_FEE if not extension_mode else HospitalSetting.get_solo().ehs_followup_ticket_fee, 'existing_patient': existing_patient,
                 }
                 if candidate_visit.doctor.is_on_leave(visit_date):
                     messages.error(request, f"Dr. {candidate_visit.doctor.full_name} is on leave/unavailable today. Please choose another doctor.")
@@ -123,8 +123,8 @@ def patient_register(request, extension_mode=False):
             if existing_patient:
                 patient = existing_patient
                 patient_type = Visit.PatientType.OLD
-                if extension_mode and candidate_visit.doctor:
-                    registration_fee = candidate_visit.doctor.extension_old_fee
+                if extension_mode:
+                    registration_fee = HospitalSetting.get_solo().ehs_followup_ticket_fee
                 else:
                     registration_fee = settings.OLD_PATIENT_REGISTRATION_FEE
             else:
@@ -132,8 +132,9 @@ def patient_register(request, extension_mode=False):
                 patient.created_by = request.user
                 patient.save()
                 patient_type = visit_form.cleaned_data.get('patient_type') or Visit.PatientType.NEW
-                if extension_mode and candidate_visit.doctor:
-                    registration_fee = candidate_visit.doctor.extension_new_fee if patient_type == Visit.PatientType.NEW else candidate_visit.doctor.extension_old_fee
+                if extension_mode:
+                    setting = HospitalSetting.get_solo()
+                    registration_fee = setting.ehs_new_ticket_fee if patient_type == Visit.PatientType.NEW else setting.ehs_followup_ticket_fee
                 else:
                     registration_fee = visit_form.cleaned_data['registration_fee']
 
@@ -180,7 +181,7 @@ def patient_register(request, extension_mode=False):
 
     return render(request, 'patients/patient_register.html', {
         'patient_form': patient_form, 'visit_form': visit_form,
-        'new_fee': 100, 'old_fee': 50,
+        'new_fee': settings.NEW_PATIENT_REGISTRATION_FEE if not extension_mode else HospitalSetting.get_solo().ehs_new_ticket_fee, 'old_fee': settings.OLD_PATIENT_REGISTRATION_FEE if not extension_mode else HospitalSetting.get_solo().ehs_followup_ticket_fee,
         'existing_patient': existing_patient,
         'extension_mode': extension_mode,
         'extension_doctor_id': extension_doctor_id or '',

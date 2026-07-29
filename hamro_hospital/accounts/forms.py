@@ -130,6 +130,9 @@ class HospitalSettingForm(forms.ModelForm):
             'default_weekend_days': forms.TextInput(attrs={'class': 'form-control'}),
             'paid_leave_days_per_month': forms.NumberInput(attrs={'class': 'form-control'}),
             'paid_leave_days_per_year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ehs_new_ticket_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'ehs_followup_ticket_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'ehs_additional_charges_note': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 

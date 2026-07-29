@@ -21,7 +21,7 @@
     <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_admissions' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-hospital d-block fs-3 mb-2"></i>Admissions</a></div>
     <div class="col-6 col-md-3"><a href="{% url 'patient_portal:my_documents' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-folder2-open d-block fs-3 mb-2"></i>Medical Records</a></div>
     <div class="col-6 col-md-3"><a href="{% url 'patient_portal:book_visit' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-calendar-check d-block fs-3 mb-2"></i>Appointments</a></div>
-    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:book_visit' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-calendar-plus d-block fs-3 mb-2 text-white"></i>Book Visit</a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'patient_portal:online_registration' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-calendar-plus d-block fs-3 mb-2 text-white"></i>Online Registration</a></div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -32,9 +32,9 @@
         <div class="stat-card green"><i class="bi bi-receipt fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ bill_count }}</h2><small>Bills on File</small></div>
     </div>
     <div class="col-md-4">
-        <a href="{% url 'patient_portal:book_visit' %}" class="text-decoration-none">
+        <a href="{% url 'patient_portal:online_registration' %}" class="text-decoration-none">
             <div class="stat-card orange h-100 d-flex flex-column justify-content-center">
-                <i class="bi bi-calendar-plus fs-3"></i><h5 class="fw-bold mt-2 mb-0">Book a Visit</h5>
+                <i class="bi bi-calendar-plus fs-3"></i><h5 class="fw-bold mt-2 mb-0">Online Registration</h5>
             </div>
         </a>
     </div>

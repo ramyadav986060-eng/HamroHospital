@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Hospital Extension Service - {{ appointment.appointment_number }}{% endblock %}
+{% block title %}Hospital EHS Service - {{ appointment.appointment_number }}{% endblock %}
 {% block navbar %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block back_button %}{% endblock %}
@@ -13,7 +13,7 @@
             <img src="{{ HOSPITAL_LOGO_URL }}" alt="{{ HOSPITAL_NAME }}">
             <div>
                 <h1>{{ HOSPITAL_NAME }}</h1>
-                <h2>Hospital Extension Service Ticket</h2>
+                <h2>Hospital EHS Service Ticket</h2>
                 <div class="location"><i class="bi bi-geo-alt-fill"></i> {{ HOSPITAL_ADDRESS }}</div>
             </div>
         </div>

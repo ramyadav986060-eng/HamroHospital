@@ -392,3 +392,19 @@ python manage.py create_demo_accounts
 - Staff discount remains configurable by Super Admin and is applied by scanning/entering Staff ID.
 - Invoice/receipt page now includes a direct PDF download button.
 - Demo setup now creates sample billable hospital services for lab, radiology, blood bank, OT, pharmacy, and other services.
+
+## Part 3 Registration, EHS Service and Patient Portal Improvements Added
+
+- Patient registration includes optional patient photo upload; registration works without a photo and stores photo on the patient profile when uploaded.
+- Public/portal wording has been standardized to **EHS Service** to avoid duplicate Extension/EHS module confusion. Existing URLs remain compatible, but labels now show EHS Service.
+- EHS Service ticket pricing is configurable by Main Super Admin in Hospital Settings:
+  - EHS New Ticket Fee
+  - EHS Follow-up Ticket Fee
+  - EHS Additional Charges Note
+- EHS Service registration uses its own pricing and remains separated from General OPD queues.
+- Patient Portal now has an **Online Registration** page with two choices:
+  - General OPD → General Registration Counter
+  - EHS Service → EHS Service Counter
+- Patient Portal login now accepts Hospital ID + password, with phone/email optional for additional verification, fixing login problems after generated registration credentials.
+- Patient Portal dashboard includes Online Registration and keeps medical/billing access. Patient card print/generate actions remain restricted by staff-side permissions.
+- Patient attendance is not present in the portal; attendance remains exclusively inside the Staff Module.

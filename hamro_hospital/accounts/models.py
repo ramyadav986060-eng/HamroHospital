@@ -241,6 +241,9 @@ class HospitalSetting(models.Model):
     default_weekend_days = models.CharField(max_length=30, default='sat', help_text='Comma-separated weekday codes for default holidays, e.g. sat or fri,sat')
     paid_leave_days_per_month = models.PositiveIntegerField(default=5, help_text='Legacy monthly paid leave limit retained for compatibility.')
     paid_leave_days_per_year = models.PositiveIntegerField(default=5, help_text='Standard paid leave days allowed per staff per year before Super Admin override is required.')
+    ehs_new_ticket_fee = models.DecimalField(max_digits=10, decimal_places=2, default=1000, help_text='EHS Service new ticket fee configured by Main Super Admin.')
+    ehs_followup_ticket_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500, help_text='EHS Service follow-up/old ticket fee configured by Main Super Admin.')
+    ehs_additional_charges_note = models.CharField(max_length=255, blank=True, help_text='Optional note for future EHS charges/policies.')
 
     class Meta:
         db_table = 'accounts_hospital_setting'

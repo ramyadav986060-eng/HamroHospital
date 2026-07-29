@@ -186,14 +186,13 @@ def login_view(request):
             account = (
                 PatientAccount.objects
                 .select_related('patient')
-                .filter(
-                    Q(patient__phone_number=phone_number) | Q(patient__email__iexact=phone_number),
-                    patient__patient_code__iexact=hospital_id,
-                    is_active=True,
-                )
+                .filter(patient__patient_code__iexact=hospital_id, is_active=True)
                 .first()
             )
-            if account and account.check_password(password):
+            contact_ok = True
+            if account and phone_number:
+                contact_ok = (account.patient.phone_number == phone_number or (account.patient.email and account.patient.email.lower() == phone_number.lower()))
+            if account and contact_ok and account.check_password(password):
                 request.session['patient_account_id'] = account.id
                 account.record_login()
                 write_audit_log(
@@ -356,6 +355,12 @@ def my_insurance_claims(request):
 
 
 # --- Self-service booking: same Visit/ticket process as the Registration Counter --
+
+@patient_login_required
+def online_registration(request):
+    patient = request.portal_patient.patient
+    return render(request, 'patient_portal/online_registration.html', {'patient': patient})
+
 
 @patient_login_required
 def book_visit(request):

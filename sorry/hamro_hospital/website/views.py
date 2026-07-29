@@ -226,4 +226,6 @@ def extension_department(request, slug):
 
 def extension_doctor(request, pk):
     doctor = get_object_or_404(Doctor.objects.select_related('department'), pk=pk, is_active=True, is_extension_service=True)
-    return render(request, 'website/extension_doctor.html', {'doctor': doctor})
+    from accounts.models import HospitalSetting
+    setting = HospitalSetting.get_solo()
+    return render(request, 'website/extension_doctor.html', {'doctor': doctor, 'ehs_new_fee': setting.ehs_new_ticket_fee, 'ehs_followup_fee': setting.ehs_followup_ticket_fee})

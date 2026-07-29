@@ -38,7 +38,7 @@
             <div class="col-md-4"><strong>Specialty:</strong><br>{{ doctor.specialization }}</div>
             <div class="col-md-4"><strong>Available Days:</strong><br>{% if doctor.available_days_list %}{{ doctor.available_days_list|join:', ' }}{% else %}As per hospital schedule{% endif %}</div>
             <div class="col-md-4"><strong>Weekly Off Day:</strong><br>{{ doctor.get_extension_weekly_off_day_display|default:'-' }}</div>
-            <div class="col-md-4"><strong>Extension Service:</strong><br>{% if doctor.is_extension_service %}Available{% else %}Not available{% endif %}</div>
+            <div class="col-md-4"><strong>EHS Service:</strong><br>{% if doctor.is_extension_service %}Available{% else %}Not available{% endif %}</div>
             <div class="col-md-6">
                 <div class="border rounded p-3 h-100 bg-light">
                     <strong>Morning Session</strong><br>

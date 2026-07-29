@@ -60,8 +60,9 @@ class PatientLoginForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. HT-2026-000001', 'autofocus': True}),
     )
     phone_number = forms.CharField(
-        label='Phone Number or Email',
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=False,
+        label='Phone Number or Email (optional after account creation)',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional if Hospital ID + password are correct'}),
     )
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
@@ -108,8 +109,10 @@ class PatientVisitBookingForm(forms.ModelForm):
         cleaned_data = super().clean()
         patient_type = cleaned_data.get('patient_type')
         doctor = cleaned_data.get('doctor')
-        if self.extension_mode and doctor:
-            cleaned_data['registration_fee'] = doctor.extension_new_fee if patient_type == Visit.PatientType.NEW else doctor.extension_old_fee
+        if self.extension_mode:
+            from accounts.models import HospitalSetting
+            setting = HospitalSetting.get_solo()
+            cleaned_data['registration_fee'] = setting.ehs_new_ticket_fee if patient_type == Visit.PatientType.NEW else setting.ehs_followup_ticket_fee
         elif patient_type == Visit.PatientType.NEW:
             cleaned_data['registration_fee'] = settings.NEW_PATIENT_REGISTRATION_FEE
         else:
