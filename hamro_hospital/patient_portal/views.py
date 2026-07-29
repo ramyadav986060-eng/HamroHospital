@@ -119,6 +119,9 @@ def register_password(request):
                     email=reg_data.get('email', ''),
                     district=district,
                 )
+            if request.FILES.get('profile_photo'):
+                patient.photo = request.FILES['profile_photo']
+                patient.save(update_fields=['photo'])
             account = PatientAccount.objects.filter(patient=patient).first() or PatientAccount(patient=patient)
             account.set_password(form.cleaned_data['password'])
             account.save()
@@ -199,7 +202,8 @@ def login_view(request):
                     patient_id_text=account.patient.patient_code,
                 )
                 messages.success(request, f'Welcome back, {account.patient.full_name}.')
-                return redirect('patient_portal:dashboard')
+                next_url = request.GET.get('next') or request.POST.get('next')
+                return redirect(next_url or 'patient_portal:dashboard')
             messages.error(request, 'Invalid Hospital ID, phone/email, or password.')
     else:
         form = PatientLoginForm()
@@ -357,13 +361,19 @@ def my_insurance_claims(request):
 def book_visit(request):
     """Patient Portal booking that creates the same Visit/OPD ticket as the Registration Counter."""
     patient = request.portal_patient.patient
+    extension_mode = request.GET.get('extension') == '1' or request.POST.get('extension') == '1'
+    doctor_id = request.GET.get('doctor') or request.POST.get('doctor')
+    department_id = request.GET.get('department') or request.POST.get('department')
 
     if request.method == 'POST':
-        form = PatientVisitBookingForm(request.POST)
+        form = PatientVisitBookingForm(request.POST, extension_mode=extension_mode)
         if form.is_valid():
             visit = form.save(commit=False)
             visit.patient = patient
             visit.registration_fee = form.cleaned_data['registration_fee']
+            visit.is_extension_service = extension_mode
+            if extension_mode:
+                visit.patient_type = Visit.PatientType.EXTENSION
             visit.created_by = None  # self-booked, not staff-created
             if visit.payment_method == Visit.PaymentMethod.CASH:
                 visit.payment_status = Visit.PaymentStatus.PENDING
@@ -384,14 +394,16 @@ def book_visit(request):
             messages.success(request, 'Visit booked. Payment Pending (Cash Payment at Hospital).')
             return redirect('patient_portal:my_ticket', visit_id=visit.id)
     else:
-        form = PatientVisitBookingForm(initial={
-            'patient_type': Visit.PatientType.OLD,
-            'payment_method': Visit.PaymentMethod.CASH,
-        })
+        initial = {'patient_type': Visit.PatientType.OLD, 'payment_method': Visit.PaymentMethod.CASH}
+        if doctor_id:
+            initial['doctor'] = doctor_id
+        if department_id:
+            initial['department'] = department_id
+        form = PatientVisitBookingForm(initial=initial, extension_mode=extension_mode)
 
     return render(request, 'patient_portal/book_visit.html', {
         'form': form, 'patient': patient,
-        'new_fee': 100, 'old_fee': 50,
+        'new_fee': 100, 'old_fee': 50, 'extension_mode': extension_mode,
     })
 
 

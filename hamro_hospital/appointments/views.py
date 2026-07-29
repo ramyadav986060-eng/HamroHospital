@@ -9,10 +9,25 @@ from accounts.utils import write_audit_log
 from appointments.esewa import build_payment_fields, get_form_url, decode_and_verify_response
 from appointments.forms import AppointmentForm
 from appointments.models import Appointment
+from patient_portal.decorators import get_portal_patient
 
 
 def book_appointment(request):
-    """Public online appointment / Extension Service booking form."""
+    """Public online appointment entry point. Requires Patient Portal login."""
+    extension_mode = request.GET.get('extension') == '1' or request.POST.get('extension') == '1'
+    portal_account = get_portal_patient(request)
+    query = request.META.get('QUERY_STRING', '')
+    if not portal_account:
+        return redirect(f'/portal/login/?next={request.get_full_path()}')
+    # Once authenticated, use the unified patient-portal booking workflow.
+    target = reverse('patient_portal:book_visit')
+    if query:
+        target += '?' + query
+    return redirect(target)
+
+
+def public_book_appointment_legacy(request):
+    """Legacy public booking form retained for backwards compatibility if needed internally."""
     extension_mode = request.GET.get('extension') == '1' or request.POST.get('extension') == '1'
     if request.method == 'POST':
         form = AppointmentForm(request.POST, extension_mode=extension_mode)

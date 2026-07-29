@@ -24,7 +24,7 @@
                 {% if doctor.contact_number %}<p class="mb-1"><strong>Contact:</strong> {{ doctor.contact_number }}</p>{% endif %}
                 {% if doctor.biography %}<p class="text-muted mt-3">{{ doctor.biography }}</p>{% endif %}
                 <div class="mt-4">
-                    <a href="{% url 'appointments:book_appointment' %}?doctor={{ doctor.id }}&department={{ doctor.department.id }}" class="btn btn-primary btn-lg"><i class="bi bi-calendar-plus"></i> Book Appointment with Dr. {{ doctor.full_name }}</a>
+                    <a href="{% url 'patient_portal:book_visit' %}?doctor={{ doctor.id }}&department={{ doctor.department.id }}" class="btn btn-primary btn-lg"><i class="bi bi-calendar-plus"></i> Book Appointment with Dr. {{ doctor.full_name }}</a>
                 </div>
             </div>
         </div>

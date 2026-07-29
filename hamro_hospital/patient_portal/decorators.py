@@ -27,7 +27,7 @@ def patient_login_required(view_func):
         account = get_portal_patient(request)
         if not account:
             messages.info(request, 'Please log in to your Patient Portal account to continue.')
-            return redirect('patient_portal:login')
+            return redirect(f"/portal/login/?next={request.get_full_path()}")
         request.portal_patient = account
         return view_func(request, *args, **kwargs)
     return _wrapped

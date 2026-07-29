@@ -86,9 +86,10 @@ class PatientVisitBookingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.extension_mode = kwargs.pop('extension_mode', False)
         super().__init__(*args, **kwargs)
         self.fields['department'].queryset = Department.objects.filter(is_active=True)
-        self.fields['doctor'].queryset = Doctor.objects.filter(is_active=True)
+        self.fields['doctor'].queryset = Doctor.objects.filter(is_active=True, is_extension_service=True) if self.extension_mode else Doctor.objects.filter(is_active=True)
         self.fields['doctor'].required = False
         self.fields['payment_method'].choices = [
             (Visit.PaymentMethod.CASH, 'Cash (Payment Pending at Hospital)'),
@@ -106,7 +107,10 @@ class PatientVisitBookingForm(forms.ModelForm):
         from django.conf import settings
         cleaned_data = super().clean()
         patient_type = cleaned_data.get('patient_type')
-        if patient_type == Visit.PatientType.NEW:
+        doctor = cleaned_data.get('doctor')
+        if self.extension_mode and doctor:
+            cleaned_data['registration_fee'] = doctor.extension_new_fee if patient_type == Visit.PatientType.NEW else doctor.extension_old_fee
+        elif patient_type == Visit.PatientType.NEW:
             cleaned_data['registration_fee'] = settings.NEW_PATIENT_REGISTRATION_FEE
         else:
             cleaned_data['registration_fee'] = settings.OLD_PATIENT_REGISTRATION_FEE

@@ -15,7 +15,7 @@
             </div>
         </div>
         <p class="text-muted">{{ department.description }}</p>
-        <a href="{% url 'appointments:book_appointment' %}?department={{ department.id }}" class="btn btn-outline-primary btn-sm">
+        <a href="{% url 'patient_portal:book_visit' %}?department={{ department.id }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-calendar-check"></i> Book an Appointment in {{ department.name }}
         </a>
     </div>
