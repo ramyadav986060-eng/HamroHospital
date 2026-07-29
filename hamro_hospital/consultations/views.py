@@ -2,15 +2,61 @@ import datetime
 
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 
 from accounts.decorators import doctor_required
+from accounts.models import Role
+from accounts.utils import create_notification
 from patients.models import Visit
 from consultations.models import Consultation, LabTestRequest, RadiologyRequest
+from workflow.models import ServiceOrder, PatientTimeline
+from workflow.utils import add_timeline
+from website.models import HospitalService
 from consultations.forms import ConsultationForm, PrescriptionItemFormSet, LabTestRequestForm, RadiologyRequestForm
 
 
 def _get_doctor_or_none(request):
     return ensure_doctor_profile_for_user(request.user)
+
+
+def _price_for_service_name(name):
+    svc = HospitalService.objects.filter(name__iexact=name, is_active=True).first() or HospitalService.objects.filter(name__icontains=name, is_active=True).first()
+    return svc.price if svc else 0
+
+
+def _create_consultation_order(consultation, service_type, service_name, role, related_url='', notes=''):
+    order, _ = ServiceOrder.objects.get_or_create(
+        patient=consultation.visit.patient,
+        ordered_by=consultation.doctor.user_account if consultation.doctor and consultation.doctor.user_account_id else None,
+        service_type=service_type,
+        service_name=service_name,
+        referral=None,
+        defaults={
+            'source_role': Role.DOCTOR,
+            'destination_role': role,
+            'destination_department': consultation.visit.department,
+            'unit_price': _price_for_service_name(service_name),
+            'payment_status': ServiceOrder.PaymentStatus.PENDING,
+            'status': ServiceOrder.Status.REQUESTED,
+            'notes': notes,
+        },
+    )
+    add_timeline(
+        consultation.visit.patient,
+        PatientTimeline.EventType.ORDER,
+        f'Order requested: {service_name}',
+        notes,
+        actor=consultation.doctor.user_account if consultation.doctor and consultation.doctor.user_account_id else None,
+        related_url=related_url,
+        source=order,
+    )
+    create_notification(
+        title='New Doctor Order',
+        message=f'{consultation.visit.patient.full_name} - {service_name}',
+        role=role,
+        related_url=related_url,
+    )
+    return order
 
 
 @doctor_required
@@ -52,7 +98,10 @@ def consultation_detail(request, visit_id):
         formset = PrescriptionItemFormSet(request.POST, instance=consultation)
         if form.is_valid() and formset.is_valid():
             form.save()
+            changed = formset.has_changed()
             formset.save()
+            if changed and consultation.prescription_items.exists():
+                _create_consultation_order(consultation, ServiceOrder.ServiceType.PHARMACY, 'Digital Prescription', Role.PHARMACY, notes='Prescription created by doctor.')
             messages.success(request, 'Consultation saved.')
             return redirect('consultations:consultation_detail', visit_id=visit.id)
     else:
@@ -80,6 +129,7 @@ def add_lab_request(request, consultation_id):
             lab_request = form.save(commit=False)
             lab_request.consultation = consultation
             lab_request.save()
+            _create_consultation_order(consultation, ServiceOrder.ServiceType.LABORATORY, lab_request.test_name, Role.LABORATORY, related_url=reverse('laboratory:update_result', args=[lab_request.pk]), notes=f'Urgency: {lab_request.get_urgency_display()}')
             messages.success(request, f'Lab test "{lab_request.test_name}" requested.')
     return redirect('consultations:consultation_detail', visit_id=consultation.visit_id)
 
@@ -93,6 +143,7 @@ def add_radiology_request(request, consultation_id):
             radiology_request = form.save(commit=False)
             radiology_request.consultation = consultation
             radiology_request.save()
+            _create_consultation_order(consultation, ServiceOrder.ServiceType.RADIOLOGY, radiology_request.display_service_name, Role.RADIOLOGY, related_url=reverse('radiology:update_report', args=[radiology_request.pk]), notes=f'Urgency: {radiology_request.get_urgency_display()}')
             messages.success(request, f'{radiology_request.display_service_name} requested. Number: {radiology_request.radiology_number}')
     return redirect('consultations:consultation_detail', visit_id=consultation.visit_id)
 
