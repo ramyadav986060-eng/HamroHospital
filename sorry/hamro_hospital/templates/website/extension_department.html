@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}{{ department.name }} Extension Services{% endblock %}
+{% block content %}
+<section class="container py-5">
+    <h1 class="fw-bold text-center mb-4">{{ department.name }} - Extension Doctors</h1>
+    <div class="row g-4">
+        {% for doctor in doctors %}<div class="col-md-4"><div class="tuh-card p-4 h-100 text-center">{% if doctor.photo %}<img src="{{ doctor.photo.url }}" class="rounded-circle mb-3" width="90" height="90" style="object-fit:cover;">{% else %}<div class="tuh-icon-circle mx-auto mb-3"><i class="bi bi-person"></i></div>{% endif %}<h5>Dr. {{ doctor.full_name }}</h5><p class="text-muted mb-1">{{ doctor.qualification }}</p><p class="mb-1"><strong>{{ doctor.specialization }}</strong></p><p class="text-muted small">New: NPR {{ doctor.extension_new_fee }} · Old: NPR {{ doctor.extension_old_fee }}</p><a href="{% url 'website:extension_doctor' doctor.pk %}" class="btn btn-primary btn-sm">View & Book</a></div></div>{% empty %}<p class="text-center text-muted">No extension doctors available in this department.</p>{% endfor %}
+    </div>
+</section>
+{% endblock %}

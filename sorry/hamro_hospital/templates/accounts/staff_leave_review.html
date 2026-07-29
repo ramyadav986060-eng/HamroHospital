@@ -1,0 +1,7 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Review Leave{% endblock %}
+{% block page_title %}Review Leave Request{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4"><strong>{{ leave.staff.get_full_name|default:leave.staff.username }}</strong> · {{ leave.staff.staff_id }}<br>{{ leave.start_date }} to {{ leave.end_date }} ({{ leave.total_days }} day/s)<br>{{ leave.reason }}{% if leave.requires_super_admin_override %}<div class="alert alert-warning mt-2 mb-0">This request exceeds the configured monthly paid leave limit and requires Main Super Admin approval.</div>{% endif %}</div>
+<div class="tuh-card p-4" style="max-width:700px;"><form method="post">{% csrf_token %}{% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}<button class="btn btn-primary">Save Review</button></form></div>
+{% endblock %}

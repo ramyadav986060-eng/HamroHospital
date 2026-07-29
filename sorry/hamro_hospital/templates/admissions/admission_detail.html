@@ -1,0 +1,91 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ admission.admission_number }}{% endblock %}
+{% block page_title %}Admission {{ admission.admission_number }}{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="tuh-card p-4">
+            {% if admission.barcode %}
+            <div class="text-end mb-3">
+                <img src="{{ admission.barcode.url }}" alt="Admission Barcode" style="max-width:180px; height:40px;">
+                <div style="font-size: 8px; color: #475569; letter-spacing: 0.5px; margin-top: 2px;" class="pe-4">{{ admission.admission_number }}</div>
+            </div>
+            {% endif %}
+            <dl class="row small mb-0">
+                <dt class="col-sm-5">Patient</dt><dd class="col-sm-7">{{ admission.patient.full_name }} ({{ admission.patient.patient_code }})</dd>
+                <dt class="col-sm-5">Department</dt><dd class="col-sm-7">{{ admission.department.name }}</dd>
+                <dt class="col-sm-5">Ward / Bed</dt><dd class="col-sm-7">{{ admission.ward.name }}{% if admission.bed %} / Bed {{ admission.bed.bed_number }}{% endif %}</dd>
+                <dt class="col-sm-5">Admitting Doctor</dt><dd class="col-sm-7">{% if admission.admitting_doctor %}Dr. {{ admission.admitting_doctor.full_name }}{% else %}-{% endif %}</dd>
+                <dt class="col-sm-5">Reason</dt><dd class="col-sm-7">{{ admission.reason_for_admission }}</dd>
+                <dt class="col-sm-5">Diagnosis</dt><dd class="col-sm-7">{{ admission.diagnosis|default:"-" }}</dd>
+                <dt class="col-sm-5">Status</dt><dd class="col-sm-7"><span class="badge badge-success-soft">{{ admission.get_status_display }}</span></dd>
+                <dt class="col-sm-5">Admitted</dt><dd class="col-sm-7">{{ admission.admission_date|date:"M d, Y H:i" }}</dd>
+                <dt class="col-sm-5">Length of Stay</dt><dd class="col-sm-7">{{ admission.length_of_stay_days }} day(s)</dd>
+                {% if admission.discharge_date %}
+                <dt class="col-sm-5">Discharged</dt><dd class="col-sm-7">{{ admission.discharge_date|date:"M d, Y H:i" }} - {{ admission.get_discharge_condition_display }}</dd>
+                {% endif %}
+            </dl>
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                <a href="{% url 'admissions:admission_slip' admission.pk %}" class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-printer"></i> Print Admission Slip</a>
+                <a href="{% url 'billing:create_bill' admission.patient.pk %}?bill_type=ipd&admission_id={{ admission.pk }}" class="btn btn-sm btn-outline-primary">Bill IPD Charges</a>
+                <a href="{% url 'admissions:admission_deposit_create' admission.pk %}" class="btn btn-sm btn-outline-success">Deposit</a>
+                <a href="{% url 'admissions:admission_transfer_bed' admission.pk %}" class="btn btn-sm btn-outline-warning">Transfer Bed</a>
+                <a href="{% url 'nursing:admission_notes' admission.pk %}" class="btn btn-sm btn-outline-secondary">Nursing Notes</a>
+                <a href="{% url 'documents:document_list' admission.patient.pk %}" class="btn btn-sm btn-outline-secondary">Patient Documents</a>
+                <a href="{% url 'admissions:discharge_package_pdf' admission.pk %}" class="btn btn-sm btn-outline-dark" target="_blank">Discharge Package</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+
+
+        {% if deposits %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Admission Deposits</h6>
+            <table class="table table-sm small"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th></th></tr></thead><tbody>{% for d in deposits %}<tr><td>{{ d.created_at|date:'Y-m-d H:i' }}</td><td>{{ d.get_deposit_type_display }}</td><td>NPR {{ d.amount }}</td><td><a href="{% url 'admissions:admission_deposit_receipt' d.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">Receipt</a></td></tr>{% endfor %}</tbody></table>
+        </div>
+        {% endif %}
+        {% if transfers %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Bed Transfer History</h6>
+            <table class="table table-sm small"><thead><tr><th>Date</th><th>From</th><th>To</th><th>By</th></tr></thead><tbody>{% for t in transfers %}<tr><td>{{ t.transferred_at|date:'Y-m-d H:i' }}</td><td>{{ t.from_ward }}{% if t.from_bed %} / {{ t.from_bed.bed_number }}{% endif %}</td><td>{{ t.to_ward }}{% if t.to_bed %} / {{ t.to_bed.bed_number }}{% endif %}</td><td>{{ t.transferred_by.get_full_name|default:t.transferred_by.username }}</td></tr>{% endfor %}</tbody></table>
+        </div>
+        {% endif %}
+        {% if checklist_form %}
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Discharge Checklist</h6>
+            <form method="post" action="{% url 'admissions:update_discharge_checklist' admission.pk %}">
+                {% csrf_token %}
+                <div class="row g-2 small">
+                    {% for field in checklist_form %}
+                        {% if field.name != 'remarks' %}<div class="col-md-6"><label class="form-check-label">{{ field }} {{ field.label }}</label></div>{% endif %}
+                    {% endfor %}
+                    <div class="col-12"><label class="form-label mt-2">Remarks</label>{{ checklist_form.remarks }}</div>
+                </div>
+                <button class="btn btn-sm btn-primary mt-3">Save Checklist</button>
+                {% if checklist.is_complete %}<span class="badge bg-success ms-2">Ready for discharge</span>{% else %}<span class="badge bg-warning text-dark ms-2">Incomplete</span>{% endif %}
+            </form>
+        </div>
+        {% endif %}
+        {% if discharge_form %}
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3">Discharge Patient</h6>
+            <form method="post" action="{% url 'admissions:discharge_patient' admission.pk %}">
+                {% csrf_token %}
+                <div class="mb-3"><label class="form-label">Condition</label>{{ discharge_form.discharge_condition }}</div>
+                <div class="mb-3"><label class="form-label">Discharge Summary</label>{{ discharge_form.discharge_summary }}</div>
+                <div class="mb-3"><label class="form-label">Follow-up Instructions</label>{{ discharge_form.follow_up_instructions }}</div>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> Discharge</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold">Discharge Summary</h6>
+            <p>{{ admission.discharge_summary|default:"-" }}</p>
+            <h6 class="fw-bold">Follow-up Instructions</h6>
+            <p>{{ admission.follow_up_instructions|default:"-" }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

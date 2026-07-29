@@ -1,0 +1,44 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Documents - {{ patient.full_name }} - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Documents - {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form method="get" class="d-flex gap-2">
+        <select name="category" class="form-select" onchange="this.form.submit()">
+            <option value="">All categories</option>
+            {% for value, label in categories %}<option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+    </form>
+    <a href="{% url 'documents:document_upload' patient.pk %}" class="btn btn-primary"><i class="bi bi-upload"></i> Upload Document</a>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Title</th><th>Category</th><th>Uploaded By</th><th>Version</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            {% for doc in documents %}
+                <tr>
+                    <td>{{ doc.title }}{% if doc.remarks %}<br><small class="text-muted">{{ doc.remarks }}</small>{% endif %}</td>
+                    <td><span class="badge badge-info-soft">{{ doc.get_category_display }}</span></td>
+                    <td>{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}<br><small class="text-muted">{{ doc.department_note }}</small></td>
+                    <td>v{{ doc.version }}</td>
+                    <td class="small text-muted">{{ doc.uploaded_at|date:"M d, Y H:i" }}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'documents:document_view' doc.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                        {% if request.user.is_superuser or request.user.role == 'super_admin' %}
+                        <a href="{% url 'documents:document_download' doc.pk %}" class="btn btn-sm btn-outline-success">Download</a>
+                        {% endif %}
+                        <a href="{% url 'documents:document_replace' doc.pk %}" class="btn btn-sm btn-outline-secondary">Replace</a>
+                        {% if request.user.is_superuser or request.user.role == 'super_admin' %}
+                        <a href="{% url 'documents:document_delete' doc.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No documents uploaded yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

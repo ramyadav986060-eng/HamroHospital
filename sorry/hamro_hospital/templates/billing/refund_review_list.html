@@ -1,0 +1,27 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Pending Refunds{% endblock %}
+{% block page_title %}Pending Refund Requests{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Bill #</th><th>Patient</th><th>Amount</th><th>Reason</th><th>Requested By</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            {% for r in refunds %}
+                <tr>
+                    <td>{{ r.bill.bill_number }}</td>
+                    <td>{{ r.bill.patient.full_name }}</td>
+                    <td>NPR {{ r.amount }}</td>
+                    <td>{{ r.reason|truncatewords:12 }}</td>
+                    <td>{{ r.requested_by.get_full_name|default:r.requested_by.username }}</td>
+                    <td class="small text-muted">{{ r.requested_at|date:"M d, Y H:i" }}</td>
+                    <td><a href="{% url 'billing:refund_review' r.pk %}" class="btn btn-sm btn-primary">Review</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No pending refund requests.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

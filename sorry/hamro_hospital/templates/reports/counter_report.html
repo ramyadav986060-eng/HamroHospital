@@ -1,0 +1,15 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Cash Counter Report{% endblock %}
+{% block page_title %}Cash Counter Report{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='counter' %}{% endblock %}
+{% block dashboard_content %}
+{% include 'reports/report_filter.html' with export_url='reports:counter_report' %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card blue click-amount-card" onclick="showFullValue('Cash', 'NPR {{ totals_by_method.cash|floatformat:2 }}')"><h6>Cash</h6><h3>NPR {{ totals_by_method.cash|short_amount }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card green click-amount-card" onclick="showFullValue('eSewa', 'NPR {{ totals_by_method.esewa|floatformat:2 }}')"><h6>eSewa</h6><h3>NPR {{ totals_by_method.esewa|short_amount }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card orange click-amount-card" onclick="showFullValue('Insurance', 'NPR {{ totals_by_method.insurance|floatformat:2 }}')"><h6>Insurance</h6><h3>NPR {{ totals_by_method.insurance|short_amount }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card gray"><h6>Transactions</h6><h3>{{ bills|length }}</h3></div></div>
+</div>
+<div class="tuh-card p-4"><h5 class="mb-3">Transactions</h5><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Bill #</th><th>Patient</th><th>Cashier</th><th>Method</th><th class="text-end">Amount</th><th>Date</th></tr></thead><tbody>{% for b in bills %}<tr><td>{{ b.bill_number }}</td><td>{{ b.patient.full_name }}<br><small class="text-muted">{{ b.patient.patient_code }}</small></td><td>{{ b.cashier.username|default:'-' }}</td><td>{{ b.get_payment_method_display }}</td><td class="text-end">NPR {{ b.total_amount|floatformat:2 }}</td><td>{{ b.created_at|date:'Y-m-d H:i' }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">No transactions found.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

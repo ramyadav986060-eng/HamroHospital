@@ -1,0 +1,279 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Registration Counter - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Registration Counter Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'patients:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'patients:patient_register' %}"><i class="bi bi-person-plus"></i> Register Patient</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link" href="{% url 'patients:patient_list' %}"><i class="bi bi-people"></i> View Patients</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<!-- Primary summary metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue shadow-sm">
+            <i class="bi bi-calendar-check fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ todays_count }}</h2>
+            <small>Total OPD Walk-ins Today</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green shadow-sm">
+            <i class="bi bi-laptop fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ online_bookings.count }}</h2>
+            <small>Pending Online Bookings</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange shadow-sm">
+            <i class="bi bi-exclamation-circle fs-3"></i>
+            <h2 class="fw-bold mt-2 mb-0">{{ pending_visits.count|add:pending_appointments.count }}</h2>
+            <small>Total Payments Pending</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'patients:patient_register' %}" class="text-decoration-none">
+            <div class="stat-card gray h-100 d-flex flex-column justify-content-center shadow-sm">
+                <i class="bi bi-plus-circle fs-3 text-white"></i>
+                <h5 class="fw-bold mt-2 mb-0 text-white">Register Walk-in Patient</h5>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Tabbed Interactive Queue Manager -->
+<div class="tuh-card p-4">
+    <h5 class="fw-bold mb-4 border-bottom pb-2 text-primary"><i class="bi bi-hospital"></i> Patient Registration & Booking Queue Manager</h5>
+
+    <ul class="nav nav-tabs mb-3" id="registrationTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold" id="walkins-tab" data-bs-toggle="tab" data-bs-target="#walkins-content" type="button" role="tab"><i class="bi bi-people"></i> Walk-ins Today ({{ todays_visits.count }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold" id="online-tab" data-bs-toggle="tab" data-bs-target="#online-content" type="button" role="tab"><i class="bi bi-laptop text-info"></i> Online Bookings ({{ online_bookings.count }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-warning" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-content" type="button" role="tab"><i class="bi bi-cash"></i> Payments Pending ({{ pending_visits.count|add:pending_appointments.count }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-success" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed-content" type="button" role="tab"><i class="bi bi-check2-circle"></i> Payments Completed</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="registrationTabsContent">
+        <!-- 1. WALK-INS TODAY -->
+        <div class="tab-pane fade show active" id="walkins-content" role="tabpanel">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Receipt #</th>
+                            <th>Patient ID</th>
+                            <th>Patient Name</th>
+                            <th>Department</th>
+                            <th>Doctor Assigned</th>
+                            <th>Queue/Token</th>
+                            <th>Payment Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for visit in todays_visits %}
+                        <tr>
+                            <td><code>{{ visit.receipt_number }}</code></td>
+                            <td><code>{{ visit.patient.patient_code }}</code></td>
+                            <td><strong>{{ visit.patient.full_name }}</strong></td>
+                            <td><span class="badge bg-primary">{{ visit.department.name }}</span></td>
+                            <td>{% if visit.doctor %}Dr. {{ visit.doctor.full_name }}{% else %}<span class="text-muted small">Not assigned</span>{% endif %}</td>
+                            <td><span class="badge bg-dark">#{{ visit.token_number }}</span></td>
+                            <td>
+                                {% if visit.payment_status == 'paid' %}
+                                    <span class="badge bg-success-soft text-success"><i class="bi bi-check-circle"></i> Completed</span>
+                                {% else %}
+                                    <span class="badge bg-danger-soft text-danger"><i class="bi bi-exclamation-circle"></i> Pending Cash</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'patients:opd_ticket_reprint' visit.pk %}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-printer"></i> Print Ticket</a>
+                                <a href="{% url 'patients:patient_detail' visit.patient.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> Profile</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center text-muted py-4">No walk-in registrations today.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. ONLINE BOOKINGS -->
+        <div class="tab-pane fade" id="online-content" role="tabpanel">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Appointment ID</th>
+                            <th>Preferred Date</th>
+                            <th>Patient Name</th>
+                            <th>Department</th>
+                            <th>Doctor Assigned</th>
+                            <th>Fee</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for apt in online_bookings %}
+                        <tr>
+                            <td><code>{{ apt.appointment_number|default:"Pending" }}</code></td>
+                            <td><strong>{{ apt.preferred_date|date:"Y-m-d" }}</strong></td>
+                            <td><strong>{{ apt.full_name }}</strong><br><small class="text-muted">{{ apt.phone_number }}</small></td>
+                            <td><span class="badge bg-info text-dark">{{ apt.department.name }}</span></td>
+                            <td>{% if apt.doctor %}Dr. {{ apt.doctor.full_name }}{% else %}<span class="text-muted small">To be assigned</span>{% endif %}</td>
+                            <td>NPR {{ apt.registration_fee }}</td>
+                            <td>
+                                {% if apt.payment_status == 'paid' %}
+                                    <span class="badge bg-success-soft text-success">Paid (Online)</span>
+                                {% else %}
+                                    <span class="badge bg-warning-soft text-warning">Cash on Arrival</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'patients:confirm_arrival' apt.id %}" class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Confirm Arrival & Register</a>
+                                <a href="{% url 'patients:cancel_booking' apt.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this booking?');"><i class="bi bi-trash"></i> Cancel</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center text-muted py-4">No pending online bookings found.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. PAYMENTS PENDING -->
+        <div class="tab-pane fade" id="pending-content" role="tabpanel">
+            <h6 class="fw-bold mb-3 text-warning">OPD Walk-in Pending Payments</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Receipt #</th>
+                            <th>Patient ID</th>
+                            <th>Patient Name</th>
+                            <th>Department</th>
+                            <th>Fee</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for visit in pending_visits %}
+                        <tr>
+                            <td><code>{{ visit.receipt_number }}</code></td>
+                            <td><code>{{ visit.patient.patient_code }}</code></td>
+                            <td><strong>{{ visit.patient.full_name }}</strong></td>
+                            <td>{{ visit.department.name }}</td>
+                            <td><strong>NPR {{ visit.registration_fee }}</strong></td>
+                            <td class="text-end">
+                                <a href="{% url 'billing:confirm_visit_payment' visit.pk %}" class="btn btn-sm btn-warning"><i class="bi bi-cash-coin"></i> Confirm Payment physically</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-2">No pending walk-in cash payments today.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h6 class="fw-bold mb-3 text-warning">Online Appointment Pending Payments (Cash on Arrival)</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Preferred Date</th>
+                            <th>Patient Name</th>
+                            <th>Department</th>
+                            <th>Fee</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for apt in pending_appointments %}
+                        <tr>
+                            <td>{{ apt.preferred_date }}</td>
+                            <td><strong>{{ apt.full_name }}</strong></td>
+                            <td>{{ apt.department.name }}</td>
+                            <td><strong>NPR {{ apt.registration_fee }}</strong></td>
+                            <td class="text-end">
+                                <a href="{% url 'patients:confirm_arrival' apt.id %}" class="btn btn-sm btn-primary"><i class="bi bi-check-circle"></i> Confirm & Collect Cash</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-2">No pending cash-on-arrival appointments.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. PAYMENTS COMPLETED -->
+        <div class="tab-pane fade" id="completed-content" role="tabpanel">
+            <h6 class="fw-bold mb-3 text-success">Completed Walk-in Payments Today</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Receipt #</th>
+                            <th>Patient</th>
+                            <th>Department</th>
+                            <th>Fee Paid</th>
+                            <th>Date/Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for visit in completed_visits %}
+                        <tr>
+                            <td><code>{{ visit.receipt_number }}</code></td>
+                            <td><strong>{{ visit.patient.full_name }}</strong></td>
+                            <td>{{ visit.department.name }}</td>
+                            <td class="text-success fw-bold">NPR {{ visit.registration_fee }}</td>
+                            <td>{{ visit.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-2">No completed walk-in payments yet today.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h6 class="fw-bold mb-3 text-success">Completed Online Bookings Today</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Appointment ID</th>
+                            <th>Patient Name</th>
+                            <th>Department</th>
+                            <th>Fee Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for apt in completed_appointments %}
+                        <tr>
+                            <td><code>{{ apt.appointment_number }}</code></td>
+                            <td><strong>{{ apt.full_name }}</strong></td>
+                            <td>{{ apt.department.name }}</td>
+                            <td class="text-success fw-bold">NPR {{ apt.registration_fee }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-2">No completed online appointments yet today.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

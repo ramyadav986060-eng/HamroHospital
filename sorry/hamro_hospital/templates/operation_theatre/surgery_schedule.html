@@ -1,0 +1,21 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Schedule Surgery - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Schedule Surgery for {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+<form method="post" enctype="multipart/form-data" class="tuh-card p-4" style="max-width:650px;">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+    {% endfor %}
+    <div class="mb-3">
+        <label class="form-label">Upload PDF / Scanned Consent Form</label>
+        <input type="file" name="consent_files" class="form-control" multiple>
+        <small class="text-muted">Optional at scheduling time - becomes part of the patient's permanent Medical Record.</small>
+    </div>
+    <button type="submit" class="btn btn-primary">Schedule Surgery</button>
+</form>
+{% endblock %}

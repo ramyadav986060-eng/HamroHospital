@@ -1,0 +1,25 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}New Visit - {{ patient.full_name }}{% endblock %}
+{% block page_title %}New OPD Visit - {{ patient.full_name }}{% endblock %}
+{% block dashboard_content %}
+{% if is_correction %}
+<div class="alert alert-info">This is a post-24-hour correction visit and will be charged and logged as such.</div>
+{% endif %}
+<form method="post" novalidate>
+    {% csrf_token %}
+    <div class="tuh-card p-4">
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Department *</label>{{ visit_form.department }}</div>
+            <div class="col-md-4"><label class="form-label">Doctor</label>{{ visit_form.doctor }}</div>
+            <div class="col-md-4"><label class="form-label">Patient Type *</label>{{ visit_form.patient_type }}</div>
+            <div class="col-md-4"><label class="form-label">Payment Method *</label>{{ visit_form.payment_method }}</div>
+            <div class="col-12"><label class="form-label">Chief Complaint</label>{{ visit_form.chief_complaint }}</div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0">
+            Registration Fee: <strong>NPR <span id="fee-display" data-new-fee="100" data-old-fee="50">50</span></strong>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check-circle"></i> Create Visit &amp; Print Ticket</button>
+    <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-outline-secondary mt-3">Cancel</a>
+</form>
+{% endblock %}

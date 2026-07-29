@@ -1,0 +1,41 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Departments - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Departments{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'departments:department_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Department</a>
+</div>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Name</th><th>Fee</th><th>Doctors</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for dept in departments %}
+                <tr>
+                    <td><i class="{{ dept.icon_class|default:'bi bi-hospital' }}"></i> {{ dept.name }}</td>
+                    <td>NPR {{ dept.consultation_fee }}</td>
+                    <td>{{ dept.active_doctor_count }}</td>
+                    <td>{% if dept.is_active %}<span class="badge badge-success-soft">Active</span>{% else %}<span class="badge badge-danger-soft">Inactive</span>{% endif %}</td>
+                    <td>
+                        <a href="{% url 'departments:department_edit' dept.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a href="{% url 'departments:department_delete' dept.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No departments yet. Run <code>python manage.py seed_demo_data</code> for samples.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

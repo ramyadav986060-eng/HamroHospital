@@ -1,0 +1,11 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}My Referrals{% endblock %}
+{% block page_title %}My Referrals{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-lg-6"><div class="tuh-card p-4"><h5 class="fw-bold mb-3">Outgoing Referrals</h5>{% include 'referrals/_referral_table.html' with referrals=outgoing %}</div></div>
+    <div class="col-lg-6"><div class="tuh-card p-4"><h5 class="fw-bold mb-3">Incoming Referrals</h5>{% include 'referrals/_referral_table.html' with referrals=incoming %}</div></div>
+    <div class="col-lg-6"><div class="tuh-card p-4"><h5 class="fw-bold mb-3">Pending / Accepted</h5>{% include 'referrals/_referral_table.html' with referrals=pending %}</div></div>
+    <div class="col-lg-6"><div class="tuh-card p-4"><h5 class="fw-bold mb-3">Completed</h5>{% include 'referrals/_referral_table.html' with referrals=completed %}</div></div>
+</div>
+{% endblock %}

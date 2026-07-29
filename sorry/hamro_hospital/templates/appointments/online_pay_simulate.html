@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Mock Online Payment Gateway - {{ HOSPITAL_NAME }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 85vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="tuh-card p-4 border border-primary shadow-lg">
+            <!-- Gateway simulated branding -->
+            <div class="text-center mb-4 pb-3 border-bottom">
+                <h5 class="fw-bold text-primary mb-1"><i class="bi bi-shield-check"></i> HT SECURE SECURE CHECKOUT</h5>
+                <p class="text-muted small mb-0">Authorized Digital Payment Gateway of Nepal</p>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Merchant</span>
+                    <strong class="small">{{ HOSPITAL_NAME }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Payment Channel</span>
+                    <span class="badge bg-info text-dark fw-bold">{{ appointment.get_payment_method_display }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Amount to Pay</span>
+                    <h5 class="fw-bold text-primary mb-0">NPR {{ appointment.registration_fee }}</h5>
+                </div>
+            </div>
+
+            <!-- Simulated Card details / Mobile number inputs depending on choice -->
+            <div class="bg-light p-3 rounded mb-4 border">
+                <p class="fw-bold small mb-2 text-dark"><i class="bi bi-lock-fill text-success"></i> Payment Details Verification</p>
+                <div class="mb-3">
+                    {% if appointment.payment_method == 'card' %}
+                        <label class="form-label small">Card Number</label>
+                        <input type="text" class="form-control form-control-sm" placeholder="XXXX-XXXX-XXXX-XXXX" value="4111 2222 3333 4444" readonly>
+                    {% else %}
+                        <label class="form-label small">Registered Wallet / Mobile Number</label>
+                        <input type="text" class="form-control form-control-sm" value="{{ appointment.phone_number }}" readonly>
+                    {% endif %}
+                </div>
+                <div class="mb-0">
+                    <label class="form-label small">Secure PIN / OTP Code</label>
+                    <input type="password" class="form-control form-control-sm" value="••••••" readonly>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary w-100 btn-lg mb-3"><i class="bi bi-wallet2"></i> Confirm &amp; Verify Payment (Rs. {{ appointment.registration_fee }})</button>
+            </form>
+
+            <div class="text-center">
+                <a href="{% url 'website:home' %}" class="small text-danger text-decoration-none" onclick="return confirm('Cancel this secure payment process?');">Cancel Payment</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

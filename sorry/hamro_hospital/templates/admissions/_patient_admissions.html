@@ -1,0 +1,21 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Admission #</th><th>Ward / Bed</th><th>Admitted</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for a in records %}
+            <tr>
+                <td>{{ a.admission_number }}</td>
+                <td>{{ a.ward.name }} / {{ a.bed.bed_number }}</td>
+                <td>{{ a.admission_date|date:"Y-m-d H:i" }}</td>
+                <td>{{ a.get_status_display }}</td>
+                <td><a href="{% url 'admissions:admission_detail' a.pk %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No admission records for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

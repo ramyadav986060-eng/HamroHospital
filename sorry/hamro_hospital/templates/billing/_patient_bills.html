@@ -1,0 +1,22 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Bill #</th><th>Date</th><th>Amount</th><th>Method</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for b in records %}
+            <tr>
+                <td>{{ b.bill_number }}</td>
+                <td>{{ b.created_at|date:"Y-m-d H:i" }}</td>
+                <td>NPR {{ b.total_amount }}</td>
+                <td>{{ b.get_payment_method_display }}</td>
+                <td>{{ b.get_status_display }}</td>
+                <td><a href="{% url 'billing:invoice_pdf' b.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">Invoice PDF</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No billing records for this patient.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

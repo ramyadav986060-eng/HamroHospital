@@ -1,0 +1,30 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Issue Blood - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Issue Blood to {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+<p>Patient's recorded blood group: <strong>{{ patient.blood_group|default:"Unknown" }}</strong></p>
+{% if blood_request %}
+<div class="alert alert-info">Fulfilling request: <strong>{{ blood_request.blood_group_needed }} x{{ blood_request.units_needed }} {{ blood_request.get_component_display }}</strong> requested by {{ blood_request.doctor_display }} ({{ blood_request.get_urgency_display }}) - {{ blood_request.clinical_note|default:"no clinical note" }}</div>
+{% endif %}
+<form method="post" enctype="multipart/form-data" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% if blood_request %}<input type="hidden" name="request_id" value="{{ blood_request.pk }}">{% endif %}
+    <div class="mb-3">
+        <label class="form-label">Compatible Unit</label>
+        <select name="blood_unit_id" class="form-select" required>
+            <option value="">Select a unit</option>
+            {% for unit in compatible_units %}
+                <option value="{{ unit.pk }}">{{ unit.bag_number }} - {{ unit.get_component_display }} - {{ unit.quantity_ml }}ml (exp. {{ unit.expiry_date }})</option>
+            {% endfor %}
+        </select>
+        {% if not compatible_units %}<div class="text-danger small">No compatible units currently available.</div>{% endif %}
+    </div>
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <div class="mb-3">
+        <label class="form-label">Upload Issue Report</label>
+        <input type="file" name="issue_report" class="form-control">
+        <small class="text-muted">Optional - becomes part of the patient's permanent Medical Record.</small>
+    </div>
+    <button type="submit" class="btn btn-primary" {% if not compatible_units %}disabled{% endif %}>Issue Blood</button>
+</form>
+{% endblock %}

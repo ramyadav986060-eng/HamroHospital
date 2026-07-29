@@ -1,0 +1,19 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Medical Records - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Medical Records Dashboard{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'medical_records:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'medical_records:patient_search' %}"><i class="bi bi-search"></i> Find Patient Record</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="row g-4">
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card blue"><i class="bi bi-people fs-3"></i><h2 class="fw-bold mt-2 mb-0">{{ patient_count }}</h2><small>Total Patients on File</small></div>
+    </div>
+</div>
+<div class="tuh-card p-4 mt-4">
+    <p class="mb-0">Use <a href="{% url 'medical_records:patient_search' %}">Find Patient Record</a> to open a patient's complete digital file - OPD history, admissions, billing, pharmacy, lab, radiology, prescriptions, operation records, and all uploaded documents in one place.</p>
+</div>
+{% endblock %}

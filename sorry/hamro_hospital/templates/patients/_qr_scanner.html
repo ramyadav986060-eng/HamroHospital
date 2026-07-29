@@ -1,0 +1,145 @@
+{% comment %}
+Reusable "Scan Patient QR Code" widget.
+
+Drop this include on any Search Patient screen in any module:
+
+    {% include 'patients/_qr_scanner.html' with target_prefix="id_" %}
+
+target_prefix must match the id="" prefix of your search input fields, e.g.
+if your form has <input id="id_patient_code">, <input id="id_full_name">,
+<input id="id_phone_number"> then pass target_prefix="id_" (the default).
+Only the fields that exist on the page get filled - missing ones are skipped.
+
+On a successful scan this:
+  1. plays a confirmation beep
+  2. calls /patients/api/qr-lookup/?code=...
+  3. auto-fills #{{ prefix }}patient_code, #{{ prefix }}full_name,
+     #{{ prefix }}phone_number, #{{ prefix }}age, #{{ prefix }}age_input,
+     #{{ prefix }}gender, #{{ prefix }}qr_code (if present on the page)
+  4. fires a `tuh:patient-scanned` custom event with the patient JSON,
+     so a module can hook extra logic (e.g. auto-submit the search).
+
+Hardware barcode scanners (USB/Bluetooth "keyboard wedge" scanners that read
+the Code128 barcode on the printed Patient Card) need no extra code here -
+they just type the patient_code into whichever text input is focused
+followed by Enter, which submits the surrounding search form exactly like a
+person typing it. Point staff at the existing "Patient ID / Search" field
+for that; this widget adds camera-based QR scanning on top.
+{% endcomment %}
+<div class="tuh-qr-scanner mb-3">
+    <button type="button" class="btn btn-outline-primary" id="tuhScanBtn-{{ target_prefix|default:'id_' }}">
+        <i class="bi bi-upc-scan"></i> Scan Patient QR / Barcode
+    </button>
+    <div id="tuhScanBox-{{ target_prefix|default:'id_' }}" style="display:none;max-width:320px;margin-top:10px;">
+        <div id="tuhScanReader-{{ target_prefix|default:'id_' }}"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="tuhScanStop-{{ target_prefix|default:'id_' }}">Stop Scanning</button>
+    </div>
+    <div id="tuhScanMsg-{{ target_prefix|default:'id_' }}" class="small mt-1"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function () {
+    var prefix = "{{ target_prefix|default:'id_' }}";
+    var btn = document.getElementById('tuhScanBtn-' + prefix);
+    var box = document.getElementById('tuhScanBox-' + prefix);
+    var stopBtn = document.getElementById('tuhScanStop-' + prefix);
+    var msg = document.getElementById('tuhScanMsg-' + prefix);
+    var readerId = 'tuhScanReader-' + prefix;
+    var html5QrCode = null;
+
+    function playBeep() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.value = 0.2;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } catch (e) { /* audio not available, ignore */ }
+    }
+
+    function fillField(suffix, value) {
+        if (value === undefined || value === null) return;
+        var el = document.getElementById(prefix + suffix);
+        if (el) {
+            el.value = value;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    function stopScanning() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(function () {
+                html5QrCode.clear();
+                html5QrCode = null;
+            }).catch(function () { html5QrCode = null; });
+        }
+        box.style.display = 'none';
+    }
+
+    function onScanSuccess(decodedText) {
+        stopScanning();
+        playBeep();
+        msg.className = 'small mt-1 text-muted';
+        msg.textContent = 'Looking up ' + decodedText + ' ...';
+
+        fetch("{% url 'patients:qr_lookup' %}?code=" + encodeURIComponent(decodedText))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.found) {
+                    msg.className = 'small mt-1 text-danger';
+                    msg.textContent = data.error || 'Patient not found.';
+                    return;
+                }
+                fillField('existing_patient_id', data.id);
+                fillField('patient_code', data.patient_code);
+                fillField('first_name', data.first_name);
+                fillField('last_name', data.last_name);
+                fillField('full_name', data.full_name);
+                fillField('phone_number', data.phone_number);
+                fillField('age', data.age);
+                fillField('age_input', data.age_display);
+                fillField('date_of_birth', data.date_of_birth);
+                fillField('gender', data.gender);
+                fillField('district', data.district_id);
+                fillField('qr_code', data.patient_code);
+                fillField('q', data.patient_code);
+                msg.className = 'small mt-1 text-success';
+                msg.textContent = 'Loaded patient: ' + data.full_name + ' (' + data.patient_code + ')';
+                document.dispatchEvent(new CustomEvent('tuh:patient-scanned', { detail: data }));
+            })
+            .catch(function () {
+                msg.className = 'small mt-1 text-danger';
+                msg.textContent = 'Lookup failed. Check connection and try again.';
+            });
+    }
+
+    btn.addEventListener('click', function () {
+        box.style.display = 'block';
+        msg.textContent = '';
+        html5QrCode = new Html5Qrcode(readerId, {
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_128,
+            ],
+        });
+        html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: 220 },
+            onScanSuccess,
+            function () { /* per-frame scan failure, ignore */ }
+        ).catch(function (err) {
+            msg.className = 'small mt-1 text-danger';
+            msg.textContent = 'Could not start camera: ' + err;
+        });
+    });
+
+    stopBtn.addEventListener('click', stopScanning);
+})();
+</script>

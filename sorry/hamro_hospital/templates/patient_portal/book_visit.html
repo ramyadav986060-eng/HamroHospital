@@ -1,0 +1,101 @@
+{% extends 'patient_portal/portal_base.html' %}
+{% block title %}Book a Visit - {{ HOSPITAL_NAME }}{% endblock %}
+{% block portal_page_title %}Book a Visit{% endblock %}
+{% block portal_content %}
+<div class="tuh-card p-4 mb-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-person-vcard"></i> Patient Information</h6>
+    <div class="row g-3 small">
+        <div class="col-md-4"><strong>Patient ID:</strong> {{ patient.patient_code }}</div>
+        <div class="col-md-4"><strong>Name:</strong> {{ patient.full_name }}</div>
+        <div class="col-md-4"><strong>Phone:</strong> {{ patient.phone_number }}</div>
+        <div class="col-md-4"><strong>Gender:</strong> {{ patient.get_gender_display }}</div>
+        <div class="col-md-4"><strong>Age:</strong> {{ patient.age_at_registration|default:patient.age }}</div>
+        <div class="col-md-4"><strong>Insurance:</strong> {% if patient.has_insurance %}Yes{% else %}No{% endif %}</div>
+    </div>
+</div>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {% if extension_mode %}<input type="hidden" name="extension" value="1"><div class="alert alert-info">Extension Hospital Service booking: fee is applied from Finance-configured doctor fee.</div>{% endif %}
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Please fix the following:</strong>
+        <ul class="mb-0">
+            {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <div class="tuh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-clipboard2-pulse"></i> OPD {% if extension_mode %}Extension Service Visit Details{% else %}Visit Details{% endif %}</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Department *</label>
+                {{ form.department }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Doctor (optional)</label>
+                {{ form.doctor }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Patient Type *</label>
+                {{ form.patient_type }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Payment Method *</label>
+                {{ form.payment_method }}
+                <div class="form-hint small text-muted mt-1">Cash is default. Cash bookings show Payment Pending at Hospital. eSewa redirects to online payment.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Insurance</label>
+                <div class="form-control bg-light">
+                    {% if patient.has_insurance %}
+                        Available: {{ patient.insurance_company|default:"Insurance on file" }}
+                    {% else %}
+                        No insurance on profile
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Chief Complaint</label>
+                {{ form.chief_complaint }}
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0" id="fee-display-wrapper">
+            Registration Fee: <strong>NPR <span id="fee-display" data-new-fee="{{ new_fee }}" data-old-fee="{{ old_fee }}">{{ old_fee }}</span></strong>
+            <small class="d-block text-muted">
+                This creates a real OPD ticket and token from the same queue used by the hospital Registration Counter.
+            </small>
+        </div>
+        <div class="alert alert-warning mt-3 mb-0" id="cash-message">
+            Payment Pending (Cash Payment at Hospital)
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Book Visit &amp; Get OPD Ticket</button>
+</form>
+<script>
+(function () {
+    const patientType = document.getElementById('id_patient_type');
+    const fee = document.getElementById('fee-display');
+    const pay = document.getElementById('id_payment_method');
+    const msg = document.getElementById('cash-message');
+    function updateFee() {
+        if (!patientType || !fee) return;
+        fee.textContent = patientType.value === 'new' ? fee.dataset.newFee : fee.dataset.oldFee;
+    }
+    function updatePaymentMessage() {
+        if (!pay || !msg) return;
+        if (pay.value === 'esewa') {
+            msg.className = 'alert alert-success mt-3 mb-0';
+            msg.textContent = 'eSewa selected: you will be redirected to online payment.';
+        } else {
+            msg.className = 'alert alert-warning mt-3 mb-0';
+            msg.textContent = 'Payment Pending (Cash Payment at Hospital)';
+        }
+    }
+    if (patientType) patientType.addEventListener('change', updateFee);
+    if (pay) pay.addEventListener('change', updatePaymentMessage);
+    updateFee(); updatePaymentMessage();
+})();
+</script>
+{% endblock %}

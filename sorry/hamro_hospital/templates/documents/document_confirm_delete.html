@@ -1,0 +1,14 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Delete Document - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Delete Document{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4">
+    <p>Delete <strong>"{{ document.title }}"</strong> ({{ document.get_category_display }}) from {{ document.patient.full_name }}'s medical record?</p>
+    <p class="text-muted small">The file is removed from the patient's record and every department view, but the row is kept for audit history - it is never hard-deleted.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'documents:document_list' patient_id=document.patient_id %}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

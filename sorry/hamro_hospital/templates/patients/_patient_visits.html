@@ -1,0 +1,23 @@
+{% extends 'patients/_section_base.html' %}
+{% block section_body %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle small">
+        <thead><tr><th>Receipt #</th><th>Date</th><th>Department</th><th>Doctor</th><th>Type</th><th>Fee</th><th></th></tr></thead>
+        <tbody>
+        {% for visit in records %}
+            <tr>
+                <td>{{ visit.receipt_number }}</td>
+                <td>{{ visit.visit_date }}</td>
+                <td>{{ visit.department.name }}</td>
+                <td>{% if visit.doctor %}Dr. {{ visit.doctor.full_name }}{% else %}-{% endif %}</td>
+                <td>{{ visit.get_patient_type_display }}</td>
+                <td>NPR {{ visit.registration_fee }}</td>
+                <td><a href="{% url 'patients:opd_ticket_reprint' visit.pk %}" class="btn btn-sm btn-outline-secondary">Reprint Ticket</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">No visits yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Consultation Queue - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Consultation Queue{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'doctors:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'consultations:queue' %}"><i class="bi bi-clock-history"></i> Consultation Queue</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-search"></i> Search / Scan QR Patient</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Token</th><th>Patient</th><th>Department</th><th>Chief Complaint</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for item in visits %}
+                <tr>
+                    <td class="fw-bold">{{ item.visit.token_number }}</td>
+                    <td>{{ item.visit.patient.full_name }} <small class="text-muted">({{ item.visit.patient.patient_code }})</small></td>
+                    <td>{{ item.visit.department.name }}</td>
+                    <td>{{ item.visit.chief_complaint|default:"-"|truncatewords:8 }}</td>
+                    <td>{% if item.has_consultation %}<span class="badge badge-success-soft">In progress / Done</span>{% else %}<span class="badge badge-warning-soft">Waiting</span>{% endif %}</td>
+                    <td><a href="{% url 'consultations:consultation_detail' item.visit.id %}" class="btn btn-sm btn-primary">Open</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No patients in your queue today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Referrals Queue - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Incoming Referrals{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link active" href="{% url 'referrals:department_queue' %}"><i class="bi bi-inboxes"></i> <span>Referral Queue</span></a>
+    <a class="nav-link" href="{% url 'doctors:patient_search' %}"><i class="bi bi-search"></i> <span>Search Patient</span></a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="get" class="tuh-card p-3 mb-4 d-flex gap-2 align-items-center">
+    <select name="status" class="form-select" style="max-width:220px;">
+        <option value="">All Statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-primary"><i class="bi bi-funnel"></i> Filter</button>
+</form>
+<div class="tuh-card p-0">
+    <div class="table-responsive"><table class="table table-hover mb-0 align-middle"><thead><tr><th>Date</th><th>Patient</th><th>Destination</th><th>Referred By</th><th>Diagnosis / Reason</th><th>Status</th><th class="text-end">Action</th></tr></thead><tbody>{% for referral in referrals %}<tr><td>{{ referral.created_at|date:'M d, Y H:i' }}</td><td><strong>{{ referral.patient.full_name }}</strong><br><small>{{ referral.patient.patient_code }} · {{ referral.patient.phone_number }}</small></td><td>{{ referral.get_referral_type_display }}{% if referral.to_department %}<br><small>{{ referral.to_department.name }}</small>{% endif %}</td><td>{% if referral.referred_by %}Dr. {{ referral.referred_by.full_name }}{% else %}Unknown{% endif %}</td><td><strong>{{ referral.diagnosis|default:'-' }}</strong><br><small class="text-muted">{{ referral.reason|truncatewords:12 }}</small></td><td><span class="badge {% if referral.status == 'new' %}bg-info{% elif referral.status == 'completed' %}bg-success{% elif referral.status == 'cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ referral.get_status_display }}</span></td><td class="text-end"><a href="{% url 'referrals:referral_detail' referral.pk %}" class="btn btn-sm btn-primary">Open</a></td></tr>{% empty %}<tr><td colspan="7" class="text-center py-4 text-muted">No referrals found in this queue.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

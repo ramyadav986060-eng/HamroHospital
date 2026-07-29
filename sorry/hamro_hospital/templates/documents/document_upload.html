@@ -1,0 +1,17 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Upload Document - {{ patient.full_name }}{% endblock %}
+{% block page_title %}Upload Document - {{ patient.full_name }} ({{ patient.patient_code }}){% endblock %}
+{% block dashboard_content %}
+<form method="post" enctype="multipart/form-data" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Upload</button>
+    <a href="{% url 'documents:document_list' patient.pk %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

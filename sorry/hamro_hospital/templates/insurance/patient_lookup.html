@@ -1,0 +1,43 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Search Patient - Insurance{% endblock %}
+{% block page_title %}Search Patient{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'insurance:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link active" href="{% url 'insurance:patient_lookup' %}"><i class="bi bi-search"></i> Search Patient</a>
+    <a class="nav-link" href="{% url 'insurance:claims_report' %}"><i class="bi bi-file-earmark-text"></i> Claims Report</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+{% include 'patients/_qr_scanner.html' with target_prefix='id_' %}
+<form method="get" class="tuh-card p-4 mb-4 d-flex gap-2" id="patientSearchForm">
+    <input type="text" id="id_q" name="q" value="{{ q }}" class="form-control" placeholder="Patient ID, name, or phone">
+    <button class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+</form>
+<script>
+document.addEventListener('tuh:patient-scanned', function (e) {
+    if (e.detail && e.detail.id) {
+        window.location.href = "{% url 'insurance:patient_claims' 0 %}".replace('0', e.detail.id);
+    }
+});
+</script>
+<div class="tuh-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Patient ID</th><th>Name</th><th>Insurance</th><th></th></tr></thead>
+            <tbody>
+            {% for patient in patients %}
+                <tr>
+                    <td>{{ patient.patient_code }}</td>
+                    <td>{{ patient.full_name }}</td>
+                    <td>{% if patient.has_insurance %}{{ patient.insurance_company }}{% else %}<span class="text-muted">None on file</span>{% endif %}</td>
+                    <td><a href="{% url 'insurance:patient_claims' patient.pk %}" class="btn btn-sm btn-primary">View Claims</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">Search for a patient above.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

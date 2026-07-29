@@ -1,0 +1,131 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Hospital Settings - {{ HOSPITAL_NAME }}{% endblock %}
+{% block page_title %}Hospital Settings{% endblock %}
+{% block sidebar %}
+<nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'accounts:dashboard_super_admin' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a class="nav-link" href="{% url 'departments:department_list' %}"><i class="bi bi-diagram-3"></i> Departments</a>
+    <a class="nav-link" href="{% url 'doctors:doctor_list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="nav-link" href="{% url 'patients:patient_search' %}"><i class="bi bi-people"></i> Patients</a>
+    <a class="nav-link" href="{% url 'accounts:staff_list' %}"><i class="bi bi-person-gear"></i> Staff Accounts</a>
+    <a class="nav-link active" href="{% url 'accounts:hospital_settings' %}"><i class="bi bi-hospital"></i> Hospital Settings</a>
+    <a class="nav-link" href="{% url 'accounts:audit_log_list' %}"><i class="bi bi-journal-text"></i> Audit Trail</a>
+</nav>
+{% endblock %}
+{% block dashboard_content %}
+<form method="post" enctype="multipart/form-data" class="row g-4">
+    {% csrf_token %}
+    
+    <!-- Primary Identity Card -->
+    <div class="col-md-8">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="bi bi-info-circle"></i> Hospital Identity & Details</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Hospital Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Hospital Logo</label>
+                    {{ form.logo }}
+                    {% if setting.logo %}
+                        <div class="mt-2"><img src="{{ setting.logo.url }}" alt="Logo preview" style="max-height: 40px;" class="border p-1 bg-white"></div>
+                    {% endif %}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold">Address</label>
+                    {{ form.address }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Email Address</label>
+                    {{ form.email }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Website URL</label>
+                    {{ form.website }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">PAN / VAT Number</label>
+                    {{ form.pan_number }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Registration Number</label>
+                    {{ form.registration_number }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Emergency Contact</label>
+                    {{ form.emergency_contact }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold">Opening Hours</label>
+                    {{ form.opening_hours }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Card: Localization, Theme & Social Links -->
+    <div class="col-md-4">
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="bi bi-globe"></i> Localization & Theme</h6>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Default Currency</label>
+                    {{ form.default_currency }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Default Time Zone</label>
+                    {{ form.default_timezone }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Primary Theme Color</label>
+                    {{ form.theme_color }}
+                </div>
+            </div>
+        </div>
+
+        <div class="tuh-card p-4 mb-4">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="bi bi-share"></i> Social Links</h6>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Facebook URL</label>
+                    {{ form.facebook_url }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Twitter URL</label>
+                    {{ form.twitter_url }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Print & Receipt settings -->
+    <div class="col-12">
+        <div class="tuh-card p-4">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="bi bi-printer"></i> Receipts & Printing Settings</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Receipt/Billing Settings Text</label>
+                    {{ form.receipt_settings }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Printing / Page Layout Defaults</label>
+                    {{ form.print_settings }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold">Footer & Copyright Information</label>
+                    {{ form.footer_information }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 text-end">
+        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Save Settings</button>
+    </div>
+</form>
+{% endblock %}

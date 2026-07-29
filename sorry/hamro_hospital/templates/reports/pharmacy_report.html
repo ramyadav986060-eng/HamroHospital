@@ -1,0 +1,15 @@
+{% extends 'dashboard_base.html' %}
+{% load finance_tags %}
+{% block title %}Pharmacy Report{% endblock %}
+{% block page_title %}Pharmacy Report{% endblock %}
+{% block sidebar %}{% include 'reports/report_sidebar.html' with active='pharmacy' %}{% endblock %}
+{% block dashboard_content %}
+{% include 'reports/report_filter.html' %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card blue"><h6>Total Sales</h6><h3>{{ total_sales }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card green click-amount-card" onclick="showFullValue('Total Revenue', 'NPR {{ total_revenue|floatformat:2 }}')"><h6>Total Revenue</h6><h3>NPR {{ total_revenue|short_amount }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card orange click-amount-card" onclick="showFullValue('Cash', 'NPR {{ totals_by_method.cash|floatformat:2 }}')"><h6>Cash</h6><h3>NPR {{ totals_by_method.cash|short_amount }}</h3></div></div>
+    <div class="col-md-3"><div class="stat-card gray click-amount-card" onclick="showFullValue('Insurance', 'NPR {{ totals_by_method.insurance|floatformat:2 }}')"><h6>Insurance</h6><h3>NPR {{ totals_by_method.insurance|short_amount }}</h3></div></div>
+</div>
+<div class="tuh-card p-4"><h5 class="mb-3">Pharmacy Sales</h5><div class="table-responsive"><table class="table table-hover small align-middle"><thead><tr><th>Sale #</th><th>Patient</th><th>Method</th><th class="text-end">Amount</th><th>Date</th></tr></thead><tbody>{% for s in sales %}<tr><td>{{ s.sale_number }}</td><td>{% if s.patient %}{{ s.patient.full_name }}<br><small>{{ s.patient.patient_code }}</small>{% else %}Walk-in{% endif %}</td><td>{{ s.get_payment_method_display }}</td><td class="text-end">NPR {{ s.total_amount|floatformat:2 }}</td><td>{{ s.created_at|date:'Y-m-d H:i' }}</td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">No sales found.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

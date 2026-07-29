@@ -1,0 +1,20 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Review Discount - {{ discount.bill.bill_number }}{% endblock %}
+{% block page_title %}Review Discount - {{ discount.bill.bill_number }}{% endblock %}
+{% block dashboard_content %}
+<div class="tuh-card p-4 mb-4" style="max-width:600px;">
+    <p class="mb-1"><strong>Patient:</strong> {{ discount.bill.patient.full_name }}</p>
+    <p class="mb-1"><strong>Original Amount:</strong> NPR {{ discount.original_amount }}</p>
+    <p class="mb-1"><strong>Requested Discount:</strong> NPR {{ discount.discount_amount }}</p>
+    <p class="mb-1"><strong>Patient Would Pay:</strong> NPR {{ discount.payable_amount }}</p>
+    <p class="mb-1"><strong>Reason:</strong> {{ discount.reason }}</p>
+    <p class="mb-1"><strong>Remarks:</strong> {{ discount.remarks|default:"-" }}</p>
+    <p class="mb-1"><strong>Requested By:</strong> {{ discount.requested_by }}</p>
+</div>
+<form method="post" class="tuh-card p-4" style="max-width:600px;">
+    {% csrf_token %}
+    {% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button type="submit" name="decision" value="approve" class="btn btn-success">Approve Discount</button>
+    <button type="submit" name="decision" value="reject" class="btn btn-danger">Reject</button>
+</form>
+{% endblock %}
