@@ -24,6 +24,13 @@ class Role(models.TextChoices):
 
 
 class User(AbstractUser):
+    class EmploymentType(models.TextChoices):
+        FULL_TIME = 'full_time', 'Full Time'
+        PART_TIME = 'part_time', 'Part Time'
+        CONTRACT = 'contract', 'Contract'
+        INTERN = 'intern', 'Intern'
+        TEMPORARY = 'temporary', 'Temporary'
+
     """
     Custom user model for all hospital staff.
 
@@ -42,6 +49,7 @@ class User(AbstractUser):
     staff_barcode = models.ImageField(upload_to='staff/barcodes/', blank=True, null=True)
     department = models.ForeignKey('departments.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_users')
     designation = models.CharField(max_length=120, blank=True)
+    employment_type = models.CharField(max_length=20, choices=EmploymentType.choices, default=EmploymentType.FULL_TIME)
     is_department_head = models.BooleanField(default=False)
     is_active_staff = models.BooleanField(
         default=True,
@@ -231,7 +239,8 @@ class HospitalSetting(models.Model):
     staff_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=90)
     required_daily_working_hours = models.DecimalField(max_digits=4, decimal_places=2, default=9)
     default_weekend_days = models.CharField(max_length=30, default='sat', help_text='Comma-separated weekday codes for default holidays, e.g. sat or fri,sat')
-    paid_leave_days_per_month = models.PositiveIntegerField(default=5, help_text='Standard paid leave days allowed per month before Super Admin override is required.')
+    paid_leave_days_per_month = models.PositiveIntegerField(default=5, help_text='Legacy monthly paid leave limit retained for compatibility.')
+    paid_leave_days_per_year = models.PositiveIntegerField(default=5, help_text='Standard paid leave days allowed per staff per year before Super Admin override is required.')
 
     class Meta:
         db_table = 'accounts_hospital_setting'
@@ -247,6 +256,8 @@ class HospitalSetting(models.Model):
 
 
 class StaffAttendance(models.Model):
+    BIOMETRIC_SOURCES = ('fingerprint', 'device', 'biometric', 'import')
+
     class Status(models.TextChoices):
         PRESENT = 'present', 'Present'
         ABSENT = 'absent', 'Absent'
@@ -318,22 +329,26 @@ class StaffLeaveRequest(models.Model):
     def total_days(self):
         return max(1, (self.end_date - self.start_date).days + 1)
 
-    def month_leave_days_if_approved(self):
-        from django.db.models import Sum
-        month_start = self.start_date.replace(day=1)
+    def year_leave_days_if_approved(self):
         existing = StaffLeaveRequest.objects.filter(
-            staff=self.staff, status=self.Status.APPROVED,
-            start_date__year=self.start_date.year, start_date__month=self.start_date.month,
+            staff=self.staff, status=self.Status.APPROVED, start_date__year=self.start_date.year,
         ).exclude(pk=self.pk)
         days = sum((leave.total_days for leave in existing), start=0)
         return days + self.total_days
 
-    def exceeds_paid_leave_limit(self):
+    def remaining_paid_leave_days(self):
         try:
-            limit = HospitalSetting.get_solo().paid_leave_days_per_month
+            limit = HospitalSetting.get_solo().paid_leave_days_per_year
         except Exception:
             limit = 5
-        return self.month_leave_days_if_approved() > limit
+        return max(0, limit - (self.year_leave_days_if_approved() - self.total_days))
+
+    def exceeds_paid_leave_limit(self):
+        try:
+            limit = HospitalSetting.get_solo().paid_leave_days_per_year
+        except Exception:
+            limit = 5
+        return self.year_leave_days_if_approved() > limit
 
     def __str__(self):
         return f'{self.staff} {self.start_date} to {self.end_date} ({self.get_status_display()})'
@@ -396,6 +411,7 @@ class StaffSalaryPayment(models.Model):
     working_days = models.PositiveIntegerField(default=0)
     present_days = models.PositiveIntegerField(default=0)
     leave_days = models.PositiveIntegerField(default=0)
+    half_days = models.PositiveIntegerField(default=0)
     absent_days = models.PositiveIntegerField(default=0)
     base_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     bonus_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -421,10 +437,15 @@ class StaffSalaryPayment(models.Model):
         profile = getattr(self.staff, 'salary_profile', None)
         if not profile:
             return
+        from decimal import Decimal
+        paid_units = Decimal(self.present_days + self.leave_days) + (Decimal(self.half_days) * Decimal('0.5'))
         if profile.per_day_salary:
-            self.base_amount = profile.per_day_salary * self.present_days
-            self.deductions = profile.per_day_salary * self.absent_days
+            per_day = profile.per_day_salary
+            self.base_amount = per_day * paid_units
+            self.deductions = 0
         else:
+            per_day = (profile.base_monthly_salary / self.working_days) if self.working_days else Decimal('0')
             self.base_amount = profile.base_monthly_salary
+            self.deductions = per_day * (Decimal(self.absent_days) + (Decimal(self.half_days) * Decimal('0.5')))
         self.bonus_amount = profile.bonus_amount
         self.net_amount = self.base_amount + self.bonus_amount + self.overtime_amount - self.deductions

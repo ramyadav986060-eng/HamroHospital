@@ -2,9 +2,11 @@
 {% block title %}Staff Attendance{% endblock %}
 {% block page_title %}Staff Attendance{% endblock %}
 {% block dashboard_content %}
+{% if request.user.is_superuser or request.user.effective_role == 'super_admin' %}
 <div class="mb-3 text-end">
-    <a href="{% url 'accounts:staff_attendance_punch' %}" class="btn btn-primary"><i class="bi bi-fingerprint"></i> Punch Attendance</a>
+    <a href="{% url 'accounts:staff_attendance_punch' %}" class="btn btn-primary"><i class="bi bi-fingerprint"></i> Manual Correction / Punch</a>
 </div>
+{% endif %}
 <form method="get" class="tuh-card p-3 mb-4">
     <div class="row g-2 align-items-end">
         <div class="col-md-3"><label class="form-label small">Staff Name / ID / Barcode</label><input name="q" value="{{ filters.q }}" class="form-control"></div>
@@ -26,20 +28,22 @@
         <div class="small text-muted">{{ calendar_year }} / {{ calendar_month }} &middot; BS-ready display, records stored safely in database dates</div>
     </div>
     <div class="d-flex gap-2 flex-wrap small mb-3">
-        <span class="badge bg-success">Present</span>
-        <span class="badge bg-success-subtle text-success border">Approved Leave</span>
-        <span class="badge bg-danger">Absent</span>
-        <span class="badge bg-danger-subtle text-danger border">Weekend/Holiday</span>
-        <span class="badge bg-warning text-dark">Partial</span>
+        <span class="badge bg-success">Green = Present / Full Day</span>
+        <span class="badge bg-success-subtle text-success border">Green = Approved Leave</span>
+        <span class="badge bg-warning text-dark">Yellow = Half Day</span>
+        <span class="badge bg-danger">Red = Absent</span>
+        <span class="badge bg-danger-subtle text-danger border">Red = Rejected Leave / Weekend-Holiday</span>
     </div>
     <div class="row g-2">
         {% for d in calendar_days %}
         <div class="col-6 col-sm-4 col-md-2 col-lg-1">
-            <div class="border rounded p-2 h-100 {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" style="min-height:76px;">
+            <div class="border rounded p-2 h-100 {% if d.display_status == 'present' %}bg-success text-white{% elif d.display_status == 'leave' %}bg-success-subtle text-success{% elif d.display_status == 'rejected_leave' %}bg-danger text-white{% elif d.display_status == 'absent' %}bg-danger text-white{% elif d.display_status == 'holiday' %}bg-danger-subtle text-danger{% elif d.display_status == 'partial' %}bg-warning-subtle text-dark{% else %}bg-light{% endif %}" style="min-height:76px;">
                 <div class="fw-bold">{{ d.day }}</div>
                 <div style="font-size:.7rem;">{{ d.date|date:'D' }}</div>
                 {% if d.records %}
                     <div style="font-size:.68rem;">P:{{ d.counts.present }} L:{{ d.counts.leave }} A:{{ d.counts.absent }}</div>
+                {% elif d.display_status == 'rejected_leave' %}
+                    <div style="font-size:.68rem;">Leave Rejected</div>
                 {% elif d.is_weekend %}
                     <div style="font-size:.68rem;">Holiday</div>
                 {% else %}

@@ -187,6 +187,136 @@ This codebase contains the integrated Hospital Management System modules request
 - Comprehensive reports with date filters, search, print, PDF export and Excel export.
 - Super Admin backup center with database, media, full backup, restore guidance/history and cloud-ready deployment notes.
 
+
+
+## HM Staff, Attendance, Leave and Payroll Update
+
+### Staff login
+
+Staff can log in using either their normal username or their generated Staff ID, for example:
+
+```text
+Username / Staff ID: STF000017
+Password: password
+```
+
+The login form accepts both values and maps Staff ID to the correct staff account.
+
+### Staff dashboard/profile
+
+Each staff user can access their own staff dashboard/profile at:
+
+```text
+/accounts/staff/profile/
+```
+
+Staff can see:
+
+- Personal profile and staff barcode.
+- Staff ID.
+- Department and designation.
+- Employment type.
+- Attendance history and attendance calendar.
+- Leave history.
+- Paid leave limit, used leave, and remaining leave balance.
+- Personal notifications.
+
+Normal staff can view only their own attendance and cannot edit attendance records.
+
+### Biometric attendance workflow
+
+Attendance salary calculation is based on biometric/fingerprint attendance records only.
+
+Supported biometric inputs:
+
+```text
+/accounts/staff/attendance/device-punch/
+python manage.py sync_fingerprint_attendance attendance.csv
+```
+
+Rules:
+
+- First fingerprint scan starts attendance.
+- Next fingerprint scan ends attendance.
+- Working hours are calculated automatically.
+- Full day requires 9 hours by default.
+- Full day is marked Present.
+- Less than required working hours is marked Partial / Half Day.
+- Approved leave is shown as leave.
+- Rejected leave appears red on the attendance calendar.
+
+Calendar colors:
+
+- Green = Present / Full Attendance.
+- Yellow = Half Day / Partial Attendance.
+- Red = Absent.
+- Green = Approved Leave.
+- Red = Rejected Leave.
+
+Manual attendance correction/punch page is restricted to Main Super Admin only. Departments and staff cannot edit biometric attendance records.
+
+### Leave workflow
+
+Default paid leave limit is 5 paid days per year and is configurable by Main Super Admin in hospital settings.
+
+Workflow:
+
+1. Staff submits leave request.
+2. Department Head receives notification and approves/rejects for own department.
+3. Staff receives notification when leave is approved or rejected.
+4. If leave exceeds paid yearly limit, Main Super Admin override is required.
+
+Leave URLs:
+
+```text
+/accounts/staff/leave/
+/accounts/staff/leave/request/
+/accounts/staff/leave/<leave_id>/review/
+```
+
+### Payroll and salary rules
+
+Only Finance and Main Super Admin can view salary amounts, salary profiles, payroll reports, and payment records.
+
+Departments and Department Heads cannot view salary amounts and cannot process payroll.
+
+Payroll is generated from biometric/fingerprint attendance records only:
+
+- Full day = configured per-day salary.
+- Half day = 50% of configured per-day salary.
+- Approved leave = paid day, within leave policy.
+- Absent day = unpaid when using per-day salary; deducted when using monthly salary.
+- Overtime can be calculated if overtime rate is configured.
+
+Payroll URLs for Finance/Super Admin:
+
+```text
+/accounts/staff/salary/profiles/
+/accounts/staff/salary/generate/
+/accounts/staff/salary/payments/
+/accounts/staff/salary/export/
+```
+
+Finance payroll page includes search and filters for all staff, department, employment type, and individual staff.
+
+### Notifications added
+
+Notifications are sent for:
+
+- Leave approved.
+- Leave rejected.
+- Salary processed.
+- Existing leave request and system announcement workflows.
+
+### Permission matrix summary
+
+| Role | Attendance | Leave | Salary/Payroll |
+|---|---|---|---|
+| Super Admin | View and correct | Full approve/override | Full access |
+| Finance | View attendance summaries | View/report as needed | Full payroll/payment access |
+| Department Head | View own department only | Approve/reject own department | No access |
+| Staff | View own only | Request/view own | No access to salary records |
+
 ## Notes
 
 - Each module (Billing, Pharmacy, Laboratory, Admission, Insurance) now generates

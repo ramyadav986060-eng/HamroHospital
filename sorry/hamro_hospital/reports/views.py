@@ -368,8 +368,8 @@ def payroll_report(request):
     payments = StaffSalaryPayment.objects.select_related('staff', 'staff__department', 'prepared_by')
     # Salary reports are monthly records; created_at is still used for Today/Week/Custom export audit range filtering.
     payments, filters = apply_report_filters(payments, request, 'created_at__date', ['staff__staff_id', 'staff__first_name', 'staff__last_name', 'staff__department__name', 'status'])
-    headers = ['Year', 'Month', 'Staff ID', 'Staff Name', 'Department', 'Present', 'Leave', 'Absent', 'Base', 'Bonus', 'Deduction', 'Net', 'Status', 'Paid At']
-    rows = [(p.year, p.month, p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display(), timezone.localtime(p.paid_at).replace(tzinfo=None) if p.paid_at else '') for p in payments.order_by('-year', '-month', 'staff__first_name')[:5000]]
+    headers = ['Year', 'Month', 'Staff ID', 'Staff Name', 'Department', 'Present', 'Half Day', 'Leave', 'Absent', 'Base', 'Bonus', 'Deduction', 'Net', 'Status', 'Paid At']
+    rows = [(p.year, p.month, p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.present_days, p.half_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display(), timezone.localtime(p.paid_at).replace(tzinfo=None) if p.paid_at else '') for p in payments.order_by('-year', '-month', 'staff__first_name')[:5000]]
     return _export_or_render(request, title='Payroll / Salary Payment Report', active='payroll', headers=headers, rows=rows, summary_rows=[('Salary Records', payments.count()), ('Net Payroll Total', _money(payments.aggregate(t=Sum('net_amount'))['t'])), ('Paid Records', payments.filter(status=StaffSalaryPayment.Status.PAID).count())], filters=filters, filename_slug='payroll_report')
 
 

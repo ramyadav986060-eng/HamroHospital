@@ -10,10 +10,10 @@ class CustomUserAdmin(UserAdmin):
     list_display = ('staff_id', 'username', 'first_name', 'last_name', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff', 'is_superuser')
     list_filter = ('role', 'department', 'is_department_head', 'is_active_staff', 'is_superuser')
     fieldsets = UserAdmin.fieldsets + (
-        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Hospital Role', {'fields': ('role', 'department', 'designation', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
 
 
@@ -30,7 +30,7 @@ class HospitalSettingAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone', 'emergency_contact', 'email', 'updated_display')
     fieldsets = (
         ('Basic Information', {'fields': ('name', 'logo', 'address', 'phone', 'emergency_contact', 'email', 'website')}),
-        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency', 'staff_discount_enabled', 'staff_discount_percent', 'required_daily_working_hours', 'default_weekend_days', 'paid_leave_days_per_month')}),
+        ('Registration / Finance', {'fields': ('pan_number', 'registration_number', 'default_currency', 'staff_discount_enabled', 'staff_discount_percent', 'required_daily_working_hours', 'default_weekend_days', 'paid_leave_days_per_month', 'paid_leave_days_per_year')}),
         ('Display / Printing', {'fields': ('opening_hours', 'footer_information', 'receipt_settings', 'print_settings', 'theme_color', 'default_timezone')}),
         ('Social Links', {'fields': ('facebook_url', 'twitter_url')}),
     )
@@ -84,7 +84,7 @@ class StaffSalaryProfileAdmin(admin.ModelAdmin):
 
 @admin.register(StaffSalaryPayment)
 class StaffSalaryPaymentAdmin(admin.ModelAdmin):
-    list_display = ('staff', 'year', 'month', 'present_days', 'leave_days', 'absent_days', 'net_amount', 'status')
+    list_display = ('staff', 'year', 'month', 'present_days', 'leave_days', 'half_days', 'absent_days', 'net_amount', 'status')
     list_filter = ('year', 'month', 'status')
     search_fields = ('staff__staff_id', 'staff__username', 'staff__first_name', 'staff__last_name')
     readonly_fields = ('created_at',)

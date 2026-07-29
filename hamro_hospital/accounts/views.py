@@ -319,7 +319,15 @@ def hospital_settings_view(request):
 
 @login_required
 def staff_profile(request):
-    return render(request, 'accounts/staff_profile.html', {'staff': request.user})
+    from accounts.models import StaffLeaveRequest, Notification
+    setting = HospitalSetting.get_solo()
+    used_leave = sum(l.total_days for l in StaffLeaveRequest.objects.filter(staff=request.user, status=StaffLeaveRequest.Status.APPROVED, start_date__year=__import__('datetime').date.today().year))
+    leave_balance = max(0, setting.paid_leave_days_per_year - used_leave)
+    notifications = Notification.objects.filter(user=request.user, is_read=False)[:10]
+    return render(request, 'accounts/staff_profile.html', {
+        'staff': request.user, 'paid_leave_limit': setting.paid_leave_days_per_year,
+        'used_leave_days': used_leave, 'leave_balance': leave_balance, 'notifications': notifications,
+    })
 
 
 @super_admin_required
@@ -369,6 +377,19 @@ def staff_attendance(request):
     by_date = {}
     for rec in calendar_records:
         by_date.setdefault(rec.date, []).append(rec)
+    from accounts.models import StaffLeaveRequest
+    rejected_leave_dates = set()
+    rejected_leaves = StaffLeaveRequest.objects.filter(status=StaffLeaveRequest.Status.REJECTED, start_date__lte=month_end, end_date__gte=month_start)
+    if not (request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT]):
+        if request.user.is_department_head and request.user.department_id:
+            rejected_leaves = rejected_leaves.filter(staff__department=request.user.department)
+        else:
+            rejected_leaves = rejected_leaves.filter(staff=request.user)
+    for leave in rejected_leaves:
+        day_cursor = max(leave.start_date, month_start)
+        while day_cursor <= min(leave.end_date, month_end):
+            rejected_leave_dates.add(day_cursor)
+            day_cursor += datetime.timedelta(days=1)
     weekend_codes = [c.strip().lower() for c in HospitalSetting.get_solo().default_weekend_days.split(',') if c.strip()]
     weekday_code = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
     calendar_days = []
@@ -379,7 +400,7 @@ def staff_attendance(request):
         for rec in recs:
             counts[rec.status] = counts.get(rec.status, 0) + 1
         is_weekend = weekday_code[date_obj.weekday()] in weekend_codes
-        display_status = 'holiday' if is_weekend and not recs else ('present' if counts.get('present') else 'leave' if counts.get('leave') else 'absent' if counts.get('absent') else 'partial' if counts.get('partial') else 'blank')
+        display_status = 'rejected_leave' if date_obj in rejected_leave_dates else ('holiday' if is_weekend and not recs else ('present' if counts.get('present') else 'leave' if counts.get('leave') else 'absent' if counts.get('absent') else 'partial' if counts.get('partial') else 'blank'))
         calendar_days.append({'date': date_obj, 'day': day, 'records': recs, 'counts': counts, 'is_weekend': is_weekend, 'display_status': display_status})
 
     if date_filter:
@@ -439,7 +460,11 @@ def staff_leave_list(request):
             leaves = leaves.filter(staff__department=request.user.department)
         else:
             leaves = leaves.filter(staff=request.user)
-    return render(request, 'accounts/staff_leave_list.html', {'leaves': leaves})
+    setting = HospitalSetting.get_solo()
+    current_year = __import__('datetime').date.today().year
+    own_used_leave = sum(l.total_days for l in StaffLeaveRequest.objects.filter(staff=request.user, status=StaffLeaveRequest.Status.APPROVED, start_date__year=current_year))
+    leave_balance = max(0, setting.paid_leave_days_per_year - own_used_leave)
+    return render(request, 'accounts/staff_leave_list.html', {'leaves': leaves, 'paid_leave_limit': setting.paid_leave_days_per_year, 'used_leave_days': own_used_leave, 'leave_balance': leave_balance})
 
 
 @login_required
@@ -461,8 +486,12 @@ def staff_leave_review(request, pk):
                     messages.error(request, 'This leave exceeds the monthly paid leave limit and requires Main Super Admin approval.')
                     return redirect('accounts:staff_leave_review', pk=leave.pk)
                 leave.approve(request.user, notes)
+                from accounts.utils import create_notification
+                create_notification('Leave Approved', f'Your leave from {leave.start_date} to {leave.end_date} was approved.', user=leave.staff, related_url=reverse('accounts:staff_leave_list'))
             elif status == StaffLeaveRequest.Status.REJECTED:
                 leave.reject(request.user, notes)
+                from accounts.utils import create_notification
+                create_notification('Leave Rejected', f'Your leave from {leave.start_date} to {leave.end_date} was rejected.', user=leave.staff, related_url=reverse('accounts:staff_leave_list'))
             else:
                 form.save()
             messages.success(request, 'Leave request updated.')
@@ -534,12 +563,25 @@ def staff_salary_generate(request):
         count = 0
         for staff in User.objects.filter(is_active_staff=True).select_related('salary_profile'):
             records = StaffAttendance.objects.filter(staff=staff, date__year=year, date__month=month)
+            biometric_records = records.filter(source__in=StaffAttendance.BIOMETRIC_SOURCES)
+            leave_records = records.filter(status=StaffAttendance.Status.LEAVE)
             payment, _ = StaffSalaryPayment.objects.get_or_create(staff=staff, year=year, month=month, defaults={'prepared_by': request.user})
             payment.working_days = days_in_month
-            payment.present_days = records.filter(status=StaffAttendance.Status.PRESENT).count()
-            payment.leave_days = records.filter(status=StaffAttendance.Status.LEAVE).count()
-            payment.absent_days = max(0, days_in_month - payment.present_days - payment.leave_days)
+            payment.present_days = biometric_records.filter(status=StaffAttendance.Status.PRESENT).count()
+            payment.half_days = biometric_records.filter(status=StaffAttendance.Status.PARTIAL).count()
+            payment.leave_days = leave_records.count()
+            payment.absent_days = max(0, days_in_month - payment.present_days - payment.half_days - payment.leave_days)
+            try:
+                required_hours = float(HospitalSetting.get_solo().required_daily_working_hours)
+            except Exception:
+                required_hours = 9
+            profile = getattr(staff, 'salary_profile', None)
+            if profile and profile.overtime_rate_per_hour:
+                from decimal import Decimal
+                overtime_hours = sum(max(0, float(r.total_working_hours or 0) - required_hours) for r in biometric_records)
+                payment.overtime_amount = profile.overtime_rate_per_hour * Decimal(str(round(overtime_hours, 2)))
             payment.prepared_by = request.user
+            payment.remarks = 'Auto-generated from biometric/fingerprint attendance records only. Approved leave counted separately.'
             payment.calculate()
             payment.save()
             count += 1
@@ -551,14 +593,27 @@ def staff_salary_generate(request):
 @role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
 def staff_salary_payments(request):
     from accounts.models import StaffSalaryPayment
-    payments = StaffSalaryPayment.objects.select_related('staff', 'prepared_by').all()
+    payments = StaffSalaryPayment.objects.select_related('staff', 'staff__department', 'prepared_by').all()
     year = request.GET.get('year')
     month = request.GET.get('month')
+    q = request.GET.get('q', '').strip()
+    department_id = request.GET.get('department', '').strip()
+    employment_type = request.GET.get('employment_type', '').strip()
+    staff_id = request.GET.get('staff', '').strip()
     if year:
         payments = payments.filter(year=year)
     if month:
         payments = payments.filter(month=month)
-    return render(request, 'accounts/staff_salary_payments.html', {'payments': payments, 'year': year or '', 'month': month or ''})
+    if q:
+        payments = payments.filter(Q(staff__staff_id__icontains=q) | Q(staff__username__icontains=q) | Q(staff__first_name__icontains=q) | Q(staff__last_name__icontains=q))
+    if department_id:
+        payments = payments.filter(staff__department_id=department_id)
+    if employment_type:
+        payments = payments.filter(staff__employment_type=employment_type)
+    if staff_id:
+        payments = payments.filter(staff_id=staff_id)
+    from departments.models import Department
+    return render(request, 'accounts/staff_salary_payments.html', {'payments': payments, 'year': year or '', 'month': month or '', 'q': q, 'department_id': department_id, 'employment_type': employment_type, 'staff_id': staff_id, 'departments': Department.objects.filter(is_active=True), 'staff_users': User.objects.filter(is_active_staff=True), 'employment_types': User.EmploymentType.choices})
 
 
 @role_required(Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT)
@@ -577,7 +632,9 @@ def staff_salary_mark_paid(request, pk):
         payment.status = StaffSalaryPayment.Status.PAID
         payment.paid_at = timezone.now()
         payment.save(update_fields=['status', 'paid_at'])
-        messages.success(request, 'Salary marked as paid.')
+        from accounts.utils import create_notification
+        create_notification('Salary Processed', f'Your salary for {payment.year}-{payment.month:02d} has been processed.', user=payment.staff, related_url=reverse('accounts:staff_profile'))
+        messages.success(request, 'Salary marked as paid and staff notified.')
     return redirect('accounts:staff_salary_payments')
 
 
@@ -591,14 +648,14 @@ def staff_salary_export(request):
         payments = payments.filter(year=year)
     if month:
         payments = payments.filter(month=month)
-    headers = ['Staff ID', 'Name', 'Department', 'Year', 'Month', 'Present', 'Leave', 'Absent', 'Base', 'Bonus', 'Deductions', 'Net', 'Status']
-    rows = [(p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()) for p in payments[:5000]]
+    headers = ['Staff ID', 'Name', 'Department', 'Year', 'Month', 'Present', 'Half Day', 'Leave', 'Absent', 'Base', 'Bonus', 'Deductions', 'Net', 'Status']
+    rows = [(p.staff.staff_id, p.staff.get_full_name() or p.staff.username, p.staff.department.name if p.staff.department else '', p.year, p.month, p.present_days, p.half_days, p.leave_days, p.absent_days, p.base_amount, p.bonus_amount, p.deductions, p.net_amount, p.get_status_display()) for p in payments[:5000]]
     if request.GET.get('export') == 'pdf':
         return export_rows_to_pdf(headers, rows, 'salary_report.pdf', 'Salary / Payroll Report')
     return export_rows_to_excel(headers, rows, 'salary_report.xlsx', 'Salary')
 
 
-@login_required
+@super_admin_required
 def staff_attendance_punch(request):
     from django.utils import timezone
     from accounts.models import StaffAttendance

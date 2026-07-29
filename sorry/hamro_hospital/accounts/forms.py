@@ -1,19 +1,29 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
 
 from accounts.models import User, Role, HospitalSetting, StaffAttendance, StaffLeaveRequest, StaffSalaryProfile
 
 
 class StyledAuthenticationForm(AuthenticationForm):
-    """Login form with Bootstrap classes applied."""
+    """Login form accepting username OR Staff ID (STFxxxxxx)."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({
-            'class': 'form-control', 'placeholder': 'Username', 'autofocus': True,
+            'class': 'form-control', 'placeholder': 'Username or Staff ID', 'autofocus': True,
         })
+        self.fields['username'].label = 'Username / Staff ID'
         self.fields['password'].widget.attrs.update({
             'class': 'form-control', 'placeholder': 'Password',
         })
+
+    def clean(self):
+        login_value = (self.cleaned_data.get('username') or '').strip()
+        if login_value:
+            staff = User.objects.filter(staff_id__iexact=login_value).first()
+            if staff:
+                self.cleaned_data['username'] = staff.get_username()
+        return super().clean()
 
     def confirm_login_allowed(self, user):
         # Keep a deactivated hospital staff account out even if Django's auth
@@ -31,7 +41,7 @@ class StaffCreateForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'is_department_head']
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'is_department_head']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -41,6 +51,7 @@ class StaffCreateForm(UserCreationForm):
             'role': forms.Select(attrs={'class': 'form-select'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'employment_type': forms.Select(attrs={'class': 'form-select'}),
             'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -55,7 +66,7 @@ class StaffEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'department', 'designation', 'employment_type', 'is_department_head', 'is_active_staff']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -64,6 +75,7 @@ class StaffEditForm(forms.ModelForm):
             'role': forms.Select(attrs={'class': 'form-select'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'employment_type': forms.Select(attrs={'class': 'form-select'}),
             'is_department_head': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -117,6 +129,7 @@ class HospitalSettingForm(forms.ModelForm):
             'required_daily_working_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.25'}),
             'default_weekend_days': forms.TextInput(attrs={'class': 'form-control'}),
             'paid_leave_days_per_month': forms.NumberInput(attrs={'class': 'form-control'}),
+            'paid_leave_days_per_year': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 
