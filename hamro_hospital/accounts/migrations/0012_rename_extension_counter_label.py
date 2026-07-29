@@ -21,7 +21,7 @@ ROLE_CHOICES = [
 ]
 
 class Migration(migrations.Migration):
-    dependencies = [('accounts', '0010_extension_counter_role')]
+    dependencies = [('accounts', '0011_hospital_staff_role')]
     operations = [
         migrations.AlterField(
             model_name='user',

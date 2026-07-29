@@ -5,7 +5,7 @@ from django.db import models
 class Role(models.TextChoices):
     SUPER_ADMIN = 'super_admin', 'Super Admin'
     REGISTRATION_COUNTER = 'registration_counter', 'Registration Counter'
-    EXTENSION_COUNTER = 'extension_counter', 'Extension Registration Counter'
+    EXTENSION_COUNTER = 'extension_counter', 'EHS Counter'
     CASH_COUNTER = 'cash_counter', 'Cash Counter'
     DOCTOR = 'doctor', 'Doctor'
     PHARMACY = 'pharmacy', 'Pharmacy'

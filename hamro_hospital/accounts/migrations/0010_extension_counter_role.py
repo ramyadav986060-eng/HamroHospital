@@ -4,7 +4,7 @@ from django.db import migrations, models
 ROLE_CHOICES = [
     ('super_admin', 'Super Admin'),
     ('registration_counter', 'Registration Counter'),
-    ('extension_counter', 'Extension Registration Counter'),
+    ('extension_counter', 'EHS Counter'),
     ('cash_counter', 'Cash Counter'),
     ('doctor', 'Doctor'),
     ('pharmacy', 'Pharmacy'),
