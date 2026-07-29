@@ -136,6 +136,22 @@ def doctor_dashboard(request):
 
 
 @doctor_required
+def doctor_opd_visits(request):
+    doctor_profile = ensure_doctor_profile_for_user(request.user)
+    import datetime
+    selected_date = request.GET.get('date') or datetime.date.today().isoformat()
+    q = (request.GET.get('q') or '').strip()
+    try:
+        date_obj = datetime.date.fromisoformat(selected_date)
+    except ValueError:
+        date_obj = datetime.date.today()
+    visits = Visit.objects.filter(doctor=doctor_profile, visit_date=date_obj).select_related('patient', 'department') if doctor_profile else Visit.objects.none()
+    if q:
+        visits = visits.filter(Q(patient__patient_code__icontains=q) | Q(patient__first_name__icontains=q) | Q(patient__last_name__icontains=q) | Q(patient__phone_number__icontains=q) | Q(receipt_number__icontains=q))
+    return render(request, 'doctors/opd_visits.html', {'doctor_profile': doctor_profile, 'visits': visits, 'selected_date': date_obj, 'q': q})
+
+
+@doctor_required
 def doctor_patient_search(request):
     q = request.GET.get('q', '').strip()
     patients = Patient.objects.none()

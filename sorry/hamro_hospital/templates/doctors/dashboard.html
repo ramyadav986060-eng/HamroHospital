@@ -17,7 +17,7 @@
 <div class="alert alert-warning">Doctor profile setup is incomplete. Please contact Super Admin.</div>
 {% else %}
 <div class="row g-4 mb-4">
-    <div class="col-md-3"><div class="stat-card blue"><i class="bi bi-calendar-check fs-3"></i><h2>{{ todays_visits }}</h2><small>Today's OPD Visits</small></div></div>
+    <div class="col-md-3"><a href="{% url 'doctors:opd_visits' %}" class="text-decoration-none"><div class="stat-card blue"><i class="bi bi-calendar-check fs-3"></i><h2>{{ todays_visits }}</h2><small>Today's OPD Visits</small></div></a></div>
     <div class="col-md-3"><a href="{% url 'doctors:patient_search' %}" class="text-decoration-none"><div class="stat-card green"><i class="bi bi-search fs-3"></i><h2><i class="bi bi-person-vcard"></i></h2><small>Search Patients</small></div></a></div>
     <div class="col-md-3"><a href="{% url 'referrals:referral_create' %}" class="text-decoration-none"><div class="stat-card orange"><i class="bi bi-send fs-3"></i><h2><i class="bi bi-arrow-right-circle"></i></h2><small>Create Referral</small></div></a></div>
     <div class="col-md-3"><a href="{% url 'doctors:profile' %}" class="text-decoration-none"><div class="stat-card gray"><i class="bi bi-person-gear fs-3"></i><h2><i class="bi bi-gear"></i></h2><small>Profile</small></div></a></div>
@@ -38,6 +38,7 @@
             <p class="text-muted small mb-1">Department: {{ doctor_profile.department.name }}</p>
             <p class="text-muted small">Contact: {{ doctor_profile.contact_number|default:'-' }}</p>
             <a href="{% url 'doctors:profile' %}" class="btn btn-outline-primary btn-sm">Update Profile</a>
+            {% if doctor_profile.user_account %}<a href="{% url 'accounts:staff_card' doctor_profile.user_account.pk %}" class="btn btn-outline-success btn-sm" target="_blank">Staff ID Card</a>{% endif %}
             <a href="{% url 'doctors:change_password' %}" class="btn btn-outline-secondary btn-sm">Change Password</a>
         </div>
     </div>

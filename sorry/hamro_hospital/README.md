@@ -387,3 +387,17 @@ python manage.py create_demo_accounts
 - Patient Portal login now accepts Hospital ID + password, with phone/email optional for additional verification, fixing login problems after generated registration credentials.
 - Patient Portal dashboard includes Online Registration and keeps medical/billing access. Patient card print/generate actions remain restricted by staff-side permissions.
 - Patient attendance is not present in the portal; attendance remains exclusively inside the Staff Module.
+
+## Part 4 Doctor Dashboard and Referral Improvements Added
+
+- Doctors are treated as hospital staff and can open their Hospital Staff ID Card from the Doctor Dashboard.
+- Staff ID Card includes hospital branding, staff/doctor role, department, contact, staff QR code and staff barcode.
+- Staff QR code field added for every staff user; existing staff receive QR when saved/updated.
+- Doctor OPD Visits card is clickable and opens a date/search drill-down page showing today's OPD visits by default, with historical retrieval by selected date.
+- Referral creation now uses fast patient lookup by barcode/QR value, Patient ID, phone number or patient name.
+- Patient details auto-fill on referral form: Patient ID, full name, age/gender, blood group, address, phone, registration number and medical record hint.
+- Referral destination department has a search field for fast lookup.
+- Referral form now includes diagnosis, working clinical impression, referral reason, requested services, optional fee, clinical notes, supporting attachment and send action.
+- Pharmacy referral supports prescribed medicines, dosage, frequency, duration and notes.
+- Admission referral stores admission reason/clinical details/ward notes and notifies the Admission role immediately.
+- Department referrals continue to notify Laboratory, Radiology, Pharmacy, Nursing, Admission, Operation Theatre and Blood Bank according to type.

@@ -31,6 +31,7 @@ class Referral(models.Model):
     instructions = models.TextField(blank=True)
     attachment = models.FileField(upload_to='referrals/attachments/', blank=True, null=True)
     requested_items = models.TextField(blank=True, help_text='Structured requested services/tests/medicines, one per line.')
+    optional_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, help_text='Optional referral fee/estimated charge, if applicable.')
     related_bill = models.ForeignKey('billing.Bill', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
     acknowledged_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals_acknowledged')

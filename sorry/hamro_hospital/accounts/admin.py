@@ -6,11 +6,11 @@ from accounts.models import User, AuditLog, Notification, HospitalSetting, Staff
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    readonly_fields = ('staff_id', 'staff_barcode')
+    readonly_fields = ('staff_id', 'staff_barcode', 'staff_qr_code')
     list_display = ('staff_id', 'username', 'first_name', 'last_name', 'role', 'department', 'designation', 'is_department_head', 'is_active_staff', 'is_superuser')
     list_filter = ('role', 'department', 'is_department_head', 'is_active_staff', 'is_superuser')
     fieldsets = UserAdmin.fieldsets + (
-        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
+        ('Hospital Role', {'fields': ('staff_id', 'staff_barcode', 'staff_qr_code', 'role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Hospital Role', {'fields': ('role', 'department', 'designation', 'employment_type', 'phone_number', 'is_department_head', 'is_active_staff')}),

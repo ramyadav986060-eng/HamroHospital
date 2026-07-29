@@ -237,7 +237,9 @@ def qr_lookup(request):
         return JsonResponse({'found': False, 'error': 'No code supplied.'}, status=400)
 
     patient = Patient.objects.select_related('district').filter(
-        Q(patient_code__iexact=code) | Q(phone_number=code)
+        Q(patient_code__iexact=code) | Q(phone_number=code) |
+        Q(first_name__icontains=code) | Q(last_name__icontains=code) |
+        Q(first_name__icontains=code.split(' ')[0] if code else '')
     ).first()
 
     if not patient:

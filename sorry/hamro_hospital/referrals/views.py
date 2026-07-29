@@ -76,7 +76,7 @@ def referral_create(request, patient_id=None, referral_type=None):
             if target_role:
                 create_notification(
                     title='New Doctor Referral',
-                    message=f'{referral.patient.full_name} has been referred to {referral.get_referral_type_display()}.',
+                    message=f'Patient {referral.patient.full_name} ({referral.patient.patient_code}) referred by {request.user.get_full_name() or request.user.username} from {getattr(getattr(request.user, "doctor_profile", None), "department", "Doctor Department")}. Status: {referral.get_status_display()}.',
                     role=target_role,
                     related_url=url,
                 )

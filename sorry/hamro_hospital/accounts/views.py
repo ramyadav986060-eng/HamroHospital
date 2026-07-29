@@ -330,9 +330,13 @@ def staff_profile(request):
     })
 
 
-@super_admin_required
+@login_required
 def staff_card(request, pk):
     staff = get_object_or_404(User, pk=pk)
+    can_view = request.user.is_superuser or request.user.effective_role in [Role.SUPER_ADMIN, Role.ACCOUNTS_DEPT] or request.user.pk == staff.pk or (request.user.effective_role == Role.DEPARTMENT_HEAD and request.user.department_id and staff.department_id == request.user.department_id)
+    if not can_view:
+        messages.error(request, "You don't have permission to view this staff card.")
+        return redirect(request.user.dashboard_url_name())
     return render(request, 'accounts/staff_card.html', {'staff': staff})
 
 

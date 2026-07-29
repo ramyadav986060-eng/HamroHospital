@@ -11,6 +11,10 @@
         <div class="doc-meta"><div class="doc-no-label">Staff ID</div><div class="doc-no">{{ staff.staff_id }}</div>{% if staff.staff_barcode %}<img class="barcode" src="{{ staff.staff_barcode.url }}">{% endif %}</div>
     </div>
     <div class="tuh-print-banner"><i class="bi bi-person-vcard"></i> STAFF CARD <span class="status-pill paid">ACTIVE</span></div>
+    <div class="text-center my-3">
+        {% if staff.doctor_profile.photo %}<img src="{{ staff.doctor_profile.photo.url }}" style="width:110px;height:110px;object-fit:cover;border-radius:12px;border:1px solid #ddd;" alt="Staff Photo">{% else %}<div class="d-inline-flex align-items-center justify-content-center bg-light border" style="width:110px;height:110px;border-radius:12px;"><i class="bi bi-person fs-1 text-muted"></i></div>{% endif %}
+        {% if staff.staff_qr_code %}<div class="mt-2"><img src="{{ staff.staff_qr_code.url }}" style="width:90px;height:90px;object-fit:contain;" alt="Staff QR Code"></div>{% endif %}
+    </div>
     <div class="tuh-meta-card">
         <div class="row-item"><div class="row-label">Staff Name</div><div class="row-val"><strong>{{ staff.get_full_name|default:staff.username }}</strong></div></div>
         <div class="row-item"><div class="row-label">Staff ID</div><div class="row-val">{{ staff.staff_id }}</div></div>

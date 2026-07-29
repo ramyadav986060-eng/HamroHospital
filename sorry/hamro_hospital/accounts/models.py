@@ -47,6 +47,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True)
     staff_id = models.CharField(max_length=30, unique=True, blank=True, null=True, db_index=True)
     staff_barcode = models.ImageField(upload_to='staff/barcodes/', blank=True, null=True)
+    staff_qr_code = models.ImageField(upload_to='staff/qrcodes/', blank=True, null=True)
     department = models.ForeignKey('departments.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_users')
     designation = models.CharField(max_length=120, blank=True)
     employment_type = models.CharField(max_length=20, choices=EmploymentType.choices, default=EmploymentType.FULL_TIME)
@@ -108,11 +109,18 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
         if (is_new or not self.staff_barcode) and self.staff_id:
             self._generate_staff_barcode()
+        if (is_new or not self.staff_qr_code) and self.staff_id:
+            self._generate_staff_qr_code()
 
     def _generate_staff_barcode(self):
         from accounts.qr_utils import generate_barcode_file
         self.staff_barcode.save(f'{self.staff_id}.png', generate_barcode_file(self.staff_id), save=False)
         User.objects.filter(pk=self.pk).update(staff_barcode=self.staff_barcode.name)
+
+    def _generate_staff_qr_code(self):
+        from accounts.qr_utils import generate_qr_file
+        self.staff_qr_code.save(f'{self.staff_id}_qr.png', generate_qr_file(self.staff_id), save=False)
+        User.objects.filter(pk=self.pk).update(staff_qr_code=self.staff_qr_code.name)
 
 
 class AuditLog(models.Model):

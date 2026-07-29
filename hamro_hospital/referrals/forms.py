@@ -1,5 +1,6 @@
 from django import forms
 from .models import Referral
+from patients.models import Patient
 from laboratory.models import LabTest
 from radiology.models import RadiologyTest
 from operation_theatre.models import OperationType
@@ -15,11 +16,17 @@ class ReferralForm(forms.ModelForm):
     blood_units = forms.IntegerField(required=False, min_value=1, widget=forms.NumberInput(attrs={'class': 'form-control'}))
     blood_urgency = forms.ChoiceField(choices=RequestUrgency.choices, required=False, widget=forms.Select(attrs={'class': 'form-select'}))
     crossmatch_required = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    patient_lookup = forms.CharField(required=False, label='Scan/Search Patient', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Scan barcode/QR or search Patient ID, phone, name'}))
+    prescribed_medicines = forms.CharField(required=False, label='Prescribed Medicines', widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control', 'placeholder': 'Medicine names, one per line'}))
+    dosage = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dosage'}))
+    frequency = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Frequency'}))
+    duration = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Duration'}))
+    pharmacy_notes = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control', 'placeholder': 'Additional medicine notes'}))
     nursing_tasks = forms.MultipleChoiceField(choices=[('iv_fluid','IV Fluid'),('dressing','Dressing'),('vitals','Vitals Monitoring'),('medication','Medication Administration'),('discharge','Discharge Preparation'),('transfer','Transfer Preparation'),('catheter','Catheter Care'),('oxygen','Oxygen Monitoring'),('wound','Wound Care'),('other','Other')], required=False, widget=forms.CheckboxSelectMultiple)
 
     class Meta:
         model = Referral
-        fields = ['patient', 'referral_type', 'to_department', 'diagnosis', 'reason', 'clinical_notes', 'instructions', 'requested_items', 'attachment']
+        fields = ['patient', 'referral_type', 'to_department', 'diagnosis', 'reason', 'clinical_notes', 'instructions', 'requested_items', 'optional_fee', 'attachment']
         widgets = {
             'patient': forms.Select(attrs={'class': 'form-select'}),
             'referral_type': forms.Select(attrs={'class': 'form-select'}),
@@ -28,12 +35,15 @@ class ReferralForm(forms.ModelForm):
             'reason': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Reason for referral'}),
             'clinical_notes': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Clinical notes and relevant history'}),
             'instructions': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Instructions for receiving department'}),
-            'requested_items': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Optional free-text requested services/items, one per line'}),
+            'requested_items': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Requested service(s), ward, operation, tests, items or notes'}),
+            'optional_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'attachment': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['patient'].queryset = Patient.objects.all().order_by('-created_at')
+        self.fields['patient'].widget.attrs.update({'class': 'form-select d-none'})
         self.fields['to_department'].required = False
         self.fields['diagnosis'].required = False
         self.fields['clinical_notes'].required = False
@@ -62,6 +72,20 @@ class ReferralForm(forms.ModelForm):
             items.append('Crossmatch Required: Yes')
         for task in cleaned.get('nursing_tasks') or []:
             items.append(f"Nursing Task: {dict(self.fields['nursing_tasks'].choices).get(task, task)}")
+        if cleaned.get('optional_fee'):
+            items.append(f"Optional Fee: NPR {cleaned.get('optional_fee')}")
+        meds = cleaned.get('prescribed_medicines') or ''
+        if meds.strip():
+            items.append('Pharmacy Medicines:')
+            items.extend([line.strip() for line in meds.splitlines() if line.strip()])
+        if cleaned.get('dosage'):
+            items.append(f"Dosage: {cleaned.get('dosage')}")
+        if cleaned.get('frequency'):
+            items.append(f"Frequency: {cleaned.get('frequency')}")
+        if cleaned.get('duration'):
+            items.append(f"Duration: {cleaned.get('duration')}")
+        if cleaned.get('pharmacy_notes'):
+            items.append(f"Pharmacy Notes: {cleaned.get('pharmacy_notes')}")
         free_text = cleaned.get('requested_items') or ''
         if free_text.strip():
             items.extend([line.strip() for line in free_text.splitlines() if line.strip()])

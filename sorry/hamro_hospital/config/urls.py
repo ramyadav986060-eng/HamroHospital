@@ -14,6 +14,7 @@ urlpatterns = [
     # canonical named routes, but these prevent older dashboard links/bookmarks
     # from producing 404s while keeping the public /doctors/ page unchanged.
     path('doctors/dashboard/', doctor_views.doctor_dashboard, name='legacy_doctor_dashboard'),
+    path('doctors/opd-visits/', doctor_views.doctor_opd_visits, name='legacy_doctor_opd_visits'),
     path('doctors/patients/search/', doctor_views.doctor_patient_search, name='legacy_doctor_patient_search'),
     path('doctors/profile/', doctor_views.doctor_profile, name='legacy_doctor_profile'),
     path('doctors/profile/password/', doctor_views.doctor_change_password, name='legacy_doctor_change_password'),
