@@ -45,6 +45,24 @@ def dashboard(request):
         preferred_date=today, payment_status=Appointment.PaymentStatus.PAID
     ).select_related('department', 'doctor')
 
+    # Registration counters share patient data, but operational/financial queues are separated.
+    if request.user.effective_role == Role.EXTENSION_COUNTER:
+        todays_visits = todays_visits.filter(is_extension_service=True)
+        pending_visits = pending_visits.filter(is_extension_service=True)
+        completed_visits = completed_visits.filter(is_extension_service=True)
+        todays_bookings = todays_bookings.filter(is_extension_service=True)
+        online_bookings = online_bookings.filter(is_extension_service=True)
+        pending_appointments = pending_appointments.filter(is_extension_service=True)
+        completed_appointments = completed_appointments.filter(is_extension_service=True)
+    elif request.user.effective_role == Role.REGISTRATION_COUNTER:
+        todays_visits = todays_visits.filter(is_extension_service=False)
+        pending_visits = pending_visits.filter(is_extension_service=False)
+        completed_visits = completed_visits.filter(is_extension_service=False)
+        todays_bookings = todays_bookings.filter(is_extension_service=False)
+        online_bookings = online_bookings.filter(is_extension_service=False)
+        pending_appointments = pending_appointments.filter(is_extension_service=False)
+        completed_appointments = completed_appointments.filter(is_extension_service=False)
+
     context = {
         'todays_visits': todays_visits,
         'todays_count': todays_visits.count(),

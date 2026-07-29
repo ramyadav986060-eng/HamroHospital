@@ -307,3 +307,16 @@ The project includes fallback/manual options so the workflows can be tested loca
 - Unified patient identity was reinforced: appointment confirmation and portal registration now reuse an existing patient by phone number instead of creating duplicate Hospital IDs.
 - Regular OPD, Extension Service and online booking now continue to share the same Patient table and same Hospital ID/barcode. Only visit/registration type changes.
 - Visit token generation was adjusted to a single daily chronological queue instead of independent department token queues.
+
+## Additional Final Corrections Applied
+
+- Patient appointment booking now requires Patient Portal authentication before any regular or Extension Service booking can continue.
+- Patient Portal login supports returning to the originally requested booking page.
+- Extension Service booking uses the same patient account, same Hospital ID and same patient barcode.
+- Extension Registration Counter role was added and tested with demo login `extension / password`.
+- Online appointment confirmation now reuses an existing patient by phone number to prevent duplicate Hospital IDs.
+- Patient Portal registration also reuses an existing patient profile by phone number.
+- Visit tokens now use one daily chronological queue across sources.
+- Universal report date filters now include Yesterday, Last 7 Days and Last 30 Days in addition to Today, Week, Month, Year, All Time and Custom Range.
+- Patient Portal registration supports optional patient photo upload.
+- Extension Service fees remain Finance/Accounts-managed.

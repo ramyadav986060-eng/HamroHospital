@@ -605,3 +605,20 @@ def system_readiness(request):
         {'name': 'Staff discount configured', 'ok': True, 'detail': f"enabled={HospitalSetting.get_solo().staff_discount_enabled}, percent={HospitalSetting.get_solo().staff_discount_percent}%"},
     ]
     return render(request, 'accounts/system_readiness.html', {'checks': checks})
+
+@login_required
+def staff_change_password(request):
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully.')
+            return redirect('accounts:staff_profile')
+    else:
+        form = PasswordChangeForm(request.user)
+    for field in form.fields.values():
+        field.widget.attrs.setdefault('class', 'form-control')
+    return render(request, 'accounts/staff_change_password.html', {'form': form})

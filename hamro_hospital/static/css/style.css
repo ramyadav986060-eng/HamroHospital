@@ -840,3 +840,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -.01em; }
 }
 .report-toolbar .form-control,
 .report-toolbar .form-select { min-height: 40px; }
+
+/* Final small spacing adjustment: keep existing homepage design, but give the hero login button more breathing room below the notification/intro text. */
+.hero-patient-login { margin-top: .75rem; }

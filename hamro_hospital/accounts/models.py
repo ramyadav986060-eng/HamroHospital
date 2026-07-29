@@ -5,6 +5,7 @@ from django.db import models
 class Role(models.TextChoices):
     SUPER_ADMIN = 'super_admin', 'Super Admin'
     REGISTRATION_COUNTER = 'registration_counter', 'Registration Counter'
+    EXTENSION_COUNTER = 'extension_counter', 'Extension Registration Counter'
     CASH_COUNTER = 'cash_counter', 'Cash Counter'
     DOCTOR = 'doctor', 'Doctor'
     PHARMACY = 'pharmacy', 'Pharmacy'
@@ -65,6 +66,7 @@ class User(AbstractUser):
         mapping = {
             Role.SUPER_ADMIN: 'accounts:dashboard_super_admin',
             Role.REGISTRATION_COUNTER: 'patients:dashboard',
+            Role.EXTENSION_COUNTER: 'patients:dashboard',
             Role.CASH_COUNTER: 'billing:dashboard',
             Role.DOCTOR: 'doctors:dashboard',
             Role.PHARMACY: 'pharmacy:dashboard',

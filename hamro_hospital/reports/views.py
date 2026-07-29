@@ -24,11 +24,17 @@ def apply_report_filters(qs, request, date_field, search_fields=None):
 
     if date_filter == 'today':
         qs = qs.filter(**{date_field: today})
-    elif date_filter == 'week':
+    elif date_filter == 'yesterday':
+        qs = qs.filter(**{date_field: today - datetime.timedelta(days=1)})
+    elif date_filter in ('last_7', '7_days'):
+        qs = qs.filter(**{f'{date_field}__gte': today - datetime.timedelta(days=7)})
+    elif date_filter in ('last_30', '30_days'):
+        qs = qs.filter(**{f'{date_field}__gte': today - datetime.timedelta(days=30)})
+    elif date_filter in ('week', 'weekly'):
         qs = qs.filter(**{f'{date_field}__gte': today - datetime.timedelta(days=today.weekday())})
-    elif date_filter == 'month':
+    elif date_filter in ('month', 'monthly'):
         qs = qs.filter(**{f'{date_field}__gte': today.replace(day=1)})
-    elif date_filter == 'year':
+    elif date_filter in ('year', 'yearly'):
         qs = qs.filter(**{f'{date_field}__gte': today.replace(month=1, day=1)})
     elif date_filter == 'custom':
         try:

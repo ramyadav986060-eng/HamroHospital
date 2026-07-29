@@ -36,7 +36,7 @@ def super_admin_required(view_func):
 
 
 def registration_counter_required(view_func):
-    return role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER)(view_func)
+    return role_required(Role.SUPER_ADMIN, Role.REGISTRATION_COUNTER, Role.EXTENSION_COUNTER)(view_func)
 
 
 def doctor_required(view_func):

@@ -14,6 +14,7 @@ urlpatterns = [
     path('staff/add/', views.staff_create, name='staff_create'),
     path('staff/<int:pk>/edit/', views.staff_edit, name='staff_edit'),
     path('staff/profile/', views.staff_profile, name='staff_profile'),
+    path('staff/change-password/', views.staff_change_password, name='staff_change_password'),
     path('staff/<int:pk>/card/', views.staff_card, name='staff_card'),
     path('staff/attendance/', views.staff_attendance, name='staff_attendance'),
     path('staff/attendance/punch/', views.staff_attendance_punch, name='staff_attendance_punch'),

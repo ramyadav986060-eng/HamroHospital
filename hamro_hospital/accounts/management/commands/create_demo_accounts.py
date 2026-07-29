@@ -8,6 +8,7 @@ DEMO_PASSWORD = 'password'
 DEMO_USERS = {
     'admin': Role.SUPER_ADMIN,
     'registration': Role.REGISTRATION_COUNTER,
+    'extension': Role.EXTENSION_COUNTER,
     'cashier': Role.CASH_COUNTER,
     'doctor': Role.DOCTOR,
     'pharmacy': Role.PHARMACY,
