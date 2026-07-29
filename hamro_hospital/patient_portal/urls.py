@@ -24,6 +24,8 @@ urlpatterns = [
     path('visits/', views.my_visits, name='my_visits'),
     path('visits/<int:visit_id>/ticket/', views.my_ticket, name='my_ticket'),
     path('patient-card/', views.my_patient_card, name='my_patient_card'),
+    path('profile/update/', views.profile_update, name='profile_update'),
+    path('profile/change-password/', views.change_password, name='change_password'),
 
     path('bills/', views.my_bills, name='my_bills'),
     path('bills/<int:pk>/receipt/', views.my_bill_receipt, name='my_bill_receipt'),

@@ -651,3 +651,33 @@ def bill_esewa_failure(request):
     if bill_id:
         return redirect('patient_portal:my_bill_receipt', pk=bill_id)
     return redirect('patient_portal:my_bills')
+
+@patient_login_required
+def profile_update(request):
+    from patient_portal.forms import PatientProfileUpdateForm
+    patient = request.portal_patient.patient
+    if request.method == 'POST':
+        form = PatientProfileUpdateForm(request.POST, request.FILES, instance=patient)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('patient_portal:my_patient_card')
+    else:
+        form = PatientProfileUpdateForm(instance=patient)
+    return render(request, 'patient_portal/profile_update.html', {'form': form, 'patient': patient})
+
+
+@patient_login_required
+def change_password(request):
+    from patient_portal.forms import PatientPortalPasswordChangeForm
+    account = request.portal_patient
+    if request.method == 'POST':
+        form = PatientPortalPasswordChangeForm(account, request.POST)
+        if form.is_valid():
+            account.set_password(form.cleaned_data['new_password'])
+            account.save(update_fields=['password_hash'])
+            messages.success(request, 'Password changed successfully.')
+            return redirect('patient_portal:dashboard')
+    else:
+        form = PatientPortalPasswordChangeForm(account)
+    return render(request, 'patient_portal/change_password.html', {'form': form})

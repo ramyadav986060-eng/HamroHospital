@@ -243,3 +243,74 @@ class PatientRegisterPasswordForm(forms.Form):
         if cleaned_data.get('password') != cleaned_data.get('password_confirm'):
             raise forms.ValidationError('Passwords do not match.')
         return cleaned_data
+
+class PatientProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Patient
+        fields = [
+            'first_name', 'last_name', 'phone_number', 'email', 'gender', 'date_of_birth',
+            'district', 'municipality', 'ward_number', 'local_address', 'photo',
+            'has_insurance', 'insurance_company', 'insurance_policy_number',
+            'insurance_membership_number', 'insurance_card_number', 'insurance_expiry_date',
+            'insurance_remarks',
+        ]
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-select'}),
+            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'district': forms.Select(attrs={'class': 'form-select district-autocomplete'}),
+            'municipality': forms.TextInput(attrs={'class': 'form-control'}),
+            'ward_number': forms.NumberInput(attrs={'class': 'form-control'}),
+            'local_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'has_insurance': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'insurance_company': forms.Select(attrs={'class': 'form-select'}),
+            'insurance_policy_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'insurance_membership_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'insurance_card_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'insurance_expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'insurance_remarks': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['district'].queryset = District.objects.select_related('province').order_by('name')
+        from patients.models import InsuranceCompany
+        self.fields['insurance_company'].queryset = InsuranceCompany.objects.filter(is_active=True)
+        self.fields['insurance_company'].required = False
+        for f in ['email', 'municipality', 'ward_number', 'local_address', 'photo', 'insurance_policy_number', 'insurance_membership_number', 'insurance_card_number', 'insurance_expiry_date', 'insurance_remarks']:
+            self.fields[f].required = False
+
+    def clean_phone_number(self):
+        phone = (self.cleaned_data.get('phone_number') or '').strip()
+        if not phone:
+            raise forms.ValidationError('Phone Number is required.')
+        qs = Patient.objects.filter(phone_number=phone).exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('This phone number is already used by another patient profile.')
+        return phone
+
+
+class PatientPortalPasswordChangeForm(forms.Form):
+    current_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), min_length=8)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+    def __init__(self, account, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.account = account
+
+    def clean_current_password(self):
+        value = self.cleaned_data['current_password']
+        if not self.account.check_password(value):
+            raise forms.ValidationError('Current password is incorrect.')
+        return value
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('new_password') and cleaned.get('confirm_password') and cleaned['new_password'] != cleaned['confirm_password']:
+            raise forms.ValidationError('New passwords do not match.')
+        return cleaned
