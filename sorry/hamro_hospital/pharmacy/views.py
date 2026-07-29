@@ -105,6 +105,7 @@ def dashboard(request):
         'out_of_stock_count': active_medicines.filter(current_stock=0).count(),
         'incoming_referrals': incoming_referrals,
         'service_orders': service_orders,
+        'recent_sales': PharmacySale.objects.select_related('patient').order_by('-created_at')[:10],
     })
 
 

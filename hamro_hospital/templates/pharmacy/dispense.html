@@ -17,16 +17,25 @@
 
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="tuh-card p-4 mb-4">
-        <h6 class="fw-bold mb-3"><i class="bi bi-capsule-pill"></i> Select Medicines</h6>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead><tr><th></th><th>Medicine</th><th>Stock</th><th>Batch</th><th>Price</th><th>Quantity</th></tr></thead>
+    <div class="tuh-card p-4 mb-4" id="medicineSelectorCard">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+                <h6 class="fw-bold mb-1"><i class="bi bi-capsule-pill"></i> Select Medicines</h6>
+                <div class="text-muted small">Search by medicine name, generic name, brand name, medicine code/barcode, batch number, or strength.</div>
+            </div>
+            <div class="d-flex gap-2"><button type="button" class="btn btn-outline-secondary btn-sm" id="scrollMedTop"><i class="bi bi-arrow-up"></i> Scroll to Top</button><button type="button" class="btn btn-outline-secondary btn-sm" id="scrollMedBottom"><i class="bi bi-arrow-down"></i> Scroll to Bottom</button></div>
+        </div>
+        <input type="text" id="medicineSearch" class="form-control form-control-lg mb-3" placeholder="Type A, B, medicine name, generic name, brand, barcode/code..." autocomplete="off">
+        <div class="small text-muted mb-2"><span id="medicineVisibleCount">{{ medicines|length }}</span> matching medicines shown.</div>
+        <div class="table-responsive" id="medicineTableWrapper" style="max-height:560px; overflow:auto; scroll-behavior:smooth;">
+            <table class="table table-hover align-middle" id="medicineTable">
+                <thead class="table-light" style="position:sticky;top:0;z-index:2;"><tr><th></th><th>Medicine</th><th>Generic / Brand</th><th>Stock</th><th>Batch</th><th>Price</th><th>Quantity</th></tr></thead>
                 <tbody>
                 {% for medicine in medicines %}
-                    <tr class="{% if medicine.is_out_of_stock %}table-danger{% elif medicine.is_low_stock %}table-warning{% endif %}">
-                        <td><input type="checkbox" name="medicine_id" value="{{ medicine.id }}" class="form-check-input" {% if medicine.is_out_of_stock %}disabled{% endif %}></td>
-                        <td>{{ medicine.name }} <small class="text-muted">({{ medicine.medicine_code }}) {{ medicine.strength }}</small></td>
+                    <tr class="medicine-row {% if medicine.is_out_of_stock %}table-danger{% elif medicine.is_low_stock %}table-warning{% endif %}" data-search="{{ medicine.name|lower }} {{ medicine.generic_name|lower }} {{ medicine.brand_name|lower }} {{ medicine.medicine_code|lower }} {{ medicine.batch_number|lower }} {{ medicine.strength|lower }}">
+                        <td><input type="checkbox" name="medicine_id" value="{{ medicine.id }}" class="form-check-input medicine-check" {% if medicine.is_out_of_stock %}disabled{% endif %}></td>
+                        <td><strong>{{ medicine.name }}</strong><br><small class="text-muted">Code/Barcode: {{ medicine.medicine_code }} · {{ medicine.strength }}</small></td>
+                        <td><small>{{ medicine.generic_name|default:'-' }}{% if medicine.brand_name %}<br>{{ medicine.brand_name }}{% endif %}</small></td>
                         <td>{{ medicine.current_stock }}</td>
                         <td>
                             <select name="batch_{{ medicine.id }}" class="form-select form-select-sm" style="min-width:150px;">
@@ -40,10 +49,11 @@
                         <td><input type="number" name="quantity_{{ medicine.id }}" value="1" min="1" max="{{ medicine.current_stock }}" class="form-control form-control-sm" style="width:80px;"></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted">No medicines in catalogue yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">No medicines in catalogue yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
+            <p id="noMedicineMatch" class="text-center text-muted py-4" style="display:none;">No matching medicines found.</p>
         </div>
     </div>
 
@@ -59,4 +69,33 @@
 
     <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Complete Sale &amp; Print Receipt</button>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const search = document.getElementById('medicineSearch');
+    const rows = Array.from(document.querySelectorAll('.medicine-row'));
+    const count = document.getElementById('medicineVisibleCount');
+    const noMatch = document.getElementById('noMedicineMatch');
+    const wrapper = document.getElementById('medicineTableWrapper');
+    function filterMedicines() {
+        const q = (search.value || '').trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+            const match = !q || row.dataset.search.includes(q);
+            row.style.display = match ? '' : 'none';
+            if (match) visible += 1;
+        });
+        if (count) count.textContent = visible;
+        if (noMatch) noMatch.style.display = visible ? 'none' : '';
+        if (wrapper) wrapper.scrollTop = 0;
+    }
+    if (search) search.addEventListener('input', filterMedicines);
+    document.querySelectorAll('.medicine-check').forEach(box => box.addEventListener('change', function () {
+        const row = box.closest('tr');
+        row.classList.toggle('table-success', box.checked);
+        row.classList.toggle('fw-semibold', box.checked);
+    }));
+    document.getElementById('scrollMedTop')?.addEventListener('click', () => { if (wrapper) wrapper.scrollTop = 0; });
+    document.getElementById('scrollMedBottom')?.addEventListener('click', () => { if (wrapper) wrapper.scrollTop = wrapper.scrollHeight; });
+});
+</script>
 {% endblock %}

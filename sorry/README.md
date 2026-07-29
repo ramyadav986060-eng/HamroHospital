@@ -422,3 +422,15 @@ python manage.py create_demo_accounts
 - Pharmacy referral supports prescribed medicines, dosage, frequency, duration and notes.
 - Admission referral stores admission reason/clinical details/ward notes and notifies the Admission role immediately.
 - Department referrals continue to notify Laboratory, Radiology, Pharmacy, Nursing, Admission, Operation Theatre and Blood Bank according to type.
+
+## Part 5 Pharmacy Improvements Added
+
+- Pharmacy dashboard duplicate Incoming Doctor Referral panels were removed.
+- Only one Incoming Doctor Referrals section remains, positioned below Find Patient to Dispense.
+- Pharmacy dashboard layout is now organized as: Dashboard Summary, Find Patient to Dispense, Incoming Doctor Referrals, Dispensing Area, Dispensing History.
+- Medicine dispensing page now has real-time medicine search.
+- Medicine search supports medicine name, generic name, brand name, medicine code/barcode, batch number and strength.
+- Medicine list filters instantly while typing to avoid scrolling through large inventories.
+- Selected medicine rows highlight immediately.
+- Added Scroll to Top and Scroll to Bottom controls for long medicine lists.
+- Existing dispensing workflow is preserved.
