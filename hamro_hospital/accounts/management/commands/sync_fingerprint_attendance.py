@@ -40,6 +40,9 @@ class Command(BaseCommand):
                 if timezone.is_naive(dt):
                     dt = timezone.make_aware(dt)
                 att, _ = StaffAttendance.objects.get_or_create(staff=staff, date=dt.date(), defaults={'source': 'fingerprint'})
+                if att.status in [StaffAttendance.Status.LEAVE, StaffAttendance.Status.HOLIDAY]:
+                    self.stdout.write(self.style.WARNING(f'Skipped {staff_id} on {dt.date()}: attendance not permitted ({att.get_status_display()}).'))
+                    continue
                 if direction == 'out':
                     att.check_out = dt
                 elif direction == 'in':

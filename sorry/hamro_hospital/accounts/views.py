@@ -542,6 +542,26 @@ def staff_leave_review(request, pk):
 
 
 @login_required
+def staff_leave_cancel(request, pk):
+    from accounts.models import StaffLeaveRequest
+    from accounts.utils import create_notification
+    leave = get_object_or_404(StaffLeaveRequest.objects.select_related('staff'), pk=pk)
+    can_cancel = request.user.is_superuser or request.user.effective_role == Role.SUPER_ADMIN or (leave.staff_id == request.user.id and leave.status == StaffLeaveRequest.Status.PENDING)
+    if not can_cancel:
+        messages.error(request, 'Only pending own leave requests can be cancelled. Contact Super Admin for other changes.')
+        return redirect('accounts:staff_leave_list')
+    if request.method == 'POST':
+        leave.cancel(reviewed_by=request.user, notes='Cancelled by requester' if leave.staff_id == request.user.id else 'Cancelled by Super Admin')
+        create_notification('Leave Cancelled', f'Leave request from {leave.start_date} to {leave.end_date} was cancelled.', user=leave.staff, related_url=reverse('accounts:staff_leave_list'))
+        create_notification('Leave Cancelled', f'{leave.staff.get_full_name() or leave.staff.username} cancelled a leave request.', role=Role.SUPER_ADMIN, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
+        if leave.staff.department_id:
+            for head in User.objects.filter(department=leave.staff.department, is_department_head=True, is_active_staff=True).exclude(pk=leave.staff_id):
+                create_notification('Leave Cancelled', f'{leave.staff.get_full_name() or leave.staff.username} cancelled a leave request.', user=head, related_url=reverse('accounts:staff_leave_review', args=[leave.pk]))
+        messages.success(request, 'Leave request cancelled.')
+    return redirect('accounts:staff_leave_list')
+
+
+@login_required
 def staff_lookup_api(request):
     from django.http import JsonResponse
     code = (request.GET.get('code') or request.GET.get('q') or '').strip()
@@ -769,6 +789,8 @@ def staff_attendance_device_punch(request):
     else:
         punch_time = timezone.now()
     att, _ = StaffAttendance.objects.get_or_create(staff=staff, date=punch_time.date(), defaults={'source': 'fingerprint'})
+    if att.status in [StaffAttendance.Status.LEAVE, StaffAttendance.Status.HOLIDAY]:
+        return JsonResponse({'ok': False, 'error': 'Attendance not permitted for this date.', 'status': att.get_status_display()}, status=409)
     if direction == 'out':
         att.check_out = punch_time
     elif direction == 'in':

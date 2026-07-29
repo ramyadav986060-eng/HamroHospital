@@ -503,3 +503,16 @@ python manage.py create_demo_accounts
 - Staff financial access remains restricted: staff cannot see hospital-wide revenue/cash collection/financial reports; salary/payment access is limited to own staff context or Finance/Super Admin workflows.
 - Django Admin navigation was synchronized by removing active Medical Records app/role references.
 - Universal patient search and staff lookup continue to support ID/barcode/QR/phone/name patterns where applicable.
+
+## Final Leave Workflow Integration Addendum
+
+- Leave Management is fully connected to staff, department head, Super Admin, attendance calendar and notifications.
+- Regular staff leave requests notify the relevant Department Head and Super Admin.
+- Department Head leave requests notify Super Admin only and are never routed back to the same Department Head.
+- Leave request notifications, approval notifications, rejection notifications and cancellation notifications use the system-wide notification framework.
+- Approved leave automatically creates/updates Staff Attendance records as Approved Leave for the selected dates.
+- Biometric/device punch and fingerprint CSV import now deny attendance on approved leave or holiday dates with an "Attendance not permitted for this date" response/message.
+- Staff may cancel their own pending leave requests; responsible users are notified.
+- Accounts users cannot approve/reject leave and cannot modify attendance records.
+- Department Heads can review leave requests only for staff in their own department and cannot review their own leave.
+- Super Admin keeps full leave-policy and override control.

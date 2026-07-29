@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import Role, User, StaffAttendance, StaffSalaryProfile, StaffSalaryPayment
+from accounts.models import Role, User, StaffAttendance, StaffSalaryProfile, StaffSalaryPayment, StaffLeaveRequest
 
 
 class StaffIdentityAttendancePayrollTests(TestCase):
@@ -41,3 +41,16 @@ class StaffIdentityAttendancePayrollTests(TestCase):
         self.assertEqual(payment.net_amount, Decimal('1000.00'))
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get(reverse('accounts:staff_salary_payments')).status_code, 302)
+
+    def test_approved_leave_blocks_biometric_attendance(self):
+        leave = StaffLeaveRequest.objects.create(
+            staff=self.staff, leave_type='Paid Leave', start_date=timezone.localdate(),
+            end_date=timezone.localdate(), reason='Approved leave test', status=StaffLeaveRequest.Status.APPROVED,
+        )
+        StaffAttendance.objects.update_or_create(
+            staff=self.staff, date=timezone.localdate(),
+            defaults={'status': StaffAttendance.Status.LEAVE, 'remarks': 'Approved leave'},
+        )
+        response = self.client.get(reverse('accounts:staff_attendance_device_punch'), {'staff_id': self.staff.staff_id, 'direction': 'in'})
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('Attendance not permitted', response.json()['error'])

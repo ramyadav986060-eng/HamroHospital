@@ -23,6 +23,7 @@ urlpatterns = [
     path('staff/leave/', views.staff_leave_list, name='staff_leave_list'),
     path('staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
     path('staff/leave/<int:pk>/review/', views.staff_leave_review, name='staff_leave_review'),
+    path('staff/leave/<int:pk>/cancel/', views.staff_leave_cancel, name='staff_leave_cancel'),
     path('staff/api/lookup/', views.staff_lookup_api, name='staff_lookup_api'),
     path('staff/salary/profiles/', views.staff_salary_profiles, name='staff_salary_profiles'),
     path('staff/<int:staff_id>/salary-profile/', views.staff_salary_profile_edit, name='staff_salary_profile_edit'),

@@ -398,6 +398,16 @@ class StaffLeaveRequest(models.Model):
         self.review_notes = notes
         self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_notes'])
 
+    def cancel(self, reviewed_by=None, notes=''):
+        from django.utils import timezone
+        self.status = self.Status.CANCELLED
+        if reviewed_by:
+            self.reviewed_by = reviewed_by
+            self.reviewed_at = timezone.now()
+        if notes:
+            self.review_notes = notes
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_notes'])
+
 
 class StaffSalaryProfile(models.Model):
     class SalaryType(models.TextChoices):
